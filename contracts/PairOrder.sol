@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.0;
 
-import "../node_modules/@openzeppelin/contracts/token/ERC20/IERC20.sol";
+import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 
 contract PairNewOrder{
     enum Side {
@@ -236,7 +236,7 @@ contract PairNewOrder{
 
 
 ////////////////////////////////////// UPDATE DATA   ////////////////////////////////////// 
-  function updateOrder(Side _side,uint256 index, uint256 newPriceOrder,uint256 prevIndexAdd,uint256 prevIndexRemove,address _token, uint256 amount,uint256 price) public {
+  function updateOrder(Side _side,uint256 index, uint256 newPriceOrder,uint256 prevIndexAdd,uint256 prevIndexRemove,address _token, uint256 amount) public {
       if(_side == Side.BUY) {
                 require(_nextNodeBuyID[index] != 0,"mist exit");
                 require(_nextNodeBuyID[prevIndexRemove]  != 0,"mist exit");
@@ -248,7 +248,7 @@ contract PairNewOrder{
                     payloadOrder[uint8(_side)][index].price = newPriceOrder;
                 } else {
                     removeOrder(_side,index,prevIndexRemove);
-                    createLimitOrder( _side, _token, amount, price, prevIndexAdd);
+                    createLimitOrder( _side, _token, amount, newPriceOrder, prevIndexAdd);
                    
                 }
       } else if(_side == Side.SELL) {
@@ -262,7 +262,7 @@ contract PairNewOrder{
                     payloadOrder[uint8(_side)][index].price = newPriceOrder;
                 } else {
                     removeOrder(_side,index,prevIndexRemove);
-                    createLimitOrder( _side, _token, amount, price, prevIndexAdd);
+                    createLimitOrder( _side, _token, amount, newPriceOrder, prevIndexAdd);
                    
                 }
 
