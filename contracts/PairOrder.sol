@@ -1,9 +1,10 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.0;
 
-import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
+import "../node_modules/@openzeppelin/contracts/token/ERC20/IERC20.sol";
+import "../node_modules/@openzeppelin/contracts/access/Ownable.sol";
 
-contract PairNewOrder{
+contract PairNewOrder is Ownable{
     enum Side {
         BUY, //  0 BUY
         SELL //  1 Sell
@@ -260,7 +261,7 @@ contract PairNewOrder{
                 uint256 nextNodeID = _nextNodeSellID[index];
                 if(_verifyIndex(prevIndexRemove, newPriceOrder, _side,nextNodeID)){
                     payloadOrder[uint8(_side)][index].price = newPriceOrder;
-                } else {
+                } else { 
                     removeOrder(_side,index,prevIndexRemove);
                     createLimitOrder( _side, _token, amount, newPriceOrder, prevIndexAdd);
                    
@@ -268,6 +269,10 @@ contract PairNewOrder{
 
       }
   
+  }
+
+  function testOwner() public onlyOwner view returns(string memory ){
+    return "can onlyOwner";
   }
 
 ////////////////////////////////////// UPDATE DATA   ////////////////////////////////////// 
