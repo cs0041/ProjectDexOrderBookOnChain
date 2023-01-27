@@ -164,20 +164,20 @@ contract PairNewOrder is Ownable,Wallet{
 ////////////////////////////////////  For offchain use ////////////////////////////////////// 
 ////////////////////////////////////// Get OrderBook ////////////////////////////////////// 
 
-  function getOrderBook(Side _side) external view returns(uint256[] memory) {
+  function getOrderBook(Side _side) external view returns(Order[] memory) {
     if(_side == Side.BUY) {
-        uint256[] memory dataList = new uint256[](listBuySize);
+        Order[] memory dataList = new Order[](listBuySize);
         uint256 currentNodeID = _nextNodeBuyID[GUARDHEAD];
         for(uint256 i = 0; i < listBuySize; ++i) {
-        dataList[i] = payloadOrder[uint8(_side)][currentNodeID].price;
+        dataList[i] = payloadOrder[uint8(_side)][currentNodeID];
         currentNodeID = _nextNodeBuyID[currentNodeID];
         }
         return dataList;
     } else if(_side == Side.SELL) {
-        uint256[] memory dataList = new uint256[](listSellSize);
+        Order[] memory dataList = new Order[](listSellSize);
         uint256 currentNodeID = _nextNodeSellID[GUARDHEAD];
         for(uint256 i = 0; i < listSellSize; ++i) {
-        dataList[i] = payloadOrder[uint8(_side)][currentNodeID].price;
+        dataList[i] = payloadOrder[uint8(_side)][currentNodeID];
         currentNodeID = _nextNodeSellID[currentNodeID];
         }
         return dataList;
