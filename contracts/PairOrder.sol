@@ -48,7 +48,7 @@ contract PairNewOrder is Ownable,Wallet{
     _nextNodeSellID[0] = 115792089237316195423570985008687907853269984665640564039457584007913129639935;
   }
 
-//////////////////////////////////////createLimitOrder ////////////////////////////////////// 
+////////////////////////////////////// CreateLimitOrder ////////////////////////////////////// 
 
  function createLimitOrder(Side side,address _token,uint256 amount,uint256 price,uint256 prevNodeID) validtoken(_token) nonReentrant public {
       require(price > 0,"price must > 0");
@@ -82,24 +82,21 @@ contract PairNewOrder is Ownable,Wallet{
 
     }
 
-   
-
-////////////////////////////////////// createLimitOrder ////////////////////////////////////// 
 
 
-////////////////////////////////////// ADD DATA ////////////////////////////////////// 
+////////////////////////////////////// Add Order ////////////////////////////////////// 
 
    function addBuyOrder( Side _side,address _token,uint256 _amount,uint256 _price,  uint256 prevNodeID)  private {  
     require(_nextNodeBuyID[prevNodeID] != 0);
     require(_verifyIndex(prevNodeID, _price,_side, _nextNodeBuyID[prevNodeID]));
     payloadOrder[uint8(_side)][nodeBuyID] = Order(
-        nodeBuyID,      // uint256 id
-        msg.sender,  // address trader
-        _side,       // Side side
-        _token,      // address token
-        _amount,     // uint256 amount
-        _price,      // uint256 price
-        0           // uint256 filled
+        nodeBuyID,      
+        msg.sender,  
+        _side,      
+        _token,      
+        _amount,   
+        _price,    
+        0          
     );
 
     _nextNodeBuyID[nodeBuyID] = _nextNodeBuyID[prevNodeID];
@@ -113,13 +110,13 @@ contract PairNewOrder is Ownable,Wallet{
     require(_verifyIndex(prevNodeID, _price,_side, _nextNodeSellID[prevNodeID]));
     
     payloadOrder[uint8(_side)][nodeSellID] = Order(
-        nodeSellID,      // uint256 id
-        msg.sender,  // address trader
-        _side,       // Side side
-        _token,      // address token
-        _amount,     // uint256 amount
-        _price,      // uint256 price
-        0           // uint256 filled
+        nodeSellID,    
+        msg.sender,  
+        _side,       
+        _token,     
+        _amount,    
+        _price,    
+        0           
     );
 
     _nextNodeSellID[nodeSellID] = _nextNodeSellID[prevNodeID];
@@ -130,6 +127,8 @@ contract PairNewOrder is Ownable,Wallet{
 
 
 
+////////////////////////////////////// Check pre_price > new_price > next_price ////////////////////////////////////// 
+
   function _verifyIndex(uint256 prevNodeID, uint256 _price, Side _side, uint256 nextNodeID) 
     internal
     view
@@ -139,6 +138,8 @@ contract PairNewOrder is Ownable,Wallet{
            (nextNodeID == GUARDTAIL || _price > payloadOrder[uint8(_side)][nextNodeID].price);
   }
 
+//////////////////////////////////////           For offchain use           ////////////////////////////////////// 
+////////////////////////////////////// Find index makes  linked list order  ////////////////////////////////////// 
   function _findIndex(uint256 _price,Side _side) external view returns(uint256) {
     require(_price > 0,"price must > 0");
     uint256 currentNodeID = GUARDHEAD;
@@ -158,12 +159,12 @@ contract PairNewOrder is Ownable,Wallet{
     revert("can't find index");
   }
 
-////////////////////////////////////// ADD DATA ////////////////////////////////////// 
 
 
-////////////////////////////////////// GET DATA   ////////////////////////////////////// 
+////////////////////////////////////  For offchain use ////////////////////////////////////// 
+////////////////////////////////////// Get OrderBook ////////////////////////////////////// 
 
-  function getOrderBook(Side _side) public view returns(uint256[] memory) {
+  function getOrderBook(Side _side) external view returns(uint256[] memory) {
     if(_side == Side.BUY) {
         uint256[] memory dataList = new uint256[](listBuySize);
         uint256 currentNodeID = _nextNodeBuyID[GUARDHEAD];
@@ -185,11 +186,10 @@ contract PairNewOrder is Ownable,Wallet{
 
     
   }
-////////////////////////////////////// GET DATA   ////////////////////////////////////// 
 
 
 
-////////////////////////////////////// REMOVE DATA   ////////////////////////////////////// 
+////////////////////////////////////// Remove Limit Order   ////////////////////////////////////// 
  function removeOrder(Side _side,uint256 index, uint256 prevIndex) public nonReentrant{
      if(_side == Side.BUY) {
         require(_nextNodeBuyID[index] != 0);
@@ -219,7 +219,9 @@ contract PairNewOrder is Ownable,Wallet{
 
  }
 
-  function _isPrev(Side _side,uint256 currentNodeID, uint256 prevNodeID) internal view returns(bool) {
+ ////////////////////////////////////// Check isPrev index ////////////////////////////////////// 
+
+  function _isPrev(Side _side,uint256 currentNodeID, uint256 prevNodeID) private view returns(bool) {
      if(_side == Side.BUY) {
           return _nextNodeBuyID[prevNodeID] == currentNodeID;
       } else if(_side == Side.SELL) {
@@ -230,6 +232,10 @@ contract PairNewOrder is Ownable,Wallet{
    
   }
 
+  
+
+//////////////////////////////////////           For offchain use           ////////////////////////////////////// 
+//////////////////////////////////////         Find PrevOrder index    ////////////////////////////////////// 
 
   function _findPrevOrder(Side _side,uint256 index) public view returns(uint256) {
     uint256 currentNodeID = GUARDHEAD;
@@ -250,12 +256,14 @@ contract PairNewOrder is Ownable,Wallet{
     revert(" _findPrevOrder not exist");
   }
 
-////////////////////////////////////// REMOVE DATA   ////////////////////////////////////// 
 
 
-////////////////////////////////////// UPDATE DATA   ////////////////////////////////////// 
+
+////////////////////////////////////// Update Limit Order   ////////////////////////////////////// 
+//prevIndexAdd      use  _findIndex(newpayloadOrder)
+//prevIndexRemove   use _findPrevOrder(index)
   function updateOrder(Side _side,uint256 index, uint256 newPriceOrder,uint256 prevIndexAdd,uint256 prevIndexRemove, uint256 newAmount) public  nonReentrant {
-     //prevIndexAdd    use  _findIndex(newpayloadOrder)
+     //prevIndexAdd      use  _findIndex(newpayloadOrder)
      //prevIndexRemove   use _findPrevOrder(index)
 
       uint8 side = uint8(_side);
@@ -313,10 +321,8 @@ contract PairNewOrder is Ownable,Wallet{
   }
 
 
-////////////////////////////////////// UPDATE DATA   ////////////////////////////////////// 
 
-
-////////////////////////////////////// MARKET ORDER    ////////////////////////////////////// 
+//////////////////////////////////////  Market Order    ////////////////////////////////////// 
     function createMarketOrder(Side _side, address _token0,uint256 amount) public validtoken(_token0) nonReentrant{
         uint256 totalFilled = 0;
         if(_side == Side.SELL){
