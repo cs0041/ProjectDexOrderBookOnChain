@@ -72,7 +72,7 @@ contract PairNewOrder is Ownable,Wallet{
         else if(side == Side.SELL) {
             ( tokenBuy,  tokenSell) =  isToken0 ? 
             (token1, token0) : (token0, token1);
-            require(balancesSpot[msg.sender][tokenSell] >= amount,"not enough balance token for buy");
+            require(balancesSpot[msg.sender][tokenSell] >= amount,"not enough balance token for sell");
             // transfer balance Spot to Trade wallet 
             balancesSpot[msg.sender][tokenSell] -= amount;
             balancesTrade[msg.sender][tokenSell] += amount;
