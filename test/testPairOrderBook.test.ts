@@ -342,15 +342,15 @@ describe('RemoveOrder',async () => {
     it('Should pass when RemoveOrder and index-preindex are contiguous and exist', async () => {
     
       let prevIndex: BigNumber
-      let isBuy = 0
       let balancesSpotToken1  : number
       let balancesTradeToken1 : number
       let balancesSpotToken0  : number
       let balancesTradeToken0 : number
+      let index: number
       let isSell = 1  // orderSell  index(1)23 index(2)154 index(3)277 index(4)93 index(5)7
                       // SELL 23 154 277 93 7   --order-->  277 154 93 23 7
 
-      let index:number  // orderBUY  index(1)112 index(2)7 index(3)245 index(4)102 index(5)23
+      let isBuy = 0  // orderBUY  index(1)112 index(2)7 index(3)245 index(4)102 index(5)23
                         // BUY  112 7 245 102 23  --order-->  245 112 102 23 7
 
 
@@ -525,21 +525,79 @@ describe('UpdateOrder',async () => {
 
     it('Should pass when UpdateOrder and index-preindex are contiguous and exist', async () => {
   
-      let isBuy = 0
-      let newPrice = 130
-      let newAmount = 1
-      let index = 2 //  orderBUY  index(1)112 index(2)7 index(3)245 index(4)102 index(5)23
-                    // BUY  112 7 245 102 23  --order-->  245 112 102 23 7
+      
       let prevIndexAdd:BigNumber
       let prevIndexRemove:BigNumber
+      let newPrice: number
+      let newAmount: number
+      let balancesSpotToken1  : number
+      let balancesTradeToken1 : number
+      let balancesSpotToken0  : number
+      let balancesTradeToken0 : number
 
+      let index: number
+      let isSell = 1  // orderSell  index(1)23 index(2)154 index(3)277 index(4)93 index(5)7
+                      // SELL 23 154 277 93 7   --order-->  277 154 93 23 7
+
+      let isBuy = 0  // orderBUY  index(1)112 index(2)7 index(3)245 index(4)102 index(5)23
+                        // BUY  112 7 245 102 23  --order-->  245 112 102 23 7
+
+                        
+      // update  orderBUY 
+
+      balancesSpotToken1 = (await pairorderbook.balancesSpot(owner.address,token1.address)).toNumber()
+      balancesTradeToken1 = (await pairorderbook.balancesTrade(owner.address,token1.address)).toNumber()
+
+      balancesSpotToken0 = (await pairorderbook.balancesSpot(owner.address,token0.address)).toNumber()
+      balancesTradeToken0 = (await pairorderbook.balancesTrade(owner.address,token0.address)).toNumber()
+
+      index = 2  // index(2) 7
+      newPrice = 130
+      newAmount = 1
       prevIndexAdd = await pairorderbook._findIndex(newPrice, isBuy)
       prevIndexRemove = await pairorderbook._findPrevOrder(isBuy, index)
       await pairorderbook.connect(owner).updateOrder(isBuy, index, newPrice,newAmount,prevIndexAdd,prevIndexRemove)
 
-       // when remove  BUY   245 112 102 23 7 --remove(index4)-->    245 130 112 102 23 
+
+                      // when update  BUY   245 112 102 23 7 --update(index2)-->    245 130 112 102 23 
        
       expect(orderToList(await pairorderbook.getOrderBook(isBuy))).to.deep.equal([245,130,112,102,23])
+
+
+       //cheack balancesSpot and balancesTrade
+      expect(await pairorderbook.balancesSpot(owner.address,token1.address)).to.be.equal(balancesSpotToken1  - (newPrice-7) )
+      expect(await pairorderbook.balancesTrade(owner.address,token1.address)).to.be.equal(balancesTradeToken1 + (newPrice-7) )
+
+      expect(await pairorderbook.balancesSpot(owner.address,token0.address)).to.be.equal(balancesSpotToken0)
+      expect(await pairorderbook.balancesTrade(owner.address,token0.address)).to.be.equal(balancesTradeToken0)
+
+
+
+       // remove  orderSELL
+
+      balancesSpotToken1 = (await pairorderbook.balancesSpot(owner.address,token1.address)).toNumber()
+      balancesTradeToken1 = (await pairorderbook.balancesTrade(owner.address,token1.address)).toNumber()
+
+      balancesSpotToken0 = (await pairorderbook.balancesSpot(owner.address,token0.address)).toNumber()
+      balancesTradeToken0 = (await pairorderbook.balancesTrade(owner.address,token0.address)).toNumber()
+
+      index = 4  // index(4) 93
+      newPrice = 3
+      newAmount = 5
+      prevIndexAdd = await pairorderbook._findIndex(newPrice, isSell)
+      prevIndexRemove = await pairorderbook._findPrevOrder(isSell, index)
+      await pairorderbook.connect(owner).updateOrder(isSell, index, newPrice,newAmount,prevIndexAdd,prevIndexRemove)
+
+                      // when update  SELL   277 154 93 23 7 --update(index2)-->  277 154 23 7 3
+
+      expect(orderToList(await pairorderbook.getOrderBook(isSell))).to.deep.equal([277,154,23,7,3])
+
+       //cheack balancesSpot and balancesTrade
+      expect(await pairorderbook.balancesSpot(owner.address,token1.address)).to.be.equal( balancesSpotToken1)
+      expect(await pairorderbook.balancesTrade(owner.address,token1.address)).to.be.equal(balancesTradeToken1)
+
+      expect(await pairorderbook.balancesSpot(owner.address,token0.address)).to.be.equal(balancesSpotToken0 - (newAmount - 1))
+      expect(await pairorderbook.balancesTrade(owner.address,token0.address)).to.be.equal(balancesTradeToken0 + (newAmount - 1) )
 
     })
  
