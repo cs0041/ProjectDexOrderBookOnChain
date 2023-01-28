@@ -63,20 +63,12 @@ contract PairNewOrder is Ownable,Wallet{
         if(side == Side.BUY) {  
             ( tokenBuy,  tokenSell) =  isToken0 ? 
             (token0, token1) : (token1, token0);
-            require(balancesSpot[msg.sender][tokenSell] >= amount * price,"not enough balance token for buy");
             addBuyOrder( side, tokenSell, amount, price,  prevNodeID);
-            // transfer balance Spot to Trade wallet 
-            balancesSpot[msg.sender][tokenSell] -= (amount * price);
-            balancesTrade[msg.sender][tokenSell] += (amount * price);
         }
         else if(side == Side.SELL) {
             ( tokenBuy,  tokenSell) =  isToken0 ? 
             (token1, token0) : (token0, token1);
-            require(balancesSpot[msg.sender][tokenSell] >= amount,"not enough balance token for sell");
             addSellOrder( side, tokenSell, amount, price,  prevNodeID);
-            // transfer balance Spot to Trade wallet 
-            balancesSpot[msg.sender][tokenSell] -= amount;
-            balancesTrade[msg.sender][tokenSell] += amount;
         }
 
 
@@ -87,8 +79,14 @@ contract PairNewOrder is Ownable,Wallet{
 ////////////////////////////////////// Add Order ////////////////////////////////////// 
 
    function addBuyOrder( Side _side,address _token,uint256 _amount,uint256 _price,  uint256 prevNodeID)  private {  
+    require(balancesSpot[msg.sender][_token] >= _amount * _price,"not enough balance token for buy");
     require(_nextNodeBuyID[prevNodeID] != 0,"index not exist");
     require(_verifyIndex(prevNodeID, _price,_side, _nextNodeBuyID[prevNodeID]),"position in linked list not order");
+
+    // transfer balance Spot to Trade wallet 
+    balancesSpot[msg.sender][_token] -= (_amount * _price);
+    balancesTrade[msg.sender][_token] += (_amount * _price);
+
     payloadOrder[uint8(_side)][nodeBuyID] = Order(
         nodeBuyID,      
         msg.sender,  
@@ -106,9 +104,14 @@ contract PairNewOrder is Ownable,Wallet{
   }
 
    function addSellOrder( Side _side,address _token,uint256 _amount,uint256 _price,  uint256 prevNodeID)  private {  
+    require(balancesSpot[msg.sender][_token] >= _amount,"not enough balance token for sell");
     require(_nextNodeSellID[prevNodeID] != 0,"index not exist");
     require(_verifyIndex(prevNodeID, _price,_side, _nextNodeSellID[prevNodeID]),"position in linked list not order");
-    
+
+    // transfer balance Spot to Trade wallet 
+    balancesSpot[msg.sender][_token] -= _amount;
+    balancesTrade[msg.sender][_token] += _amount;
+
     payloadOrder[uint8(_side)][nodeSellID] = Order(
         nodeSellID,    
         msg.sender,  
@@ -265,11 +268,12 @@ contract PairNewOrder is Ownable,Wallet{
 //prevIndexAdd      use  _findIndex(newpayloadOrder)
 //prevIndexRemove   use _findPrevOrder(index)
   function updateOrder(Side _side,uint256 index, uint256 newPriceOrder, uint256 newAmount,uint256 prevIndexAdd,uint256 prevIndexRemove) public  {
-     //prevIndexAdd      use  _findIndex(newpayloadOrder)
-     //prevIndexRemove   use _findPrevOrder(index)
+
       uint8 side = uint8(_side);
       require(payloadOrder[side][index].trader == msg.sender,"you are not owner of this position order");
+    
       address _token =  payloadOrder[side][index].token;
+
       if(_side == Side.BUY) {
 
           require(_nextNodeBuyID[index] != 0,"index not exist");
@@ -278,51 +282,20 @@ contract PairNewOrder is Ownable,Wallet{
 
           // removeOrder and createLimitOrder
           removeOrder(_side,index,prevIndexRemove);
-          createLimitOrder( _side, _token, newAmount, newPriceOrder, prevIndexAdd);
+          addBuyOrder( _side, _token, newAmount, newPriceOrder,  prevIndexAdd);
 
-
-          // transfer update balance Trade and Spot wallet 
-
-          bool isMoreThan =   (newPriceOrder * newAmount) > ( payloadOrder[side][index].amount * payloadOrder[side][index].price);
-
-          uint256 diff = isMoreThan? (newPriceOrder * newAmount) -( payloadOrder[side][index].amount * payloadOrder[side][index].price) : 
-            ( payloadOrder[side][index].amount * payloadOrder[side][index].price) - (newPriceOrder * newAmount);
-
-          if(isMoreThan){
-            balancesSpot[msg.sender][_token] -= diff;
-            balancesTrade[msg.sender][_token] += diff;
-          }else{
-            balancesSpot[msg.sender][_token] += diff;
-            balancesTrade[msg.sender][_token] -= diff;
-          }
-
-
-                
+   
             
       } else if(_side == Side.SELL) {
-                require(_nextNodeSellID[index] != 0,"index not exist");
-                require(_nextNodeSellID[prevIndexRemove]  != 0,"index not exist");
-                require(_nextNodeSellID[prevIndexAdd]  != 0,"index not exist");
 
-                removeOrder(_side,index,prevIndexRemove);
-                createLimitOrder( _side, _token, newAmount, newPriceOrder, prevIndexAdd);
+          require(_nextNodeSellID[index] != 0,"index not exist");
+          require(_nextNodeSellID[prevIndexRemove]  != 0,"index not exist");
+          require(_nextNodeSellID[prevIndexAdd]  != 0,"index not exist");
 
-                // transfer update balance Trade and Spot wallet 
-
-                bool isMoreThan =  newAmount> payloadOrder[side][index].amount;
-
-                uint256 diff = isMoreThan?  newAmount - payloadOrder[side][index].amount :  payloadOrder[side][index].amount  -  newAmount;
-
-                if(isMoreThan){
-                  balancesSpot[msg.sender][_token] -= diff;
-                  balancesTrade[msg.sender][_token] += diff;
-                }else{
-                  balancesSpot[msg.sender][_token] += diff;
-                  balancesTrade[msg.sender][_token] -= diff;
-                }
-
+          // removeOrder and createLimitOrder
+          removeOrder(_side,index,prevIndexRemove);
+          addSellOrder( _side, _token, newAmount, newPriceOrder,  prevIndexAdd);
       }
-  
   }
 
 
@@ -334,9 +307,9 @@ contract PairNewOrder is Ownable,Wallet{
             require(balancesSpot[msg.sender][_token0] >= amount, "not enough balance token for sell");
 
             
-            // _nextNodeBuyID
-            // listBuySize
-          //   payloadOrder[uint8(_side)][nodeBuyID] 
+          // _nextNodeBuyID
+          // listBuySize
+          // payloadOrder[uint8(_side)][nodeBuyID] 
             uint256 currentNodeID = _nextNodeBuyID[GUARDHEAD];
             for (uint256 i = 0; i < listBuySize && totalFilled < amount; i++) {
 
