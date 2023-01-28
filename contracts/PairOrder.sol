@@ -53,8 +53,8 @@ contract PairNewOrder is Ownable,Wallet{
  function createLimitOrder(Side side,address _token,uint256 amount,uint256 price,uint256 prevNodeID) validtoken(_token)  public {
       require(price > 0,"price must > 0");
       require(amount > 0,"amount must > 0");
-      // BUY  _token
-      // SELL _token
+      // BUY  _token0
+      // SELL _token0
        bool isToken0 = _token == token0;
        address tokenBuy;
        address tokenSell;
@@ -63,11 +63,13 @@ contract PairNewOrder is Ownable,Wallet{
         if(side == Side.BUY) {  
             ( tokenBuy,  tokenSell) =  isToken0 ? 
             (token0, token1) : (token1, token0);
+            //buy token0 sell token1
             addBuyOrder( side, tokenSell, amount, price,  prevNodeID);
         }
         else if(side == Side.SELL) {
             ( tokenBuy,  tokenSell) =  isToken0 ? 
             (token1, token0) : (token0, token1);
+            //buy token1 sell token0
             addSellOrder( side, tokenSell, amount, price,  prevNodeID);
         }
 
@@ -79,6 +81,7 @@ contract PairNewOrder is Ownable,Wallet{
 ////////////////////////////////////// Add Order ////////////////////////////////////// 
 
    function addBuyOrder( Side _side,address _token,uint256 _amount,uint256 _price,  uint256 prevNodeID)  private {  
+    //BUY token0 amount - price
     require(balancesSpot[msg.sender][_token] >= _amount * _price,"not enough balance token for buy");
     require(_nextNodeBuyID[prevNodeID] != 0,"index not exist");
     require(_verifyIndex(prevNodeID, _price,_side, _nextNodeBuyID[prevNodeID]),"position in linked list not order");
@@ -103,7 +106,8 @@ contract PairNewOrder is Ownable,Wallet{
     nodeBuyID++;
   }
 
-   function addSellOrder( Side _side,address _token,uint256 _amount,uint256 _price,  uint256 prevNodeID)  private {  
+   function addSellOrder( Side _side,address _token,uint256 _amount,uint256 _price,  uint256 prevNodeID)  private {
+    //SELL token0 amount - price  
     require(balancesSpot[msg.sender][_token] >= _amount,"not enough balance token for sell");
     require(_nextNodeSellID[prevNodeID] != 0,"index not exist");
     require(_verifyIndex(prevNodeID, _price,_side, _nextNodeSellID[prevNodeID]),"position in linked list not order");
@@ -303,8 +307,11 @@ contract PairNewOrder is Ownable,Wallet{
 //////////////////////////////////////  Market Order    ////////////////////////////////////// 
     function createMarketOrder(Side _side, address _token0,uint256 amount) public validtoken(_token0) {
         uint256 totalFilled = 0;
+        // Market Sell token0
+        // sell token0 buy token1
+
         if(_side == Side.SELL){
-            require(balancesSpot[msg.sender][_token0] >= amount, "not enough balance token for sell");
+            require(balancesSpot[msg.sender][token0] >= amount, "not enough balance token for sell");
 
             
           // _nextNodeBuyID
@@ -317,10 +324,10 @@ contract PairNewOrder is Ownable,Wallet{
                 uint256 availableToFill = payloadOrder[uint8(_side)][currentNodeID].amount -  payloadOrder[uint8(_side)][currentNodeID].filled;
                 uint256 filled = 0;
                 if(availableToFill > leftToFill){
-                    filled = leftToFill; //Fill the entire market order
+                    filled = leftToFill; //Full Fill 
                 }
                 else{ 
-                    filled = availableToFill; //Fill as much as is available in order[i]
+                    filled = availableToFill; // Fill as much as can Fill
                 }
 
                 totalFilled = totalFilled + filled;
@@ -350,6 +357,57 @@ contract PairNewOrder is Ownable,Wallet{
 
         //Remove 100% filled orders from the orderbook
         while(listBuySize > 0 && payloadOrder[uint8(_side)][currentNodeID].filled == payloadOrder[uint8(_side)][currentNodeID].amount ){
+        //Remove the top element in the orders
+             removeOrder(_side, _nextNodeBuyID[GUARDHEAD],0);
+        }
+
+      // Market Buy token0
+      // sell token1 buy token0
+
+      } else if(_side == Side.BUY){
+            require(balancesSpot[msg.sender][token1] >= amount, "not enough balance token for buy");
+          // _nextNodeSellID
+          // listSellSize
+          // payloadOrder[uint8(_side)][nodeSellID] 
+            uint256 currentNodeID = _nextNodeSellID[GUARDHEAD];
+            for (uint256 i = 0; i < listSellSize && totalFilled < amount; i++) {
+                uint256 leftToFill = amount - totalFilled;
+                uint256 availableToFill = (payloadOrder[uint8(_side)][currentNodeID].amount* payloadOrder[uint8(_side)][currentNodeID].price) -  payloadOrder[uint8(_side)][currentNodeID].filled;
+                uint256 filled = 0;
+                if(availableToFill > leftToFill){
+                    filled = leftToFill; //Fill the entire market order
+                }
+                else{ 
+                    filled = availableToFill; //Fill as much as is available in order[i]
+                }
+
+                totalFilled = totalFilled + filled;
+                payloadOrder[uint8(_side)][currentNodeID].filled += filled;
+                uint256 cost = filled/payloadOrder[uint8(_side)][currentNodeID].price;
+
+                //msg.sender is the seller
+
+                // sell
+                balancesSpot[msg.sender][token1] -= filled;
+                balancesSpot[payloadOrder[uint8(_side)][currentNodeID].trader][token1] += filled;
+           
+
+                // recive after sell
+                balancesSpot[msg.sender][token0] += cost;
+                balancesSpot[payloadOrder[uint8(_side)][currentNodeID].trader][token0] -= cost;
+
+
+
+
+                currentNodeID = _nextNodeSellID[currentNodeID];
+        }
+
+     
+
+    
+
+        //Remove 100% filled orders from the orderbook
+        while(listSellSize > 0 && payloadOrder[uint8(_side)][currentNodeID].filled == ((payloadOrder[uint8(_side)][currentNodeID].amount* payloadOrder[uint8(_side)][currentNodeID].price)) ){
         //Remove the top element in the orders
              removeOrder(_side, _nextNodeBuyID[GUARDHEAD],0);
         }
