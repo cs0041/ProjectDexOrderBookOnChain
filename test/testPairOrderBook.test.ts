@@ -201,63 +201,270 @@ describe('RemoveOrder',async () => {
       // order 2  -> price 23 sell
       price = 23
       prevNodeID = await pairorderbook._findIndex(price, isSell)
-      await pairorderbook.connect(owner).createLimitOrder (isSell,token0.address,1,price,prevNodeID)
+      await pairorderbook.connect(owner).createLimitOrder (isSell,token0.address,amount,price,prevNodeID)
     
 
       // order 3  -> price 7 buy
       price = 7
       prevNodeID = await pairorderbook._findIndex(price, isBuy)
-      await pairorderbook.connect(owner).createLimitOrder (isBuy,token0.address,1,price,prevNodeID)
+      await pairorderbook.connect(owner).createLimitOrder (isBuy,token0.address,amount,price,prevNodeID)
 
       // order 4  -> price 245 buy
       price = 245
       prevNodeID = await pairorderbook._findIndex(price, isBuy)
-      await pairorderbook.connect(owner).createLimitOrder (isBuy,token0.address,1,price,prevNodeID)
+      await pairorderbook.connect(owner).createLimitOrder (isBuy,token0.address,amount,price,prevNodeID)
 
-      // order 5  -> price 854 sell
+      // order 5  -> price 154 sell
       price = 154
       prevNodeID = await pairorderbook._findIndex(price, isSell)
-      await pairorderbook.connect(owner).createLimitOrder (isSell,token0.address,1,price,prevNodeID)
+      await pairorderbook.connect(owner).createLimitOrder (isSell,token0.address,amount,price,prevNodeID)
 
       // order 6  -> price 477 sell
       price = 277
       prevNodeID = await pairorderbook._findIndex(price, isSell)
-      await pairorderbook.connect(owner).createLimitOrder (isSell,token0.address,1,price,prevNodeID)
+      await pairorderbook.connect(owner).createLimitOrder (isSell,token0.address,amount,price,prevNodeID)
 
       // order 7  -> price 93 sell
       price = 93
       prevNodeID = await pairorderbook._findIndex(price, isSell)
-      await pairorderbook.connect(owner).createLimitOrder (isSell,token0.address,1,price,prevNodeID)
+      await pairorderbook.connect(owner).createLimitOrder (isSell,token0.address,amount,price,prevNodeID)
 
       // order 8  -> price 102 buy
       price = 102
       prevNodeID = await pairorderbook._findIndex(price, isBuy)
-      await pairorderbook.connect(owner).createLimitOrder (isBuy,token0.address,1,price,prevNodeID)
+      await pairorderbook.connect(owner).createLimitOrder (isBuy,token0.address,amount,price,prevNodeID)
 
       // order 9  -> price 7 sell
       price = 7
       prevNodeID = await pairorderbook._findIndex(price, isSell)
-      await pairorderbook.connect(owner).createLimitOrder (isSell,token0.address,1,price,prevNodeID)
+      await pairorderbook.connect(owner).createLimitOrder (isSell,token0.address,amount,price,prevNodeID)
 
       // order 10  -> price 23 buy
       price = 23
       prevNodeID = await pairorderbook._findIndex(price, isBuy)
-      await pairorderbook.connect(owner).createLimitOrder (isBuy,token0.address,1,price,prevNodeID)
+      await pairorderbook.connect(owner).createLimitOrder (isBuy,token0.address,amount,price,prevNodeID)
 
       // BUY  112 7 245 102 23  --order-->  245 112 102 23 7
       // SELL 23 154 277 93 7   --order-->  277 154 93 23 7
+
+
   })
 
-    it("test", async() => {
-          // BUY  112 7 245 102 23  --order-->  245 112 102 23 7
-          // let output: PairNewOrder.OrderStructOutput[]
-          // output = await pairorderbook.getOrderBook(0)
-          // output.map((item)=>{
-          //     console.log(item.price.toString())
-          // })
+    it("Should revert when RemoveOrder and index not exist", async() => {
+      let isBuy = 0
+      let index = 6 // not exist -> orderBUY  index(1)112 index(2)7 index(3)245 index(4)102 index(5)23
 
-         
+      await expect(pairorderbook._findPrevOrder(isBuy, index)).to.be.revertedWith("_findPrevOrder not exist")
+      await expect(pairorderbook.connect(owner).removeOrder(isBuy, index, 12)).to.be.revertedWith("you are not owner of this position order") // cause owner is address0
+    })
+    it("Should revert when RemoveOrder and index-preindex are not contiguous", async() => {
+      let prevIndex: BigNumber
+      let isBuy = 0
+      let index = 5 // not exist -> orderBUY  index(1)112 index(2)7 index(3)245 index(4)102 index(5)23
+      
+
+      prevIndex = await pairorderbook._findPrevOrder(isBuy, index) // find index-preindex are contiguous
+      prevIndex = prevIndex.add(1) // add to make revertedWith("index is not pre")
+      await expect(pairorderbook.connect(owner).removeOrder(isBuy, index, prevIndex)).to.be.revertedWith("index is not pre") 
+    })
+
+    it('Should revert when RemoveOrder and not owner  position order', async () => {
+      let prevIndex: BigNumber
+      let isBuy = 0
+      let index = 5 // not exist -> orderBUY  index(1)112 index(2)7 index(3)245 index(4)102 index(5)23
+
+      prevIndex = await pairorderbook._findPrevOrder(isBuy, index) // find index-preindex are contiguous
+      await expect( pairorderbook.connect(addr1).removeOrder(isBuy, index, prevIndex)   ).to.be.revertedWith("you are not owner of this position order")
+    })
+    it('Should revert when RemoveOrder and empty linked list', async () => {
+    
+      let prevIndex: BigNumber
+      let isBuy = 0
+      let index :number // not exist -> orderBUY  index(1)112 index(2)7 index(3)245 index(4)102 index(5)23
+                    // BUY  112 7 245 102 23  --order-->  245 112 102 23 7
+
+      index = 1
+      prevIndex = await pairorderbook._findPrevOrder(isBuy, index) // find index-preindex are contiguous
+      await pairorderbook.connect(owner).removeOrder(isBuy, index, prevIndex)
+
+      index = 4
+      prevIndex = await pairorderbook._findPrevOrder(isBuy, index) // find index-preindex are contiguous
+      await pairorderbook.connect(owner).removeOrder(isBuy, index, prevIndex)
+
+      index = 3
+      prevIndex = await pairorderbook._findPrevOrder(isBuy, index) // find index-preindex are contiguous
+      await pairorderbook.connect(owner).removeOrder(isBuy, index, prevIndex)
+
+      index = 2
+      prevIndex = await pairorderbook._findPrevOrder(isBuy, index) // find index-preindex are contiguous
+      await pairorderbook.connect(owner).removeOrder(isBuy, index, prevIndex)
+
+      index = 5
+      prevIndex = await pairorderbook._findPrevOrder(isBuy, index) // find index-preindex are contiguous
+      await pairorderbook.connect(owner).removeOrder(isBuy, index, prevIndex)
+
+      // now empty linked list
+      expect(orderToList(await pairorderbook.getOrderBook(isBuy))).to.deep.equal([])
+      
+      // try remove empty linked list
+      await expect(pairorderbook.connect(owner).removeOrder(isBuy, index, 3)).to.be.revertedWith("index not exist")
+
+
+    })
+
+    it('Should pass when RemoveOrder and index-preindex are contiguous and exist', async () => {
+    
+      let prevIndex: BigNumber
+      let isBuy = 0
+      let index = 4 // orderBUY  index(1)112 index(2)7 index(3)245 index(4)102 index(5)23
+                    // BUY  112 7 245 102 23  --order-->  245 112 102 23 7
+
+      prevIndex = await pairorderbook._findPrevOrder(isBuy, index) // find index-preindex are contiguous
+      await pairorderbook.connect(owner).removeOrder(isBuy, index, prevIndex)
+
+                    // when remove  orderBUY   245 112 102 23 7 --remove(index4)-->   245 112 23 7
+
+      expect(orderToList(await pairorderbook.getOrderBook(isBuy))).to.deep.equal([245,112,23,7])
     })
  
   })
+
+describe('UpdateOrder',async () => {
+    beforeEach(async () => {
+      let price: number
+      let amount = 1
+      let prevNodeID: BigNumber
+      let isBuy = 0
+      let isSell = 1
+
+      // order 1  -> price 112 buy
+      price = 112
+      prevNodeID = await pairorderbook._findIndex(price, isBuy)
+      await pairorderbook.connect(owner).createLimitOrder(isBuy,token0.address,amount,price,prevNodeID)
+
+      // order 2  -> price 23 sell
+      price = 23
+      prevNodeID = await pairorderbook._findIndex(price, isSell)
+      await pairorderbook.connect(owner).createLimitOrder (isSell,token0.address,amount,price,prevNodeID)
+    
+
+      // order 3  -> price 7 buy
+      price = 7
+      prevNodeID = await pairorderbook._findIndex(price, isBuy)
+      await pairorderbook.connect(owner).createLimitOrder (isBuy,token0.address,amount,price,prevNodeID)
+
+      // order 4  -> price 245 buy
+      price = 245
+      prevNodeID = await pairorderbook._findIndex(price, isBuy)
+      await pairorderbook.connect(owner).createLimitOrder (isBuy,token0.address,amount,price,prevNodeID)
+
+      // order 5  -> price 154 sell
+      price = 154
+      prevNodeID = await pairorderbook._findIndex(price, isSell)
+      await pairorderbook.connect(owner).createLimitOrder (isSell,token0.address,amount,price,prevNodeID)
+
+      // order 6  -> price 477 sell
+      price = 277
+      prevNodeID = await pairorderbook._findIndex(price, isSell)
+      await pairorderbook.connect(owner).createLimitOrder (isSell,token0.address,amount,price,prevNodeID)
+
+      // order 7  -> price 93 sell
+      price = 93
+      prevNodeID = await pairorderbook._findIndex(price, isSell)
+      await pairorderbook.connect(owner).createLimitOrder (isSell,token0.address,amount,price,prevNodeID)
+
+      // order 8  -> price 102 buy
+      price = 102
+      prevNodeID = await pairorderbook._findIndex(price, isBuy)
+      await pairorderbook.connect(owner).createLimitOrder (isBuy,token0.address,amount,price,prevNodeID)
+
+      // order 9  -> price 7 sell
+      price = 7
+      prevNodeID = await pairorderbook._findIndex(price, isSell)
+      await pairorderbook.connect(owner).createLimitOrder (isSell,token0.address,amount,price,prevNodeID)
+
+      // order 10  -> price 23 buy
+      price = 23
+      prevNodeID = await pairorderbook._findIndex(price, isBuy)
+      await pairorderbook.connect(owner).createLimitOrder (isBuy,token0.address,amount,price,prevNodeID)
+
+      // BUY  112 7 245 102 23  --order-->  245 112 102 23 7
+      // SELL 23 154 277 93 7   --order-->  277 154 93 23 7
+
+
+  })
+
+    it("Should revert when UpdateOrder and index not exist", async() => {
+      let isBuy = 0
+      let newPrice = 912
+      let newAmount = 1
+      let index = 6 // not exist -> orderBUY  index(1)112 index(2)7 index(3)245 index(4)102 index(5)23
+      let prevIndexAdd = BigNumber.from(7)
+      let prevIndexRemove = BigNumber.from(8)
+
+      await expect(pairorderbook._findPrevOrder(isBuy, index)).to.be.revertedWith("_findPrevOrder not exist")
+      await expect(pairorderbook.connect(owner).updateOrder(isBuy, index, newPrice,newAmount,prevIndexAdd,prevIndexRemove)).to.be.revertedWith("you are not owner of this position order") // cause owner is address0
+    })
+    it("Should revert when UpdateOrder and index/prevIndexRemove/prevIndexAdd not exist", async() => {
+      let isBuy = 0
+      let newPrice = 912
+      let newAmount = 1
+      let index = 3 //  orderBUY  index(1)112 index(2)7 index(3)245 index(4)102 index(5)23
+      let prevIndexAdd = BigNumber.from(9)
+      let prevIndexRemove = BigNumber.from(12)
+
+      await expect(pairorderbook._findPrevOrder(isBuy, 12)).to.be.revertedWith("_findPrevOrder not exist")
+      await expect(pairorderbook.connect(owner).updateOrder(isBuy, index, newPrice,newAmount,prevIndexAdd,prevIndexRemove)).to.be.revertedWith("index not exist") 
+    })
+    it("Should revert when UpdateOrder and index-preindex are not contiguous", async() => {
+     let isBuy = 0
+      let newPrice = 912
+      let newAmount = 1
+      let index = 3 //  orderBUY  index(1)112 index(2)7 index(3)245 index(4)102 index(5)23
+      let prevIndexAdd:BigNumber
+      let prevIndexRemove: BigNumber
+
+      // BUY  112 7 245 102 23  --order-->  245 112 102 23 7
+
+      prevIndexAdd = BigNumber.from(5)
+      prevIndexRemove = BigNumber.from(4)
+      
+      await expect(pairorderbook.connect(owner).updateOrder(isBuy, index, newPrice,newAmount,prevIndexAdd,prevIndexRemove)).to.be.revertedWith("index is not pre") 
+    })
+
+    it('Should revert when UpdateOrder and not owner  position order', async () => {
+      let isBuy = 0
+      let newPrice = 300
+      let newAmount = 1
+      let index = 2 //  orderBUY  index(1)112 index(2)7 index(3)245 index(4)102 index(5)23
+      let prevIndexAdd:BigNumber
+      let prevIndexRemove:BigNumber
+
+      prevIndexAdd = await pairorderbook._findIndex(newPrice, isBuy)
+      prevIndexRemove = await pairorderbook._findPrevOrder(isBuy, index)
+      await expect(pairorderbook.connect(addr1).updateOrder(isBuy, index, newPrice,newAmount,prevIndexAdd,prevIndexRemove)).to.be.revertedWith("you are not owner of this position order") 
+    })
+
+    it('Should pass when UpdateOrder and index-preindex are contiguous and exist', async () => {
+  
+      let isBuy = 0
+      let newPrice = 130
+      let newAmount = 1
+      let index = 2 //  orderBUY  index(1)112 index(2)7 index(3)245 index(4)102 index(5)23
+                    // BUY  112 7 245 102 23  --order-->  245 112 102 23 7
+      let prevIndexAdd:BigNumber
+      let prevIndexRemove:BigNumber
+
+      prevIndexAdd = await pairorderbook._findIndex(newPrice, isBuy)
+      prevIndexRemove = await pairorderbook._findPrevOrder(isBuy, index)
+      await pairorderbook.connect(owner).updateOrder(isBuy, index, newPrice,newAmount,prevIndexAdd,prevIndexRemove)
+
+       // when remove  BUY   245 112 102 23 7 --remove(index4)-->    245 130 112 102 23 
+       
+      expect(orderToList(await pairorderbook.getOrderBook(isBuy))).to.deep.equal([245,130,112,102,23])
+
+    })
+ 
+  })
+
 })
