@@ -50,7 +50,7 @@ contract PairNewOrder is Ownable,Wallet{
 
 ////////////////////////////////////// CreateLimitOrder ////////////////////////////////////// 
 
- function createLimitOrder(Side side,address _token,uint256 amount,uint256 price,uint256 prevNodeID) validtoken(_token) nonReentrant public {
+ function createLimitOrder(Side side,address _token,uint256 amount,uint256 price,uint256 prevNodeID) validtoken(_token)  public {
       require(price > 0,"price must > 0");
       require(amount > 0,"amount must > 0");
       // BUY  _token
@@ -64,19 +64,19 @@ contract PairNewOrder is Ownable,Wallet{
             ( tokenBuy,  tokenSell) =  isToken0 ? 
             (token0, token1) : (token1, token0);
             require(balancesSpot[msg.sender][tokenSell] >= amount * price,"not enough balance token for buy");
+            addBuyOrder( side, tokenSell, amount, price,  prevNodeID);
             // transfer balance Spot to Trade wallet 
             balancesSpot[msg.sender][tokenSell] -= (amount * price);
             balancesTrade[msg.sender][tokenSell] += (amount * price);
-            addBuyOrder( side, tokenBuy, amount, price,  prevNodeID);
         }
         else if(side == Side.SELL) {
             ( tokenBuy,  tokenSell) =  isToken0 ? 
             (token1, token0) : (token0, token1);
             require(balancesSpot[msg.sender][tokenSell] >= amount,"not enough balance token for sell");
+            addSellOrder( side, tokenSell, amount, price,  prevNodeID);
             // transfer balance Spot to Trade wallet 
             balancesSpot[msg.sender][tokenSell] -= amount;
             balancesTrade[msg.sender][tokenSell] += amount;
-            addSellOrder( side, tokenSell, amount, price,  prevNodeID);
         }
 
 
@@ -190,14 +190,16 @@ contract PairNewOrder is Ownable,Wallet{
 
 
 ////////////////////////////////////// Remove Limit Order   ////////////////////////////////////// 
- function removeOrder(Side _side,uint256 index, uint256 prevIndex) public nonReentrant{
+ function removeOrder(Side _side,uint256 index, uint256 prevIndex) public {
+     uint8 side = uint8(_side);
+     require(payloadOrder[side][index].trader == msg.sender,"you are not owner of this position order");
      if(_side == Side.BUY) {
         require(_nextNodeBuyID[index] != 0,"index not exist");
-        require(_isPrev(_side,index, prevIndex),"position in linked list not order");
+        require(_isPrev(_side,index, prevIndex),"index is not pre");
         
         // transfer balance Trade to Spot wallet 
-        balancesSpot[msg.sender][payloadOrder[uint8(_side)][index].token] += ( payloadOrder[uint8(_side)][index].amount *  payloadOrder[uint8(_side)][index].price);
-        balancesTrade[msg.sender][payloadOrder[uint8(_side)][index].token] -= ( payloadOrder[uint8(_side)][index].amount *  payloadOrder[uint8(_side)][index].price);
+        balancesSpot[msg.sender][payloadOrder[side][index].token] += ( payloadOrder[side][index].amount *  payloadOrder[side][index].price);
+        balancesTrade[msg.sender][payloadOrder[side][index].token] -= ( payloadOrder[side][index].amount *  payloadOrder[side][index].price);
 
         _nextNodeBuyID[prevIndex] = _nextNodeBuyID[index];
         _nextNodeBuyID[index] = 0;
@@ -205,11 +207,11 @@ contract PairNewOrder is Ownable,Wallet{
 
       } else if(_side == Side.SELL) {
         require(_nextNodeSellID[index] != 0,"index not exist");
-        require(_isPrev(_side,index, prevIndex),"position in linked list not order");
+        require(_isPrev(_side,index, prevIndex),"index is not pre");
 
         // transfer balance Trade to Spot wallet 
-        balancesSpot[msg.sender][payloadOrder[uint8(_side)][index].token]  += payloadOrder[uint8(_side)][index].amount ;
-        balancesTrade[msg.sender][payloadOrder[uint8(_side)][index].token] -= payloadOrder[uint8(_side)][index].amount ;
+        balancesSpot[msg.sender][payloadOrder[side][index].token]  += payloadOrder[side][index].amount ;
+        balancesTrade[msg.sender][payloadOrder[side][index].token] -= payloadOrder[side][index].amount ;
 
         _nextNodeSellID[prevIndex] = _nextNodeSellID[index];
         _nextNodeSellID[index] = 0;
@@ -253,7 +255,7 @@ contract PairNewOrder is Ownable,Wallet{
             }
       }
     
-    revert(" _findPrevOrder not exist");
+    revert("_findPrevOrder not exist");
   }
 
 
@@ -262,17 +264,22 @@ contract PairNewOrder is Ownable,Wallet{
 ////////////////////////////////////// Update Limit Order   ////////////////////////////////////// 
 //prevIndexAdd      use  _findIndex(newpayloadOrder)
 //prevIndexRemove   use _findPrevOrder(index)
-  function updateOrder(Side _side,uint256 index, uint256 newPriceOrder,uint256 prevIndexAdd,uint256 prevIndexRemove, uint256 newAmount) public  nonReentrant {
+  function updateOrder(Side _side,uint256 index, uint256 newPriceOrder, uint256 newAmount,uint256 prevIndexAdd,uint256 prevIndexRemove) public  {
      //prevIndexAdd      use  _findIndex(newpayloadOrder)
      //prevIndexRemove   use _findPrevOrder(index)
-
       uint8 side = uint8(_side);
+      require(payloadOrder[side][index].trader == msg.sender,"you are not owner of this position order");
       address _token =  payloadOrder[side][index].token;
       if(_side == Side.BUY) {
 
           require(_nextNodeBuyID[index] != 0,"index not exist");
           require(_nextNodeBuyID[prevIndexRemove]  != 0,"index not exist");
           require(_nextNodeBuyID[prevIndexAdd]  != 0,"index not exist");
+
+          // removeOrder and createLimitOrder
+          removeOrder(_side,index,prevIndexRemove);
+          createLimitOrder( _side, _token, newAmount, newPriceOrder, prevIndexAdd);
+
 
           // transfer update balance Trade and Spot wallet 
 
@@ -290,15 +297,15 @@ contract PairNewOrder is Ownable,Wallet{
           }
 
 
-          // removeOrder and createLimitOrder
-          removeOrder(_side,index,prevIndexRemove);
-          createLimitOrder( _side, _token, newAmount, newPriceOrder, prevIndexAdd);
                 
             
       } else if(_side == Side.SELL) {
                 require(_nextNodeSellID[index] != 0,"index not exist");
                 require(_nextNodeSellID[prevIndexRemove]  != 0,"index not exist");
                 require(_nextNodeSellID[prevIndexAdd]  != 0,"index not exist");
+
+                removeOrder(_side,index,prevIndexRemove);
+                createLimitOrder( _side, _token, newAmount, newPriceOrder, prevIndexAdd);
 
                 // transfer update balance Trade and Spot wallet 
 
@@ -314,8 +321,6 @@ contract PairNewOrder is Ownable,Wallet{
                   balancesTrade[msg.sender][_token] -= diff;
                 }
 
-                removeOrder(_side,index,prevIndexRemove);
-                createLimitOrder( _side, _token, newAmount, newPriceOrder, prevIndexAdd);
       }
   
   }
@@ -323,7 +328,7 @@ contract PairNewOrder is Ownable,Wallet{
 
 
 //////////////////////////////////////  Market Order    ////////////////////////////////////// 
-    function createMarketOrder(Side _side, address _token0,uint256 amount) public validtoken(_token0) nonReentrant{
+    function createMarketOrder(Side _side, address _token0,uint256 amount) public validtoken(_token0) {
         uint256 totalFilled = 0;
         if(_side == Side.SELL){
             require(balancesSpot[msg.sender][_token0] >= amount, "not enough balance token for sell");
