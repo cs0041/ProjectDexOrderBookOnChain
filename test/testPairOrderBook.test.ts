@@ -343,15 +343,66 @@ describe('RemoveOrder',async () => {
     
       let prevIndex: BigNumber
       let isBuy = 0
-      let index = 4 // orderBUY  index(1)112 index(2)7 index(3)245 index(4)102 index(5)23
-                    // BUY  112 7 245 102 23  --order-->  245 112 102 23 7
+      let balancesSpotToken1  : number
+      let balancesTradeToken1 : number
+      let balancesSpotToken0  : number
+      let balancesTradeToken0 : number
+      let isSell = 1  // orderSell  index(1)23 index(2)154 index(3)277 index(4)93 index(5)7
+                      // SELL 23 154 277 93 7   --order-->  277 154 93 23 7
 
+      let index:number  // orderBUY  index(1)112 index(2)7 index(3)245 index(4)102 index(5)23
+                        // BUY  112 7 245 102 23  --order-->  245 112 102 23 7
+
+
+      // remove  orderBUY 
+
+      balancesSpotToken1 = (await pairorderbook.balancesSpot(owner.address,token1.address)).toNumber()
+      balancesTradeToken1 = (await pairorderbook.balancesTrade(owner.address,token1.address)).toNumber()
+
+      balancesSpotToken0 = (await pairorderbook.balancesSpot(owner.address,token0.address)).toNumber()
+      balancesTradeToken0 = (await pairorderbook.balancesTrade(owner.address,token0.address)).toNumber()
+
+      index = 4  // index(4) 102
       prevIndex = await pairorderbook._findPrevOrder(isBuy, index) // find index-preindex are contiguous
       await pairorderbook.connect(owner).removeOrder(isBuy, index, prevIndex)
 
                     // when remove  orderBUY   245 112 102 23 7 --remove(index4)-->   245 112 23 7
 
       expect(orderToList(await pairorderbook.getOrderBook(isBuy))).to.deep.equal([245,112,23,7])
+
+       //cheack balancesSpot and balancesTrade
+      expect(await pairorderbook.balancesSpot(owner.address,token1.address)).to.be.equal( balancesSpotToken1  + 102 )
+      expect(await pairorderbook.balancesTrade(owner.address,token1.address)).to.be.equal(balancesTradeToken1 - 102)
+
+      expect(await pairorderbook.balancesSpot(owner.address,token0.address)).to.be.equal(balancesSpotToken0)
+      expect(await pairorderbook.balancesTrade(owner.address,token0.address)).to.be.equal(balancesTradeToken0)
+
+
+
+       // remove  orderSELL
+
+      balancesSpotToken1 = (await pairorderbook.balancesSpot(owner.address,token1.address)).toNumber()
+      balancesTradeToken1 = (await pairorderbook.balancesTrade(owner.address,token1.address)).toNumber()
+
+      balancesSpotToken0 = (await pairorderbook.balancesSpot(owner.address,token0.address)).toNumber()
+      balancesTradeToken0 = (await pairorderbook.balancesTrade(owner.address,token0.address)).toNumber()
+
+      index = 2 // index(2) 154
+      prevIndex = await pairorderbook._findPrevOrder(isSell, index) // find index-preindex are contiguous
+      await pairorderbook.connect(owner).removeOrder(isSell, index, prevIndex)
+
+                    // when remove  orderSELL  277 154 93 23 7 --remove(index4)--> 277 93 23 7 
+
+      expect(orderToList(await pairorderbook.getOrderBook(isSell))).to.deep.equal([277,93,23,7])
+
+      //cheack balancesSpot and balancesTrade
+      expect(await pairorderbook.balancesSpot(owner.address,token1.address)).to.be.equal( balancesSpotToken1)
+      expect(await pairorderbook.balancesTrade(owner.address,token1.address)).to.be.equal(balancesTradeToken1)
+
+      expect(await pairorderbook.balancesSpot(owner.address,token0.address)).to.be.equal(balancesSpotToken0 + 1)
+      expect(await pairorderbook.balancesTrade(owner.address,token0.address)).to.be.equal(balancesTradeToken0 - 1)
+
+     
     })
  
   })
