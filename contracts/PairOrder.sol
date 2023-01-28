@@ -87,8 +87,8 @@ contract PairNewOrder is Ownable,Wallet{
 ////////////////////////////////////// Add Order ////////////////////////////////////// 
 
    function addBuyOrder( Side _side,address _token,uint256 _amount,uint256 _price,  uint256 prevNodeID)  private {  
-    require(_nextNodeBuyID[prevNodeID] != 0);
-    require(_verifyIndex(prevNodeID, _price,_side, _nextNodeBuyID[prevNodeID]));
+    require(_nextNodeBuyID[prevNodeID] != 0,"index not exist");
+    require(_verifyIndex(prevNodeID, _price,_side, _nextNodeBuyID[prevNodeID]),"position in linked list not order");
     payloadOrder[uint8(_side)][nodeBuyID] = Order(
         nodeBuyID,      
         msg.sender,  
@@ -106,8 +106,8 @@ contract PairNewOrder is Ownable,Wallet{
   }
 
    function addSellOrder( Side _side,address _token,uint256 _amount,uint256 _price,  uint256 prevNodeID)  private {  
-    require(_nextNodeSellID[prevNodeID] != 0);
-    require(_verifyIndex(prevNodeID, _price,_side, _nextNodeSellID[prevNodeID]));
+    require(_nextNodeSellID[prevNodeID] != 0,"index not exist");
+    require(_verifyIndex(prevNodeID, _price,_side, _nextNodeSellID[prevNodeID]),"position in linked list not order");
     
     payloadOrder[uint8(_side)][nodeSellID] = Order(
         nodeSellID,    
@@ -192,8 +192,8 @@ contract PairNewOrder is Ownable,Wallet{
 ////////////////////////////////////// Remove Limit Order   ////////////////////////////////////// 
  function removeOrder(Side _side,uint256 index, uint256 prevIndex) public nonReentrant{
      if(_side == Side.BUY) {
-        require(_nextNodeBuyID[index] != 0);
-        require(_isPrev(_side,index, prevIndex));
+        require(_nextNodeBuyID[index] != 0,"index not exist");
+        require(_isPrev(_side,index, prevIndex),"position in linked list not order");
         
         // transfer balance Trade to Spot wallet 
         balancesSpot[msg.sender][payloadOrder[uint8(_side)][index].token] += ( payloadOrder[uint8(_side)][index].amount *  payloadOrder[uint8(_side)][index].price);
@@ -204,8 +204,8 @@ contract PairNewOrder is Ownable,Wallet{
         listBuySize--;
 
       } else if(_side == Side.SELL) {
-        require(_nextNodeSellID[index] != 0);
-        require(_isPrev(_side,index, prevIndex));
+        require(_nextNodeSellID[index] != 0,"index not exist");
+        require(_isPrev(_side,index, prevIndex),"position in linked list not order");
 
         // transfer balance Trade to Spot wallet 
         balancesSpot[msg.sender][payloadOrder[uint8(_side)][index].token]  += payloadOrder[uint8(_side)][index].amount ;
@@ -270,9 +270,9 @@ contract PairNewOrder is Ownable,Wallet{
       address _token =  payloadOrder[side][index].token;
       if(_side == Side.BUY) {
 
-          require(_nextNodeBuyID[index] != 0,"must exit");
-          require(_nextNodeBuyID[prevIndexRemove]  != 0,"must exit");
-          require(_nextNodeBuyID[prevIndexAdd]  != 0,"must exit");
+          require(_nextNodeBuyID[index] != 0,"index not exist");
+          require(_nextNodeBuyID[prevIndexRemove]  != 0,"index not exist");
+          require(_nextNodeBuyID[prevIndexAdd]  != 0,"index not exist");
 
           // transfer update balance Trade and Spot wallet 
 
@@ -296,9 +296,9 @@ contract PairNewOrder is Ownable,Wallet{
                 
             
       } else if(_side == Side.SELL) {
-                require(_nextNodeSellID[index] != 0,"must exit");
-                require(_nextNodeSellID[prevIndexRemove]  != 0,"must exit");
-                require(_nextNodeSellID[prevIndexAdd]  != 0,"must exit");
+                require(_nextNodeSellID[index] != 0,"index not exist");
+                require(_nextNodeSellID[prevIndexRemove]  != 0,"index not exist");
+                require(_nextNodeSellID[prevIndexAdd]  != 0,"index not exist");
 
                 // transfer update balance Trade and Spot wallet 
 
