@@ -5,6 +5,7 @@ import { assert, expect } from 'chai'
 import { SignerWithAddress } from '@nomiclabs/hardhat-ethers/signers'
 import { BigNumber } from 'ethers'
 import {orderToList} from "./helper/OrderToList"
+import { FindSum } from './helper/FindSum'
 
 describe("PairOrderBook",async () => {
   let pairorderbook: PairNewOrder
@@ -92,7 +93,7 @@ describe("PairOrderBook",async () => {
       let prevNodeID:BigNumber
       let isBuy = 0
       let isSell = 1
-      let round =10
+      let round = 10
 
       // Loop createLimitOrder
       let resultOrder = [] 
@@ -107,11 +108,18 @@ describe("PairOrderBook",async () => {
       // Sort numbers in ascending order:
       resultOrder.sort(function (a, b) { return b - a})
 
+      //cheack OrderBook
       expect(orderToList(await pairorderbook.getOrderBook(isBuy))).to.deep.equal(resultOrder)
 
       //empty
       expect(await pairorderbook.getOrderBook(isSell)).to.deep.equal([])
 
+      //cheack balancesSpot and balancesTrade
+      expect(await pairorderbook.balancesSpot(owner.address,token1.address)).to.be.equal( initialSupply - FindSum(resultOrder))
+      expect(await pairorderbook.balancesTrade(owner.address,token1.address)).to.be.equal( FindSum(resultOrder))
+
+      expect(await pairorderbook.balancesSpot(owner.address,token0.address)).to.be.equal( initialSupply )
+      expect(await pairorderbook.balancesTrade(owner.address,token0.address)).to.be.equal(0)
 
      })
 
@@ -137,11 +145,18 @@ describe("PairOrderBook",async () => {
       // Sort numbers in ascending order:
       resultOrder.sort(function (a, b) { return b - a})
 
+      //cheack OrderBook
       expect(orderToList(await pairorderbook.getOrderBook(isSell))).to.deep.equal(resultOrder)
 
       //empty
       expect(await pairorderbook.getOrderBook(isBuy)).to.deep.equal([])
     
+      //cheack balancesSpot and balancesTrade
+      expect(await pairorderbook.balancesSpot(owner.address,token1.address)).to.be.equal( initialSupply )
+      expect(await pairorderbook.balancesTrade(owner.address,token1.address)).to.be.equal(0)
+      
+      expect(await pairorderbook.balancesSpot(owner.address,token0.address)).to.be.equal( initialSupply - 10)
+      expect(await pairorderbook.balancesTrade(owner.address,token0.address)).to.be.equal(10)
 
      })
 
@@ -157,6 +172,7 @@ describe("PairOrderBook",async () => {
         // Loop createLimitOrder
       let resultBuyOrder = [] 
       let resultSellOrder = [] 
+      let amountSell = 0
       for(let i = 0 ; i< round;i++){
 
         // price random  from 1 to 100
@@ -168,6 +184,7 @@ describe("PairOrderBook",async () => {
           prevNodeID = await pairorderbook._findIndex(price, isSell)
           await pairorderbook.connect(owner).createLimitOrder(isSell,token0.address,amount,price,prevNodeID)
           resultSellOrder.push(price)
+          amountSell++
         }else{
           prevNodeID = await pairorderbook._findIndex(price, isBuy)
           await pairorderbook.connect(owner).createLimitOrder(isBuy,token0.address,amount,price,prevNodeID)
@@ -179,9 +196,19 @@ describe("PairOrderBook",async () => {
       resultBuyOrder.sort(function (a, b) { return b - a})
       resultSellOrder.sort(function (a, b) { return b - a})
 
+      //cheack OrderBook
       expect(orderToList(await pairorderbook.getOrderBook(isBuy))).to.deep.equal(resultBuyOrder)
 
       expect(orderToList(await pairorderbook.getOrderBook(isSell))).to.deep.equal(resultSellOrder)
+
+      
+      //cheack balancesSpot and balancesTrade
+      expect(await pairorderbook.balancesSpot(owner.address,token1.address)).to.be.equal( initialSupply - FindSum(resultBuyOrder))
+      expect(await pairorderbook.balancesTrade(owner.address,token1.address)).to.be.equal( FindSum(resultBuyOrder))
+
+      expect(await pairorderbook.balancesSpot(owner.address,token0.address)).to.be.equal( initialSupply - amountSell )
+      expect(await pairorderbook.balancesTrade(owner.address,token0.address)).to.be.equal(amountSell)
+
      })
   })
 
