@@ -105,7 +105,7 @@ describe("PairOrderBook",async () => {
         resultOrder.push(price)
       }
 
-      // Sort numbers in ascending order:
+      // Sort the numbers in descending order:
       resultOrder.sort(function (a, b) { return b - a})
 
       //cheack OrderBook
@@ -142,8 +142,8 @@ describe("PairOrderBook",async () => {
         resultOrder.push(price)
       }
 
-      // Sort numbers in ascending order:
-      resultOrder.sort(function (a, b) { return b - a})
+      // Sort the numbers in ascending order
+      resultOrder.sort(function(a, b){return a-b});
 
       //cheack OrderBook
       expect(orderToList(await pairorderbook.getOrderBook(isSell))).to.deep.equal(resultOrder)
@@ -192,9 +192,11 @@ describe("PairOrderBook",async () => {
         }
       }
 
-      // Sort numbers in ascending order:
+      // Sort the numbers in descending order:
       resultBuyOrder.sort(function (a, b) { return b - a})
-      resultSellOrder.sort(function (a, b) { return b - a})
+
+     // Sort the numbers in ascending order
+      resultSellOrder.sort(function(a, b){return a-b});
 
       //cheack OrderBook
       expect(orderToList(await pairorderbook.getOrderBook(isBuy))).to.deep.equal(resultBuyOrder)
@@ -272,7 +274,7 @@ describe('RemoveOrder',async () => {
       await pairorderbook.connect(owner).createLimitOrder (isBuy,token0.address,amount,price,prevNodeID)
 
       // BUY  112 7 245 102 23  --order-->  245 112 102 23 7
-      // SELL 23 154 277 93 7   --order-->  277 154 93 23 7
+      // SELL 23 154 277 93 7   --order-->   7 23 93 154 277
 
 
   })
@@ -287,7 +289,7 @@ describe('RemoveOrder',async () => {
     it("Should revert when RemoveOrder and index-preindex are not contiguous", async() => {
       let prevIndex: BigNumber
       let isBuy = 0
-      let index = 5 // not exist -> orderBUY  index(1)112 index(2)7 index(3)245 index(4)102 index(5)23
+      let index = 5 // orderBUY  index(1)112 index(2)7 index(3)245 index(4)102 index(5)23
       
 
       prevIndex = await pairorderbook._findPrevOrder(isBuy, index) // find index-preindex are contiguous
@@ -298,7 +300,7 @@ describe('RemoveOrder',async () => {
     it('Should revert when RemoveOrder and not owner  position order', async () => {
       let prevIndex: BigNumber
       let isBuy = 0
-      let index = 5 // not exist -> orderBUY  index(1)112 index(2)7 index(3)245 index(4)102 index(5)23
+      let index = 5 //  orderBUY  index(1)112 index(2)7 index(3)245 index(4)102 index(5)23
 
       prevIndex = await pairorderbook._findPrevOrder(isBuy, index) // find index-preindex are contiguous
       await expect( pairorderbook.connect(addr1).removeOrder(isBuy, index, prevIndex)   ).to.be.revertedWith("you are not owner of this position order")
@@ -307,8 +309,8 @@ describe('RemoveOrder',async () => {
     
       let prevIndex: BigNumber
       let isBuy = 0
-      let index :number // not exist -> orderBUY  index(1)112 index(2)7 index(3)245 index(4)102 index(5)23
-                    // BUY  112 7 245 102 23  --order-->  245 112 102 23 7
+      let index :number // orderBUY  index(1)112 index(2)7 index(3)245 index(4)102 index(5)23
+                       // BUY  112 7 245 102 23  --order-->  245 112 102 23 7
 
       index = 1
       prevIndex = await pairorderbook._findPrevOrder(isBuy, index) // find index-preindex are contiguous
@@ -348,7 +350,7 @@ describe('RemoveOrder',async () => {
       let balancesTradeToken0 : number
       let index: number
       let isSell = 1  // orderSell  index(1)23 index(2)154 index(3)277 index(4)93 index(5)7
-                      // SELL 23 154 277 93 7   --order-->  277 154 93 23 7
+                      // SELL 23 154 277 93 7   --order-->   7 23 93 154 277
 
       let isBuy = 0  // orderBUY  index(1)112 index(2)7 index(3)245 index(4)102 index(5)23
                         // BUY  112 7 245 102 23  --order-->  245 112 102 23 7
@@ -391,9 +393,9 @@ describe('RemoveOrder',async () => {
       prevIndex = await pairorderbook._findPrevOrder(isSell, index) // find index-preindex are contiguous
       await pairorderbook.connect(owner).removeOrder(isSell, index, prevIndex)
 
-                    // when remove  orderSELL  277 154 93 23 7 --remove(index4)--> 277 93 23 7 
+                    // when remove  orderSELL   7 23 93 154 277 --remove(index4)--> 7 23 93 277
 
-      expect(orderToList(await pairorderbook.getOrderBook(isSell))).to.deep.equal([277,93,23,7])
+      expect(orderToList(await pairorderbook.getOrderBook(isSell))).to.deep.equal([7,23,93,277])
 
       //cheack balancesSpot and balancesTrade
       expect(await pairorderbook.balancesSpot(owner.address,token1.address)).to.be.equal( balancesSpotToken1)
@@ -467,7 +469,7 @@ describe('UpdateOrder',async () => {
       await pairorderbook.connect(owner).createLimitOrder (isBuy,token0.address,amount,price,prevNodeID)
 
       // BUY  112 7 245 102 23  --order-->  245 112 102 23 7
-      // SELL 23 154 277 93 7   --order-->  277 154 93 23 7
+      // SELL 23 154 277 93 7   --order-->  7 23 93 154 277
 
 
   })
@@ -537,7 +539,7 @@ describe('UpdateOrder',async () => {
 
       let index: number
       let isSell = 1  // orderSell  index(1)23 index(2)154 index(3)277 index(4)93 index(5)7
-                      // SELL 23 154 277 93 7   --order-->  277 154 93 23 7
+                      // SELL 23 154 277 93 7   --order-->   7 23 93 154 277
 
       let isBuy = 0  // orderBUY  index(1)112 index(2)7 index(3)245 index(4)102 index(5)23
                         // BUY  112 7 245 102 23  --order-->  245 112 102 23 7
@@ -588,9 +590,9 @@ describe('UpdateOrder',async () => {
       prevIndexRemove = await pairorderbook._findPrevOrder(isSell, index)
       await pairorderbook.connect(owner).updateOrder(isSell, index, newPrice,newAmount,prevIndexAdd,prevIndexRemove)
 
-                      // when update  SELL   277 154 93 23 7 --update(index2)-->  277 154 23 7 3
+                      // when update  SELL    7 23 93 154 277  --update(index2)-->  3 7 23 154 277
 
-      expect(orderToList(await pairorderbook.getOrderBook(isSell))).to.deep.equal([277,154,23,7,3])
+      expect(orderToList(await pairorderbook.getOrderBook(isSell))).to.deep.equal([3,7,23,154,277])
 
        //cheack balancesSpot and balancesTrade
       expect(await pairorderbook.balancesSpot(owner.address,token1.address)).to.be.equal( balancesSpotToken1)
@@ -602,5 +604,7 @@ describe('UpdateOrder',async () => {
     })
  
   })
+
+
 
 })
