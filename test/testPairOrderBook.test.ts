@@ -47,11 +47,11 @@ describe("PairOrderBook",async () => {
         let isSell = 1
 
         prevNodeID = await pairorderbook._findIndex(price, isBuy)
-        await expect( pairorderbook.connect(owner).createLimitOrder(isBuy,token0.address,amount,price,prevNodeID)).to.be.revertedWith("amount must > 0")
+        await expect( pairorderbook.connect(owner).createLimitOrder(isBuy,amount,price,prevNodeID)).to.be.revertedWith("amount must > 0")
 
 
         prevNodeID = await pairorderbook._findIndex(price, isSell)
-        await expect( pairorderbook.connect(owner).createLimitOrder(isSell,token0.address,amount,price,prevNodeID)).to.be.revertedWith("amount must > 0")
+        await expect( pairorderbook.connect(owner).createLimitOrder(isSell,amount,price,prevNodeID)).to.be.revertedWith("amount must > 0")
      })
 
      it(' Should revert when Order Buy/Sell and input price = 0 ', async () => {
@@ -61,10 +61,10 @@ describe("PairOrderBook",async () => {
         let isSell = 1
 
         await expect( pairorderbook._findIndex(price, isBuy) ).to.be.revertedWith("price must > 0")
-        await expect( pairorderbook.connect(owner).createLimitOrder(isBuy,token0.address,amount,price,1)).to.be.revertedWith("price must > 0")
+        await expect( pairorderbook.connect(owner).createLimitOrder(isBuy,amount,price,1)).to.be.revertedWith("price must > 0")
 
         await expect( pairorderbook._findIndex(price, isSell) ).to.be.revertedWith("price must > 0")
-        await expect( pairorderbook.connect(owner).createLimitOrder(isSell,token0.address,amount,price,1)).to.be.revertedWith("price must > 0")
+        await expect( pairorderbook.connect(owner).createLimitOrder(isSell,amount,price,1)).to.be.revertedWith("price must > 0")
      })
 
      it(' Should revert when create Order Buy/Sell and balancesSpot not sufficient ', async () => {
@@ -78,12 +78,12 @@ describe("PairOrderBook",async () => {
         amount = 1
         price = 1001
         prevNodeID = await pairorderbook._findIndex(price, isBuy)
-        await expect( pairorderbook.connect(owner).createLimitOrder(isBuy,token0.address,amount,price,prevNodeID)).to.be.revertedWith("not enough balance token for buy")
+        await expect( pairorderbook.connect(owner).createLimitOrder(isBuy,amount,price,prevNodeID)).to.be.revertedWith("not enough balance token for buy")
 
         amount = 1001
         price = 1
         prevNodeID = await pairorderbook._findIndex(price, isSell)
-        await expect( pairorderbook.connect(owner).createLimitOrder(isSell,token0.address,amount,price,prevNodeID)).to.be.revertedWith("not enough balance token for sell")
+        await expect( pairorderbook.connect(owner).createLimitOrder(isSell,amount,price,prevNodeID)).to.be.revertedWith("not enough balance token for sell")
      })
 
      it(' Should order when create 10 Order buy', async  () => {
@@ -101,7 +101,7 @@ describe("PairOrderBook",async () => {
         // price random  from 1 to 100
         price = Math.floor(Math.random() * 100) + 1
         prevNodeID = await pairorderbook._findIndex(price, isBuy)
-        await pairorderbook.connect(owner).createLimitOrder(isBuy,token0.address,amount,price,prevNodeID)
+        await pairorderbook.connect(owner).createLimitOrder(isBuy,amount,price,prevNodeID)
         resultOrder.push(price)
       }
 
@@ -138,7 +138,7 @@ describe("PairOrderBook",async () => {
         // price random  from 1 to 100
         price = Math.floor(Math.random() * 100) + 1
         prevNodeID = await pairorderbook._findIndex(price, isSell)
-        await pairorderbook.connect(owner).createLimitOrder(isSell,token0.address,amount,price,prevNodeID)
+        await pairorderbook.connect(owner).createLimitOrder(isSell,amount,price,prevNodeID)
         resultOrder.push(price)
       }
 
@@ -182,12 +182,12 @@ describe("PairOrderBook",async () => {
         let randomBuyorSell = Math.random() >= 0.5 ? true : false // true -> sell false -> buy
         if(randomBuyorSell) {
           prevNodeID = await pairorderbook._findIndex(price, isSell)
-          await pairorderbook.connect(owner).createLimitOrder(isSell,token0.address,amount,price,prevNodeID)
+          await pairorderbook.connect(owner).createLimitOrder(isSell,amount,price,prevNodeID)
           resultSellOrder.push(price)
           amountSell++
         }else{
           prevNodeID = await pairorderbook._findIndex(price, isBuy)
-          await pairorderbook.connect(owner).createLimitOrder(isBuy,token0.address,amount,price,prevNodeID)
+          await pairorderbook.connect(owner).createLimitOrder(isBuy,amount,price,prevNodeID)
           resultBuyOrder.push(price)
         }
       }
@@ -225,53 +225,53 @@ describe('RemoveOrder',async () => {
       // order 1  -> price 112 buy
       price = 112
       prevNodeID = await pairorderbook._findIndex(price, isBuy)
-      await pairorderbook.connect(owner).createLimitOrder(isBuy,token0.address,amount,price,prevNodeID)
+      await pairorderbook.connect(owner).createLimitOrder(isBuy,amount,price,prevNodeID)
 
       // order 2  -> price 23 sell
       price = 23
       prevNodeID = await pairorderbook._findIndex(price, isSell)
-      await pairorderbook.connect(owner).createLimitOrder (isSell,token0.address,amount,price,prevNodeID)
+      await pairorderbook.connect(owner).createLimitOrder (isSell,amount,price,prevNodeID)
     
 
       // order 3  -> price 7 buy
       price = 7
       prevNodeID = await pairorderbook._findIndex(price, isBuy)
-      await pairorderbook.connect(owner).createLimitOrder (isBuy,token0.address,amount,price,prevNodeID)
+      await pairorderbook.connect(owner).createLimitOrder (isBuy,amount,price,prevNodeID)
 
       // order 4  -> price 245 buy
       price = 245
       prevNodeID = await pairorderbook._findIndex(price, isBuy)
-      await pairorderbook.connect(owner).createLimitOrder (isBuy,token0.address,amount,price,prevNodeID)
+      await pairorderbook.connect(owner).createLimitOrder (isBuy,amount,price,prevNodeID)
 
       // order 5  -> price 154 sell
       price = 154
       prevNodeID = await pairorderbook._findIndex(price, isSell)
-      await pairorderbook.connect(owner).createLimitOrder (isSell,token0.address,amount,price,prevNodeID)
+      await pairorderbook.connect(owner).createLimitOrder (isSell,amount,price,prevNodeID)
 
       // order 6  -> price 477 sell
       price = 277
       prevNodeID = await pairorderbook._findIndex(price, isSell)
-      await pairorderbook.connect(owner).createLimitOrder (isSell,token0.address,amount,price,prevNodeID)
+      await pairorderbook.connect(owner).createLimitOrder (isSell,amount,price,prevNodeID)
 
       // order 7  -> price 93 sell
       price = 93
       prevNodeID = await pairorderbook._findIndex(price, isSell)
-      await pairorderbook.connect(owner).createLimitOrder (isSell,token0.address,amount,price,prevNodeID)
+      await pairorderbook.connect(owner).createLimitOrder (isSell,amount,price,prevNodeID)
 
       // order 8  -> price 102 buy
       price = 102
       prevNodeID = await pairorderbook._findIndex(price, isBuy)
-      await pairorderbook.connect(owner).createLimitOrder (isBuy,token0.address,amount,price,prevNodeID)
+      await pairorderbook.connect(owner).createLimitOrder (isBuy,amount,price,prevNodeID)
 
       // order 9  -> price 7 sell
       price = 7
       prevNodeID = await pairorderbook._findIndex(price, isSell)
-      await pairorderbook.connect(owner).createLimitOrder (isSell,token0.address,amount,price,prevNodeID)
+      await pairorderbook.connect(owner).createLimitOrder (isSell,amount,price,prevNodeID)
 
       // order 10  -> price 23 buy
       price = 23
       prevNodeID = await pairorderbook._findIndex(price, isBuy)
-      await pairorderbook.connect(owner).createLimitOrder (isBuy,token0.address,amount,price,prevNodeID)
+      await pairorderbook.connect(owner).createLimitOrder (isBuy,amount,price,prevNodeID)
 
       // BUY  112 7 245 102 23  --order-->  245 112 102 23 7
       // SELL 23 154 277 93 7   --order-->   7 23 93 154 277
@@ -420,53 +420,53 @@ describe('UpdateOrder',async () => {
       // order 1  -> price 112 buy
       price = 112
       prevNodeID = await pairorderbook._findIndex(price, isBuy)
-      await pairorderbook.connect(owner).createLimitOrder(isBuy,token0.address,amount,price,prevNodeID)
+      await pairorderbook.connect(owner).createLimitOrder(isBuy,amount,price,prevNodeID)
 
       // order 2  -> price 23 sell
       price = 23
       prevNodeID = await pairorderbook._findIndex(price, isSell)
-      await pairorderbook.connect(owner).createLimitOrder (isSell,token0.address,amount,price,prevNodeID)
+      await pairorderbook.connect(owner).createLimitOrder (isSell,amount,price,prevNodeID)
     
 
       // order 3  -> price 7 buy
       price = 7
       prevNodeID = await pairorderbook._findIndex(price, isBuy)
-      await pairorderbook.connect(owner).createLimitOrder (isBuy,token0.address,amount,price,prevNodeID)
+      await pairorderbook.connect(owner).createLimitOrder (isBuy,amount,price,prevNodeID)
 
       // order 4  -> price 245 buy
       price = 245
       prevNodeID = await pairorderbook._findIndex(price, isBuy)
-      await pairorderbook.connect(owner).createLimitOrder (isBuy,token0.address,amount,price,prevNodeID)
+      await pairorderbook.connect(owner).createLimitOrder (isBuy,amount,price,prevNodeID)
 
       // order 5  -> price 154 sell
       price = 154
       prevNodeID = await pairorderbook._findIndex(price, isSell)
-      await pairorderbook.connect(owner).createLimitOrder (isSell,token0.address,amount,price,prevNodeID)
+      await pairorderbook.connect(owner).createLimitOrder (isSell,amount,price,prevNodeID)
 
       // order 6  -> price 477 sell
       price = 277
       prevNodeID = await pairorderbook._findIndex(price, isSell)
-      await pairorderbook.connect(owner).createLimitOrder (isSell,token0.address,amount,price,prevNodeID)
+      await pairorderbook.connect(owner).createLimitOrder (isSell,amount,price,prevNodeID)
 
       // order 7  -> price 93 sell
       price = 93
       prevNodeID = await pairorderbook._findIndex(price, isSell)
-      await pairorderbook.connect(owner).createLimitOrder (isSell,token0.address,amount,price,prevNodeID)
+      await pairorderbook.connect(owner).createLimitOrder (isSell,amount,price,prevNodeID)
 
       // order 8  -> price 102 buy
       price = 102
       prevNodeID = await pairorderbook._findIndex(price, isBuy)
-      await pairorderbook.connect(owner).createLimitOrder (isBuy,token0.address,amount,price,prevNodeID)
+      await pairorderbook.connect(owner).createLimitOrder (isBuy,amount,price,prevNodeID)
 
       // order 9  -> price 7 sell
       price = 7
       prevNodeID = await pairorderbook._findIndex(price, isSell)
-      await pairorderbook.connect(owner).createLimitOrder (isSell,token0.address,amount,price,prevNodeID)
+      await pairorderbook.connect(owner).createLimitOrder (isSell,amount,price,prevNodeID)
 
       // order 10  -> price 23 buy
       price = 23
       prevNodeID = await pairorderbook._findIndex(price, isBuy)
-      await pairorderbook.connect(owner).createLimitOrder (isBuy,token0.address,amount,price,prevNodeID)
+      await pairorderbook.connect(owner).createLimitOrder (isBuy,amount,price,prevNodeID)
 
       // BUY  112 7 245 102 23  --order-->  245 112 102 23 7
       // SELL 23 154 277 93 7   --order-->  7 23 93 154 277
