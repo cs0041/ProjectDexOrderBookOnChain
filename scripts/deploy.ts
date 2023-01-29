@@ -5,11 +5,11 @@ import {PairNewOrder,PairNewOrder__factory,Token0,Token0__factory,Token1,Token1_
 // npx hardhat node
 // npx hardhat run scripts/deploy.ts --network localhost
 
-// wei   ->ethers.utils.parseEther
-// ether -> ethers.utils.formatEther
+// toWei   ->ethers.utils.parseEther
+// toEther -> ethers.utils.formatEther
 async function main() {
   
-  const initialSupply = ethers.utils.parseEther('100000')
+  const initialSupply = 1000000000
 
   const [owner,signer1] = await ethers.getSigners();
 
@@ -38,29 +38,52 @@ async function main() {
   await pairorderbook.connect(owner).deposit(initialSupply,token0.address)
   await pairorderbook.connect(owner).deposit(initialSupply,token1.address)
 
+
+
+
   // createLimitOrder
 
-  let price: BigNumber
-  let amount: BigNumber
+  let price: number
+  let amount: number
   let prevNodeID:BigNumber
   let isBuy = 0
   let isSell = 1
   let round = 10
-  // OrderBuy -> buy 5 token0 at price 10
-  price = ethers.utils.parseEther('10')
-  amount = ethers.utils.parseEther('5')
+
+  price = 22500
+  amount = 5
   prevNodeID = await pairorderbook._findIndex(price, isBuy)
   await pairorderbook.connect(owner).createLimitOrder(isBuy,amount,price,prevNodeID)
-  // OrderBuy -> buy 20 token0 at price 15
-  price = ethers.utils.parseEther('15')
-  amount = ethers.utils.parseEther('20')
+
+  price = 21000
+  amount = 20
   prevNodeID = await pairorderbook._findIndex(price, isBuy)
   await pairorderbook.connect(owner).createLimitOrder(isBuy,amount,price,prevNodeID)
-  // OrderBuy -> buy 15 token0 at price 30
-  price = ethers.utils.parseEther('30')
-  amount = ethers.utils.parseEther('15')
+
+  price = 19000
+  amount = 15
   prevNodeID = await pairorderbook._findIndex(price, isBuy)
   await pairorderbook.connect(owner).createLimitOrder(isBuy,amount,price,prevNodeID)
+  
+  
+
+  price = 24500
+  amount = 12
+  prevNodeID = await pairorderbook._findIndex(price, isSell)
+  await pairorderbook.connect(owner).createLimitOrder(isSell,amount,price,prevNodeID)
+
+  price = 23000
+  amount = 9
+  prevNodeID = await pairorderbook._findIndex(price, isSell)
+  await pairorderbook.connect(owner).createLimitOrder(isSell,amount,price,prevNodeID)
+ 
+  price = 25000
+  amount = 3
+  prevNodeID = await pairorderbook._findIndex(price, isSell)
+  await pairorderbook.connect(owner).createLimitOrder(isSell,amount,price,prevNodeID)
+
+
+
 
 
   // for (let i = 0; i < round; i++) {
