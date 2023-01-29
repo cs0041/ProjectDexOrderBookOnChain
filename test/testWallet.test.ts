@@ -1,8 +1,10 @@
 import {
   Wallet,
   Wallet__factory,
-  TestToken,
-  TestToken__factory,
+  Token0,
+  Token0__factory,
+  Token1,
+  Token1__factory
 } from '../typechain-types'
 // @ts-ignore
 import { ethers } from 'hardhat'
@@ -12,8 +14,8 @@ import { BigNumber } from 'ethers'
 import { AddressZero } from '@ethersproject/constants'
 describe('Wallet', async () => {
   let wallet: Wallet
-  let token0: TestToken
-  let token1: TestToken
+  let token0: Token0
+  let token1: Token1
   let owner: SignerWithAddress
   let addr1: SignerWithAddress
   const initialSupply = 1000 // initialSupply Token
@@ -22,15 +24,15 @@ describe('Wallet', async () => {
     [owner, addr1] = await ethers.getSigners()
 
     const TOKEN0 = (await ethers.getContractFactory(
-      'TestToken',
+      'Token0',
       owner
-    )) as TestToken__factory
+    )) as Token0__factory
     token0 = await TOKEN0.deploy(initialSupply)
 
     const TOKEN1 = (await ethers.getContractFactory(
-      'TestToken',
+      'Token1',
       owner
-    )) as TestToken__factory
+    )) as Token1__factory
     token1 = await TOKEN1.deploy(initialSupply)
 
     const Wallet = (await ethers.getContractFactory(

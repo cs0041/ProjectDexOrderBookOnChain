@@ -1,4 +1,4 @@
-import {PairNewOrder,PairNewOrder__factory,TestToken,TestToken__factory} from '../typechain-types'
+import {PairNewOrder,PairNewOrder__factory,Token0,Token0__factory,Token1,Token1__factory} from '../typechain-types'
 // @ts-ignore
 import { ethers } from 'hardhat'
 import { assert, expect } from 'chai'
@@ -9,8 +9,8 @@ import { FindSum } from './helper/FindSum'
 
 describe("PairOrderBook",async () => {
   let pairorderbook: PairNewOrder
-  let token0: TestToken
-  let token1: TestToken
+  let token0: Token0
+  let token1: Token1
   let owner: SignerWithAddress
   let addr1: SignerWithAddress
   const initialSupply = 1000 // initialSupply Token
@@ -18,10 +18,10 @@ describe("PairOrderBook",async () => {
   beforeEach(async () => {
     [owner, addr1] = await ethers.getSigners()
 
-    const TOKEN0 = (await ethers.getContractFactory('TestToken', owner )) as TestToken__factory
+    const TOKEN0 = (await ethers.getContractFactory('Token0', owner )) as Token0__factory
     token0 = await TOKEN0.deploy(initialSupply)
     
-    const TOKEN1 = (await ethers.getContractFactory( 'TestToken',  owner )) as TestToken__factory
+    const TOKEN1 = (await ethers.getContractFactory( 'Token1',  owner )) as Token1__factory
     token1 = await TOKEN1.deploy(initialSupply)
 
     const PairOrderBook = (await ethers.getContractFactory( 'PairNewOrder', owner)) as PairNewOrder__factory
