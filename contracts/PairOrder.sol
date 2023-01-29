@@ -224,6 +224,29 @@ contract PairNewOrder is Ownable,Wallet{
 
  }
 
+ function removeOrderNoUpdateBalances(Side _side,uint256 index, uint256 prevIndex) private {
+
+     if(_side == Side.BUY) {
+        require(_nextNodeBuyID[index] != 0,"index not exist");
+        require(_isPrev(_side,index, prevIndex),"index is not pre");
+        
+
+        _nextNodeBuyID[prevIndex] = _nextNodeBuyID[index];
+        _nextNodeBuyID[index] = 0;
+        listBuySize--;
+
+      } else if(_side == Side.SELL) {
+        require(_nextNodeSellID[index] != 0,"index not exist");
+        require(_isPrev(_side,index, prevIndex),"index is not pre");
+
+        _nextNodeSellID[prevIndex] = _nextNodeSellID[index];
+        _nextNodeSellID[index] = 0;
+        listSellSize--;
+
+      }
+
+ }
+
  ////////////////////////////////////// Check isPrev index ////////////////////////////////////// 
 
   function _isPrev(Side _side,uint256 currentNodeID, uint256 prevNodeID) private view returns(bool) {
@@ -334,11 +357,13 @@ contract PairNewOrder is Ownable,Wallet{
                 // sell
                 balancesSpot[msg.sender][token0] -= filled;
                 balancesSpot[payloadOrder[0][currentNodeID].trader][token0] += filled;
-           
-
+                
+          
                 // recive after sell
                 balancesSpot[msg.sender][token1] += cost;
-                balancesSpot[payloadOrder[0][currentNodeID].trader][token1] -= cost;
+                balancesTrade[payloadOrder[0][currentNodeID].trader][token1] -= cost;
+
+
 
 
 
@@ -352,7 +377,7 @@ contract PairNewOrder is Ownable,Wallet{
         //Remove 100% filled orders from the orderbook
         while(listBuySize > 0 && payloadOrder[0][_nextNodeBuyID[GUARDHEAD]].filled == payloadOrder[0][_nextNodeBuyID[GUARDHEAD]].amount ){
         //Remove the top element in the orders
-             removeOrder(_side, _nextNodeBuyID[GUARDHEAD],0);
+             removeOrderNoUpdateBalances(Side.BUY, _nextNodeBuyID[GUARDHEAD],0);
         }
 
       // Market Buy token0
@@ -377,7 +402,7 @@ contract PairNewOrder is Ownable,Wallet{
 
                 totalFilled = totalFilled + filled;
                 payloadOrder[1][currentNodeID].filled += (filled/payloadOrder[1][currentNodeID].price);
-                uint256 cost = (filled/payloadOrder[1][currentNodeID].price);
+                uint256 cost = (filled/payloadOrder[1][currentNodeID].price); // amount token0
 
                 //msg.sender is the seller
 
@@ -388,7 +413,9 @@ contract PairNewOrder is Ownable,Wallet{
 
                 // recive after sell
                 balancesSpot[msg.sender][token0] += cost;
-                balancesSpot[payloadOrder[1][currentNodeID].trader][token0] -= cost;
+                balancesTrade[payloadOrder[1][currentNodeID].trader][token0] -= cost;
+
+
 
 
                 currentNodeID = _nextNodeSellID[currentNodeID];
@@ -399,9 +426,9 @@ contract PairNewOrder is Ownable,Wallet{
     
 
         //Remove 100% filled orders from the orderbook
-        while(listSellSize > 0 && payloadOrder[1][_nextNodeBuyID[GUARDHEAD]].filled == payloadOrder[1][_nextNodeBuyID[GUARDHEAD]].amount ){
+        while(listSellSize > 0 && payloadOrder[1][_nextNodeSellID[GUARDHEAD]].filled == payloadOrder[1][_nextNodeSellID[GUARDHEAD]].amount ){
         //Remove the top element in the orders
-             removeOrder(_side, _nextNodeBuyID[GUARDHEAD],0);
+           removeOrderNoUpdateBalances(Side.SELL, _nextNodeSellID[GUARDHEAD],0);
         }
 
       }
