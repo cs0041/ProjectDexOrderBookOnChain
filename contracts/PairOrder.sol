@@ -11,8 +11,8 @@ contract PairNewOrder is Ownable,Wallet{
         SELL //  1 Sell
     }
 
-    // address  token0; // BUY ETH
-    // address  token1; // SELL BUSD
+    // address  token0; // Main Token
+    // address  token1; // Ssecondary Token
 
     struct Order {
         uint256 id;
@@ -136,13 +136,16 @@ contract PairNewOrder is Ownable,Wallet{
 
 ////////////////////////////////////// Check pre_price > new_price > next_price ////////////////////////////////////// 
 
-  function _verifyIndex(uint256 prevNodeID, uint256 _price, Side _side, uint256 nextNodeID) 
-    internal
-    view
-    returns(bool)
-  {
-    return (prevNodeID == GUARDHEAD || payloadOrder[uint8(_side)][prevNodeID].price >= _price) && 
-           (nextNodeID == GUARDTAIL || _price > payloadOrder[uint8(_side)][nextNodeID].price);
+  function _verifyIndex(uint256 prevNodeID, uint256 _price, Side _side, uint256 nextNodeID)  internal view returns(bool) {
+    uint8 side = uint8(_side);
+     if(_side == Side.BUY){
+        return (prevNodeID == GUARDHEAD || payloadOrder[side][prevNodeID].price >= _price) && 
+           (nextNodeID == GUARDTAIL || _price > payloadOrder[side][nextNodeID].price);
+     } else if(_side == Side.SELL) {
+         return (prevNodeID == GUARDHEAD || payloadOrder[side][prevNodeID].price <= _price) && 
+           (nextNodeID == GUARDTAIL || _price < payloadOrder[side][nextNodeID].price);
+     }
+     revert("_verifyIndex revert");
   }
 
 //////////////////////////////////////           For offchain use           ////////////////////////////////////// 
