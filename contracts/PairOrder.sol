@@ -26,13 +26,13 @@ contract PairNewOrder is Ownable,Wallet{
 
   mapping(uint8 => mapping (uint256 =>  Order))  payloadOrder;    //  Side (buy or sell) -> nodeID  -> Order
 
-  // node OrderBUY
+  // node OrderBUY -> descending price token0 for buy
   mapping(uint256 => uint256) _nextNodeBuyID; 
   uint256  listBuySize;
   uint256  nodeBuyID = 1;
   
 
-  // node OrderSell
+  // node OrderSell -> ascending price token0 for sell
   mapping(uint256 => uint256) _nextNodeSellID; 
   uint256  listSellSize;
   uint256  nodeSellID = 1;
@@ -50,27 +50,20 @@ contract PairNewOrder is Ownable,Wallet{
 
 ////////////////////////////////////// CreateLimitOrder ////////////////////////////////////// 
 
- function createLimitOrder(Side side,address _token,uint256 amount,uint256 price,uint256 prevNodeID) validtoken(_token)  public {
+ function createLimitOrder(Side side,uint256 amount,uint256 price,uint256 prevNodeID)  public {
       require(price > 0,"price must > 0");
       require(amount > 0,"amount must > 0");
-      // BUY  _token0
-      // SELL _token0
-       bool isToken0 = _token == token0;
-       address tokenBuy;
-       address tokenSell;
-
+      // BUY  token0 -> create selltoken1 with (amount*price) to buy token0
+      // SELL token0 -> create selltoken0
 
         if(side == Side.BUY) {  
-            ( tokenBuy,  tokenSell) =  isToken0 ? 
-            (token0, token1) : (token1, token0);
-            //buy token0 sell token1
-            addBuyOrder( side, tokenSell, amount, price,  prevNodeID);
+            // buy token0  -> sell token1 
+            // amountToken0 priceToken0
+            addBuyOrder( amount, price,  prevNodeID);
         }
         else if(side == Side.SELL) {
-            ( tokenBuy,  tokenSell) =  isToken0 ? 
-            (token1, token0) : (token0, token1);
-            //buy token1 sell token0
-            addSellOrder( side, tokenSell, amount, price,  prevNodeID);
+            // sell token0 -> buy token1
+            addSellOrder( amount, price,  prevNodeID);
         }
 
 
@@ -80,21 +73,21 @@ contract PairNewOrder is Ownable,Wallet{
 
 ////////////////////////////////////// Add Order ////////////////////////////////////// 
 
-   function addBuyOrder( Side _side,address _token,uint256 _amount,uint256 _price,  uint256 prevNodeID)  private {  
+   function addBuyOrder(uint256 _amount,uint256 _price,  uint256 prevNodeID)  private {  
     //BUY token0 amount - price
-    require(balancesSpot[msg.sender][_token] >= _amount * _price,"not enough balance token for buy");
+    require(balancesSpot[msg.sender][token1] >= _amount * _price,"not enough balance token for buy");
     require(_nextNodeBuyID[prevNodeID] != 0,"index not exist");
-    require(_verifyIndex(prevNodeID, _price,_side, _nextNodeBuyID[prevNodeID]),"position in linked list not order");
+    require(_verifyIndex(prevNodeID, _price,Side.BUY, _nextNodeBuyID[prevNodeID]),"position in linked list not order");
 
     // transfer balance Spot to Trade wallet 
-    balancesSpot[msg.sender][_token] -= (_amount * _price);
-    balancesTrade[msg.sender][_token] += (_amount * _price);
+    balancesSpot[msg.sender][token1] -= (_amount * _price);
+    balancesTrade[msg.sender][token1] += (_amount * _price);
 
-    payloadOrder[uint8(_side)][nodeBuyID] = Order(
+    payloadOrder[0][nodeBuyID] = Order(
         nodeBuyID,      
         msg.sender,  
-        _side,      
-        _token,      
+        Side.BUY,      
+        token1,      
         _amount,   
         _price,    
         0          
@@ -106,21 +99,21 @@ contract PairNewOrder is Ownable,Wallet{
     nodeBuyID++;
   }
 
-   function addSellOrder( Side _side,address _token,uint256 _amount,uint256 _price,  uint256 prevNodeID)  private {
+   function addSellOrder( uint256 _amount,uint256 _price,  uint256 prevNodeID)  private {
     //SELL token0 amount - price  
-    require(balancesSpot[msg.sender][_token] >= _amount,"not enough balance token for sell");
+    require(balancesSpot[msg.sender][token0] >= _amount,"not enough balance token for sell");
     require(_nextNodeSellID[prevNodeID] != 0,"index not exist");
-    require(_verifyIndex(prevNodeID, _price,_side, _nextNodeSellID[prevNodeID]),"position in linked list not order");
+    require(_verifyIndex(prevNodeID, _price,Side.SELL, _nextNodeSellID[prevNodeID]),"position in linked list not order");
 
     // transfer balance Spot to Trade wallet 
-    balancesSpot[msg.sender][_token] -= _amount;
-    balancesTrade[msg.sender][_token] += _amount;
+    balancesSpot[msg.sender][token0] -= _amount;
+    balancesTrade[msg.sender][token0] += _amount;
 
-    payloadOrder[uint8(_side)][nodeSellID] = Order(
+    payloadOrder[1][nodeSellID] = Order(
         nodeSellID,    
         msg.sender,  
-        _side,       
-        _token,     
+        Side.SELL,       
+        token0,     
         _amount,    
         _price,    
         0           
@@ -279,7 +272,6 @@ contract PairNewOrder is Ownable,Wallet{
       uint8 side = uint8(_side);
       require(payloadOrder[side][index].trader == msg.sender,"you are not owner of this position order");
     
-      address _token =  payloadOrder[side][index].token;
 
       if(_side == Side.BUY) {
 
@@ -289,7 +281,7 @@ contract PairNewOrder is Ownable,Wallet{
 
           // removeOrder and createLimitOrder
           removeOrder(_side,index,prevIndexRemove);
-          addBuyOrder( _side, _token, newAmount, newPriceOrder,  prevIndexAdd);
+          addBuyOrder( newAmount, newPriceOrder,  prevIndexAdd);
 
    
             
@@ -301,14 +293,14 @@ contract PairNewOrder is Ownable,Wallet{
 
           // removeOrder and createLimitOrder
           removeOrder(_side,index,prevIndexRemove);
-          addSellOrder( _side, _token, newAmount, newPriceOrder,  prevIndexAdd);
+          addSellOrder( newAmount, newPriceOrder,  prevIndexAdd);
       }
   }
 
 
 
 //////////////////////////////////////  Market Order    ////////////////////////////////////// 
-    function createMarketOrder(Side _side, address _token0,uint256 amount) public validtoken(_token0) {
+    function createMarketOrder(Side _side,uint256 amount) public {
         uint256 totalFilled = 0;
         // Market Sell token0
         // sell token0 buy token1
@@ -324,7 +316,7 @@ contract PairNewOrder is Ownable,Wallet{
             for (uint256 i = 0; i < listBuySize && totalFilled < amount; i++) {
 
                 uint256 leftToFill = amount - totalFilled;
-                uint256 availableToFill = payloadOrder[uint8(_side)][currentNodeID].amount -  payloadOrder[uint8(_side)][currentNodeID].filled;
+                uint256 availableToFill = payloadOrder[0][currentNodeID].amount -  payloadOrder[0][currentNodeID].filled;
                 uint256 filled = 0;
                 if(availableToFill > leftToFill){
                     filled = leftToFill; //Full Fill 
@@ -334,19 +326,19 @@ contract PairNewOrder is Ownable,Wallet{
                 }
 
                 totalFilled = totalFilled + filled;
-                payloadOrder[uint8(_side)][currentNodeID].filled += filled;
-                uint256 cost = filled * payloadOrder[uint8(_side)][currentNodeID].price;
+                payloadOrder[0][currentNodeID].filled += filled;
+                uint256 cost = filled * payloadOrder[0][currentNodeID].price;
 
                 //msg.sender is the seller
 
                 // sell
-                balancesSpot[msg.sender][_token0] -= filled;
-                balancesSpot[payloadOrder[uint8(_side)][currentNodeID].trader][_token0] += filled;
+                balancesSpot[msg.sender][token0] -= filled;
+                balancesSpot[payloadOrder[0][currentNodeID].trader][token0] += filled;
            
 
                 // recive after sell
                 balancesSpot[msg.sender][token1] += cost;
-                balancesSpot[payloadOrder[uint8(_side)][currentNodeID].trader][token1] -= cost;
+                balancesSpot[payloadOrder[0][currentNodeID].trader][token1] -= cost;
 
 
 
@@ -357,9 +349,8 @@ contract PairNewOrder is Ownable,Wallet{
      
 
     
-
         //Remove 100% filled orders from the orderbook
-        while(listBuySize > 0 && payloadOrder[uint8(_side)][currentNodeID].filled == payloadOrder[uint8(_side)][currentNodeID].amount ){
+        while(listBuySize > 0 && payloadOrder[0][_nextNodeBuyID[GUARDHEAD]].filled == payloadOrder[0][_nextNodeBuyID[GUARDHEAD]].amount ){
         //Remove the top element in the orders
              removeOrder(_side, _nextNodeBuyID[GUARDHEAD],0);
         }
@@ -375,31 +366,29 @@ contract PairNewOrder is Ownable,Wallet{
             uint256 currentNodeID = _nextNodeSellID[GUARDHEAD];
             for (uint256 i = 0; i < listSellSize && totalFilled < amount; i++) {
                 uint256 leftToFill = amount - totalFilled;
-                uint256 availableToFill = (payloadOrder[uint8(_side)][currentNodeID].amount* payloadOrder[uint8(_side)][currentNodeID].price) -  payloadOrder[uint8(_side)][currentNodeID].filled;
+                uint256 availableToFill = payloadOrder[1][currentNodeID].amount -  payloadOrder[1][currentNodeID].filled;
                 uint256 filled = 0;
-                if(availableToFill > leftToFill){
-                    filled = leftToFill; //Fill the entire market order
+                if( (availableToFill*payloadOrder[1][currentNodeID].price) > leftToFill){
+                    filled = leftToFill; //Full Fill 
                 }
                 else{ 
-                    filled = availableToFill; //Fill as much as is available in order[i]
+                    filled = (availableToFill*payloadOrder[1][currentNodeID].price); // Fill as much as can Fill
                 }
 
                 totalFilled = totalFilled + filled;
-                payloadOrder[uint8(_side)][currentNodeID].filled += filled;
-                uint256 cost = filled/payloadOrder[uint8(_side)][currentNodeID].price;
+                payloadOrder[1][currentNodeID].filled += (filled/payloadOrder[1][currentNodeID].price);
+                uint256 cost = (filled/payloadOrder[1][currentNodeID].price);
 
                 //msg.sender is the seller
 
                 // sell
                 balancesSpot[msg.sender][token1] -= filled;
-                balancesSpot[payloadOrder[uint8(_side)][currentNodeID].trader][token1] += filled;
+                balancesSpot[payloadOrder[1][currentNodeID].trader][token1] += filled;
            
 
                 // recive after sell
                 balancesSpot[msg.sender][token0] += cost;
-                balancesSpot[payloadOrder[uint8(_side)][currentNodeID].trader][token0] -= cost;
-
-
+                balancesSpot[payloadOrder[1][currentNodeID].trader][token0] -= cost;
 
 
                 currentNodeID = _nextNodeSellID[currentNodeID];
@@ -410,7 +399,7 @@ contract PairNewOrder is Ownable,Wallet{
     
 
         //Remove 100% filled orders from the orderbook
-        while(listSellSize > 0 && payloadOrder[uint8(_side)][currentNodeID].filled == ((payloadOrder[uint8(_side)][currentNodeID].amount* payloadOrder[uint8(_side)][currentNodeID].price)) ){
+        while(listSellSize > 0 && payloadOrder[1][_nextNodeBuyID[GUARDHEAD]].filled == payloadOrder[1][_nextNodeBuyID[GUARDHEAD]].amount ){
         //Remove the top element in the orders
              removeOrder(_side, _nextNodeBuyID[GUARDHEAD],0);
         }
