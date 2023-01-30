@@ -8,20 +8,21 @@ import {PairNewOrder,PairNewOrder__factory,Token0,Token0__factory,Token1,Token1_
 // toWei   ->ethers.utils.parseEther
 // toEther -> ethers.utils.formatEther
 async function main() {
-  
-  const initialSupply = 1000000000
 
-  const [owner,signer1] = await ethers.getSigners();
+  const initialSupplyToken0 = 1000
+  const initialSupplyToken1 = 10000000
+  const [owner,addr1,addr2] = await ethers.getSigners();
+  console.log(addr2.address)
 
   // deploy token0
   const TOKEN0 = (await ethers.getContractFactory('Token0', owner )) as Token0__factory
-  const token0 = await TOKEN0.deploy(initialSupply)
+  const token0 = await TOKEN0.deploy(initialSupplyToken0)
   await token0.deployed()
   console.log(`token 0 deploy at address ${token0.address}`)
     
   // deploy token1
   const TOKEN1 = (await ethers.getContractFactory( 'Token1',  owner )) as Token1__factory
-  const token1 = await TOKEN1.deploy(initialSupply)
+  const token1 = await TOKEN1.deploy(initialSupplyToken1)
   await token1.deployed()
   console.log(`token 1 deploy at address ${token1.address}`)
 
@@ -31,12 +32,23 @@ async function main() {
   console.log(`PairOrderBook deploy at address ${pairorderbook.address}`)
 
   // approve 
-  await token0.connect(owner).approve(pairorderbook.address,initialSupply)
-  await token1.connect(owner).approve(pairorderbook.address,initialSupply)
+  await token0.connect(owner).approve(pairorderbook.address,ethers.constants.MaxUint256)
+  await token1.connect(owner).approve(pairorderbook.address,ethers.constants.MaxUint256)
+  await token0.connect(addr2).approve(pairorderbook.address,ethers.constants.MaxUint256)
+  await token1.connect(addr2).approve(pairorderbook.address,ethers.constants.MaxUint256)
 
-  // deposit token 
-  await pairorderbook.connect(owner).deposit(initialSupply,token0.address)
-  await pairorderbook.connect(owner).deposit(initialSupply,token1.address)
+  // owner deposit token 
+  await pairorderbook.connect(owner).deposit(initialSupplyToken0-100,token0.address)
+  await pairorderbook.connect(owner).deposit(initialSupplyToken1-2000000,token1.address)
+
+
+  // transfer token to addr2
+  await token0.connect(owner).transfer(addr2.address,100)
+  await token1.connect(owner).transfer(addr2.address, 2000000)
+
+  // addr2 deposit token 
+  await pairorderbook.connect(addr2).deposit(100, token0.address)
+  await pairorderbook.connect(addr2).deposit(2000000, token1.address)
 
 
 
