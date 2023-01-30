@@ -6,24 +6,28 @@ import { useAccount, useSigner } from 'wagmi'
 import useIsMounted from '../hooks/useIsMounted'
 import { polygonMumbai } from 'wagmi/chains'
 import { ethers } from 'ethers'
-import { contractFaucetABI, contractFaucetAddress } from '../utils/FaucetABI'
+// import { contractFaucetABI, contractFaucetAddress } from '../utils/FaucetABI'
 
 import { useContractRead } from 'wagmi'
-import { useEffect, useState } from 'react'
+import { useContext, useEffect, useState } from 'react'
 import { useForm, SubmitHandler } from 'react-hook-form'
 import artifact from '../../artifacts/contracts/PairOrder.sol/PairNewOrder.json'
 import {PairNewOrder,PairNewOrder__factory,Token0,Token0__factory,Token1,Token1__factory} from '../../typechain-types'
-const ContractAddress = '0x4ed7c70F96B99c776995fB64377f0d4aB3B0e1C1'
+import {ContractContext} from '../context/ContratContext'
+const ContractAddress = '0x9fE46736679d2D9a65F0992F2272dE9f3c7fa6e0'
 
+  
+    
 interface Inputs {
   data: number
 }
-const wagmigotchiContract = {
-  address: contractFaucetAddress,
-  abi: contractFaucetABI,
-}
+// const wagmigotchiContract = {
+//   address: contractFaucetAddress,
+//   abi: contractFaucetABI,
+// }
 
 const Home = () => {
+  const {loadOrderBook,loadingOrderBuy,loadingOrderSell,orderBookBuy,orderBookSell} = useContext(ContractContext)
   const [contract, setContract] = useState<PairNewOrder | null>(null)
   useEffect(() => {
     const onLoad = async () =>{
@@ -32,6 +36,7 @@ const Home = () => {
         artifact.abi 
       ) as PairNewOrder
       setContract(contract)
+      
     }
   onLoad()
 
@@ -54,14 +59,14 @@ const Home = () => {
   const sendTxTest = async (data: number) => {
     try {
       setLoadingTx(true)
-      const FaucetContract = new ethers.Contract(
-        contractFaucetAddress,
-        contractFaucetABI,
-        signer as any
-      )
-      const dataFindindex = await FaucetContract._findIndex(data)
-      const addNumber = await FaucetContract.addStudent(data, dataFindindex)
-      const cheackstatus = await addNumber.wait()
+      // const FaucetContract = new ethers.Contract(
+      //   contractFaucetAddress,
+      //   contractFaucetABI,
+      //   signer as any
+      // )
+      // const dataFindindex = await FaucetContract._findIndex(data)
+      // const addNumber = await FaucetContract.addStudent(data, dataFindindex)
+      // const cheackstatus = await addNumber.wait()
     } catch (error) {
       console.log(error)
     } finally {
@@ -76,13 +81,13 @@ const Home = () => {
   const readData = async () => {
     try {
       setLoading(true)
-      const FaucetContract = new ethers.Contract(
-        contractFaucetAddress,
-        contractFaucetABI,
-        signer as any
-      )
-      const data = await FaucetContract.getData()
-      setDataNumber(data)
+      // const FaucetContract = new ethers.Contract(
+      //   contractFaucetAddress,
+      //   contractFaucetABI,
+      //   signer as any
+      // )
+      // const data = await FaucetContract.getData()
+      // setDataNumber(data)
     } catch (error) {
       console.log(error)
     } finally {
@@ -113,8 +118,8 @@ const Home = () => {
        }
 
     } catch (error) {
-      console.log(error)
-      alert(error)
+      // console.log(error)
+      // alert(error)
     }
   }
 
@@ -203,7 +208,40 @@ const Home = () => {
         </div>
 
         <div>data</div>
+        <br />
+        <br />
+        <br />
+
+        <div>dataOrderSell</div>
+         {loadingOrderSell ? 'LoadOrderSell...' : orderBookSell?.map((item)=>(
+              <p>{` ${item.price} - ${item.amount}` }</p>
+            ))}
+         
+
+          <br />
+          <p>--------------------------------------</p>
+          <br />
+        <div>dataOrderBuy</div>
+         {loadingOrderBuy ? 'LoadOrderBuy...' : orderBookBuy?.map((item)=>(
+              <p>{` ${item.price} - ${item.amount}` }</p>
+            ))}
+
+          
+
+          <br />
+          <p>--------------------------------------</p>
+          <br />
+        <button
+            className="text-black rounded-lg bg-red-500 p-2 px-8"
+            onClick={()=> loadOrderBook()}
+                >
+            GetOrderBuy
+          </button>
+
+                
+
       </div>
+
     )
   )
 }
