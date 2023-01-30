@@ -6,6 +6,7 @@ import { useAccount, useSigner } from 'wagmi'
 import useIsMounted from '../hooks/useIsMounted'
 import { polygonMumbai } from 'wagmi/chains'
 import { ethers } from 'ethers'
+import Loader from '../components/Loader'
 // import { contractFaucetABI, contractFaucetAddress } from '../utils/FaucetABI'
 
 import { useContractRead } from 'wagmi'
@@ -14,7 +15,6 @@ import { useForm, SubmitHandler } from 'react-hook-form'
 import artifact from '../../artifacts/contracts/PairOrder.sol/PairNewOrder.json'
 import {PairNewOrder,PairNewOrder__factory,Token0,Token0__factory,Token1,Token1__factory} from '../../typechain-types'
 import {ContractContext} from '../context/ContratContext'
-const ContractAddress = '0x9fE46736679d2D9a65F0992F2272dE9f3c7fa6e0'
 
   
     
@@ -27,27 +27,30 @@ interface Inputs {
 // }
 
 const Home = () => {
-  const {loadOrderBook,loadingOrderBuy,loadingOrderSell,orderBookBuy,orderBookSell} = useContext(ContractContext)
-  const [contract, setContract] = useState<PairNewOrder | null>(null)
-  useEffect(() => {
-    const onLoad = async () =>{
-      const contract = await new ethers.Contract(
-        ContractAddress,
-        artifact.abi 
-      ) as PairNewOrder
-      setContract(contract)
-      
-    }
-  onLoad()
+  const {
+    loadOrderBook,
+    loadingOrderBuy,
+    loadingOrderSell,
+    orderBookBuy,
+    orderBookSell,
+    priceToken,
+    sendTxMarketOrder,
+    balancesSpotToken0,
+    balancesTradeToken0,
+    balancesSpotToken1,
+    balancesTradeToken1,
+    sendTxLimitOrder,
+  } = useContext(ContractContext)
 
-   
-  }, [])
 
+  const [inputBuyToken, setInputBuyToken] = useState<string>()
+  const [inputSellToken, setInputSellToken] = useState<string>()
 
-  
-  const [dataNumber, setDataNumber] = useState(null)
-  const [loading, setLoading] = useState(false)
-  const [loadingTx, setLoadingTx] = useState(false)
+  const [inputBuyPriceTokenLimitOrder, setInputBuyPriceTokenLimitOrder] = useState<string>()
+  const [inputBuyAmountTokenLimitOrder, setInputBuyAmountTokenLimitOrder] = useState<string>()
+
+  const [inputSellPriceTokenLimitOrder, setInputSellPriceTokenLimitOrder] = useState<string>()
+  const [inputSellAmountTokenLimitOrder, setInputSellAmountTokenLimitOrder] = useState<string>()
 
   const mounted = useIsMounted()
 
@@ -55,83 +58,6 @@ const Home = () => {
   const { data: signer } = useSigner({
     chainId: polygonMumbai.id,
   })
-
-  const sendTxTest = async (data: number) => {
-    try {
-      setLoadingTx(true)
-      // const FaucetContract = new ethers.Contract(
-      //   contractFaucetAddress,
-      //   contractFaucetABI,
-      //   signer as any
-      // )
-      // const dataFindindex = await FaucetContract._findIndex(data)
-      // const addNumber = await FaucetContract.addStudent(data, dataFindindex)
-      // const cheackstatus = await addNumber.wait()
-    } catch (error) {
-      console.log(error)
-    } finally {
-      readData()
-      console.log('asdasd')
-      setLoadingTx(false)
-    }
-    // const provider =  new ethers.providers.Web3Provider(window.ethereum as any)
-    // const signer = provider.getSigner()
-  }
-
-  const readData = async () => {
-    try {
-      setLoading(true)
-      // const FaucetContract = new ethers.Contract(
-      //   contractFaucetAddress,
-      //   contractFaucetABI,
-      //   signer as any
-      // )
-      // const data = await FaucetContract.getData()
-      // setDataNumber(data)
-    } catch (error) {
-      console.log(error)
-    } finally {
-      setLoading(false)
-    }
-    // const provider =  new ethers.providers.Web3Provider(window.ethereum as any)
-    // const signer = provider.getSigner()
-  }
-
-  const [dataOrderBuy,setDataOrderBuy] = useState<PairNewOrder.OrderStructOutput[] >()
-  const [dataOrderSell,setDataOrderSell] = useState<PairNewOrder.OrderStructOutput[] >()
-  const readDataOrderBook = async (side:number) => {
-    try {
-  
-     //setDataOrder(data!)
-     const PairtContract = new ethers.Contract(
-        ContractAddress,
-        artifact.abi,
-       signer as any
-       )  as PairNewOrder
-       const data = await PairtContract.getOrderBook(side)
-       console.log(data)
-       if(side == 0){
-
-         setDataOrderBuy(data)
-       }else if(side==1) {
-        setDataOrderSell(data)
-       }
-
-    } catch (error) {
-      // console.log(error)
-      // alert(error)
-    }
-  }
-
-  const {
-    register,
-    handleSubmit,
-    formState: { errors },
-  } = useForm<Inputs>()
-
-  const onSubmit: SubmitHandler<Inputs> = async ({ data }) => {
-    await sendTxTest(data)
-  }
 
   return (
     mounted && (
@@ -144,104 +70,210 @@ const Home = () => {
 
         {address && <p>My address is {address}</p>}
 
-        <div className='text-red-500 text-3xl'>
-          <p >Sell</p>
-          <p >
-            {loading ? 'Load...' : dataOrderSell?.map((item)=>(
-              <p>{` ${item.price.toString()} - ${item.amount.toString()}` }</p>
-            ))}
-          </p>
-          <button
-            className="text-black rounded-lg bg-red-500 p-2 px-8"
-            onClick={()=>  readDataOrderBook(1)}
-          >
-            GetOrderSell
-          </button>
-        </div>
+        <span>Price</span>
+        <p>{priceToken ? priceToken : 'wait Price ...'}</p>
 
+        <div className="text-red-500 text-3xl">
+          <p>Sell</p>
+          <p>
+            {loadingOrderSell
+              ? 'Load...'
+              : orderBookSell
+                  .slice(0)
+                  .reverse()
+                  .map((item) => (
+                    <p>{` ${item.price} - ${item.amount - item.filled}`}</p>
+                  ))}
+          </p>
+        </div>
         <div className="text-green-500 text-3xl">
-          <p >Buy</p>
-          <p >
-            {loading ? 'Load...' : dataOrderBuy?.map((item)=>(
-              <p>{` ${item.price.toString()} - ${item.amount.toString()}` }</p>
-            ))}
+          <p>Buy</p>
+          <p>
+            {loadingOrderBuy
+              ? 'Load...'
+              : orderBookBuy?.map((item) => (
+                  <p>{` ${item.price} - ${item.amount - item.filled}`}</p>
+                ))}
           </p>
           <button
             className="text-black rounded-lg bg-red-500 p-2 px-8"
-            onClick={()=>  readDataOrderBook(0)}
+            onClick={loadOrderBook}
           >
-            GetOrderBuy
+            GetDataOrder
           </button>
         </div>
 
-        <div>
-          <p className="text-black text-3xl">Sendata</p>
+        <h1 className="text-4xl mt-10">Market Order</h1>
 
-          <form
-            onSubmit={handleSubmit(onSubmit)}
-            className="relative mt-24 space-y-8 rounded bg-black/75 py-10 px-6 md:mt-0
-       md:max-w-md md:px-14"
-          >
-            <h1 className="text-4xl font-semibold">Sign In</h1>
-            <div className="space-y-4">
-              <label className="inline-block w-full">
-                <input
-                  type="number"
-                  placeholder="data number"
-                  className="input"
-                  {...register('data', { required: true })}
-                />
-                {errors.data && (
-                  <p className="p-1 text-[13px] font-light  text-orange-500">
-                    Please enter a valid email.
-                  </p>
-                )}
-              </label>
+        <div className="mt-10 flex-row flex space-x-10 justify-center">
+          <div className="max-w-[800px] min-w-[400px] space-y-8 rounded bg-black/40 py-10 px-6 ">
+            <div className="bg-black/40 flex flex-row text-xl">
+              <span className="flex items-center pl-2 pr-5">Total</span>
+              <input
+                type="number"
+                onKeyPress={(event) => {
+                  if (!/^[0-9]*[.,]?[0-9]*$/.test(event.key)) {
+                    event.preventDefault()
+                  }
+                }}
+                onChange={(e) => {
+                  setInputBuyToken(e.target.value)
+                }}
+                className="  w-full py-2 pr-2 text-right  bg-transparent outline-none  text-white"
+              />
+              <span className="flex items-center  pr-5">USDT</span>
+            </div>
+            <button
+              onClick={() => {
+                sendTxMarketOrder(0, inputBuyToken!)
+              }}
+              className="w-full text-white rounded bg-green-500 py-3 font-semibold"
+            >
+              Buy BTC
+            </button>
+          </div>
+
+          <div className="max-w-[800px] min-w-[400px]  space-y-8 rounded bg-black/40 py-10 px-6 ">
+            <div className="bg-black/40 flex flex-row text-xl">
+              <span className="flex items-center pl-2 pr-5">Amount</span>
+              <input
+                type="number"
+                required
+                onKeyPress={(event) => {
+                  if (!/^[0-9]*[.,]?[0-9]*$/.test(event.key)) {
+                    event.preventDefault()
+                  }
+                }}
+                onChange={(e) => {
+                  setInputSellToken(e.target.value)
+                }}
+                className=" w-full py-2 pr-2 text-right   bg-transparent outline-none text-xl text-white"
+              />
+              <span className="flex items-center  pr-5">BTC</span>
+            </div>
+            <button
+              onClick={() => {
+                sendTxMarketOrder(1, inputSellToken!)
+              }}
+              className="w-full text-white rounded bg-red-500 py-3 font-semibold"
+            >
+              Sell BTC
+            </button>
+          </div>
+        </div>
+
+
+        <h1 className="text-4xl mt-10">Limit Order</h1>
+
+        <div className="mt-10 flex-row flex space-x-10 justify-center">
+          <div className="max-w-[800px] min-w-[400px] space-y-8 rounded bg-black/40 py-10 px-6 ">
+            <div className="bg-black/40 flex flex-row text-xl">
+
+              <span className="flex items-center pl-2 pr-5">Price</span>
+              <input
+                type="number"
+                onKeyPress={(event) => {
+                  if (!/^[0-9]*[.,]?[0-9]*$/.test(event.key)) {
+                    event.preventDefault()
+                  }
+                }}
+                onChange={(e) => {
+                  setInputBuyPriceTokenLimitOrder(e.target.value)
+                }}
+                className="  w-full py-2 pr-2 text-right  bg-transparent outline-none  text-white"
+              />
+              <span className="flex items-center  pr-5">USDT</span>
             </div>
 
-            <button className="w-full rounded bg-[#e50914] py-3 font-semibold">
-              Sendata
+            <div className="bg-black/40 flex flex-row text-xl">
+              <span className="flex items-center pl-2 pr-5">Amount</span>
+              <input
+                type="number"
+                onKeyPress={(event) => {
+                  if (!/^[0-9]*[.,]?[0-9]*$/.test(event.key)) {
+                    event.preventDefault()
+                  }
+                }}
+                onChange={(e) => {
+                  setInputBuyAmountTokenLimitOrder(e.target.value)
+                }}
+                className="  w-full py-2 pr-2 text-right  bg-transparent outline-none  text-white"
+              />
+              <span className="flex items-center  pr-5">BTC</span>
+            </div>
+            <button
+              onClick={() => {
+                 sendTxLimitOrder(0,inputBuyAmountTokenLimitOrder!,inputBuyPriceTokenLimitOrder!)
+              }}
+              className="w-full text-white rounded bg-green-500 py-3 font-semibold"
+            >
+              Buy BTC
             </button>
-          </form>
+          </div>
 
-          {loadingTx ? 'LoadTX...' : `nice`}
+          <div className="max-w-[800px] min-w-[400px]  space-y-8 rounded bg-black/40 py-10 px-6 ">
+            <div className="bg-black/40 flex flex-row text-xl">
+              <span className="flex items-center pl-2 pr-5">Price</span>
+              <input
+                type="number"
+                required
+                onKeyPress={(event) => {
+                  if (!/^[0-9]*[.,]?[0-9]*$/.test(event.key)) {
+                    event.preventDefault()
+                  }
+                }}
+                onChange={(e) => {
+                  setInputSellPriceTokenLimitOrder(e.target.value)
+                }}
+                className=" w-full py-2 pr-2 text-right   bg-transparent outline-none text-xl text-white"
+              />
+              <span className="flex items-center  pr-5">USDT</span>
+            </div>
+            <div className="bg-black/40 flex flex-row text-xl">
+              <span className="flex items-center pl-2 pr-5">Amount</span>
+              <input
+                type="number"
+                required
+                onKeyPress={(event) => {
+                  if (!/^[0-9]*[.,]?[0-9]*$/.test(event.key)) {
+                    event.preventDefault()
+                  }
+                }}
+                onChange={(e) => {
+                  setInputSellAmountTokenLimitOrder(e.target.value)
+                }}
+                className=" w-full py-2 pr-2 text-right   bg-transparent outline-none text-xl text-white"
+              />
+              <span className="flex items-center  pr-5">BTC</span>
+            </div>
+            <button
+              onClick={() => {
+                sendTxLimitOrder(1, inputSellAmountTokenLimitOrder!,inputSellPriceTokenLimitOrder!)
+              }}
+              className="w-full text-white rounded bg-red-500 py-3 font-semibold"
+            >
+              Sell BTC
+            </button>
+          </div>
         </div>
 
-        <div>data</div>
-        <br />
-        <br />
-        <br />
 
-        <div>dataOrderSell</div>
-         {loadingOrderSell ? 'LoadOrderSell...' : orderBookSell?.map((item)=>(
-              <p>{` ${item.price} - ${item.amount}` }</p>
-            ))}
-         
 
-          <br />
-          <p>--------------------------------------</p>
-          <br />
-        <div>dataOrderBuy</div>
-         {loadingOrderBuy ? 'LoadOrderBuy...' : orderBookBuy?.map((item)=>(
-              <p>{` ${item.price} - ${item.amount}` }</p>
-            ))}
 
-          
 
-          <br />
-          <p>--------------------------------------</p>
-          <br />
-        <button
-            className="text-black rounded-lg bg-red-500 p-2 px-8"
-            onClick={()=> loadOrderBook()}
-                >
-            GetOrderBuy
-          </button>
-
-                
-
+        <div className="flex flex-row space-x-10 text-6xl">
+          <div>
+            <h1>Balances Spot</h1>
+            <p>{`Token0 : ${balancesSpotToken0}`}</p>
+            <p>{`Token1 : ${balancesSpotToken1}`}</p>
+          </div>
+          <div>
+            <h1>Balances Trade</h1>
+            <p>{`Token0 : ${balancesTradeToken0}`}</p>
+            <p>{`Token1 : ${balancesTradeToken1}`}</p>
+          </div>
+        </div>
       </div>
-
     )
   )
 }
