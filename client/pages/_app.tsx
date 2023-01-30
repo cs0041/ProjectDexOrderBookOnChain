@@ -12,6 +12,10 @@ import {
   RainbowKitProvider,
 } from '@rainbow-me/rainbowkit'
 import { Chain } from 'wagmi/chains'
+import { ContractProvider } from '../context/ContratContext'
+
+
+
 const hardhat: Chain = {
   id: 31337,
   name: 'Hardhat',
@@ -51,11 +55,13 @@ const wagmiClient = createClient({
 
 function MyApp({ Component, pageProps }: AppProps) {
   return (
-    <WagmiConfig client={wagmiClient}>
-      <RainbowKitProvider chains={chains}>
-        <Component {...pageProps} />
-      </RainbowKitProvider>
-    </WagmiConfig>
+    <ContractProvider>
+      <WagmiConfig client={wagmiClient}>
+        <RainbowKitProvider chains={chains}>
+          <Component {...pageProps} />
+        </RainbowKitProvider>
+      </WagmiConfig>
+    </ContractProvider>
   )
 }
 
