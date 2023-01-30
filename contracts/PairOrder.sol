@@ -40,18 +40,18 @@ contract PairNewOrder is Ownable,Wallet{
   uint256 immutable GUARDHEAD = 0 ;
   uint256 immutable GUARDTAIL = 115792089237316195423570985008687907853269984665640564039457584007913129639935 ;
 
+  uint256 public price;
+
 
   constructor(address _tokne0 , address _token1) Wallet(_tokne0,_token1)  {
-    // token0 =  _tokne0;
-    // token1 = _token1;
     _nextNodeBuyID[0] = 115792089237316195423570985008687907853269984665640564039457584007913129639935;
     _nextNodeSellID[0] = 115792089237316195423570985008687907853269984665640564039457584007913129639935;
   }
 
 ////////////////////////////////////// CreateLimitOrder ////////////////////////////////////// 
 
- function createLimitOrder(Side side,uint256 amount,uint256 price,uint256 prevNodeID)  public {
-      require(price > 0,"price must > 0");
+ function createLimitOrder(Side side,uint256 amount,uint256 _price,uint256 prevNodeID)  public {
+      require(_price > 0,"price must > 0");
       require(amount > 0,"amount must > 0");
       // BUY  token0 -> create selltoken1 with (amount*price) to buy token0
       // SELL token0 -> create selltoken0
@@ -59,11 +59,11 @@ contract PairNewOrder is Ownable,Wallet{
         if(side == Side.BUY) {  
             // buy token0  -> sell token1 
             // amountToken0 priceToken0
-            addBuyOrder( amount, price,  prevNodeID);
+            addBuyOrder( amount, _price,  prevNodeID);
         }
         else if(side == Side.SELL) {
             // sell token0 -> buy token1
-            addSellOrder( amount, price,  prevNodeID);
+            addSellOrder( amount, _price,  prevNodeID);
         }
 
 
@@ -366,7 +366,8 @@ contract PairNewOrder is Ownable,Wallet{
 
 
 
-
+                // update latest price
+                price = payloadOrder[0][currentNodeID].price ;
 
                 currentNodeID = _nextNodeBuyID[currentNodeID];
         }
@@ -379,6 +380,7 @@ contract PairNewOrder is Ownable,Wallet{
         //Remove the top element in the orders
              removeOrderNoUpdateBalances(Side.BUY, _nextNodeBuyID[GUARDHEAD],0);
         }
+
 
       // Market Buy token0
       // sell token1 buy token0
@@ -416,9 +418,12 @@ contract PairNewOrder is Ownable,Wallet{
                 balancesTrade[payloadOrder[1][currentNodeID].trader][token0] -= cost;
 
 
-
+                // update latest price
+                price = payloadOrder[1][currentNodeID].price ;
 
                 currentNodeID = _nextNodeSellID[currentNodeID];
+
+                
         }
 
      
@@ -430,6 +435,7 @@ contract PairNewOrder is Ownable,Wallet{
         //Remove the top element in the orders
            removeOrderNoUpdateBalances(Side.SELL, _nextNodeSellID[GUARDHEAD],0);
         }
+
 
       }
     }
