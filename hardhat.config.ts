@@ -3,6 +3,7 @@ import '@typechain/hardhat'
 import '@nomiclabs/hardhat-ethers'
 import "@nomiclabs/hardhat-waffle"
 import { HardhatUserConfig } from 'hardhat/types'
+import 'hardhat-gas-reporter'
 
 const config: HardhatUserConfig = {
   defaultNetwork: 'hardhat',
@@ -22,6 +23,15 @@ const config: HardhatUserConfig = {
       default: 0,
     },
   },
+  gasReporter: {
+    enabled: true,
+    outputFile: 'gas-report.txt',
+    noColors: true,
+    currency: 'USD',
+    // coinmarketcap: 'apikey',
+    token:"MATIC"
+  },
 }
+
 
 export default config
