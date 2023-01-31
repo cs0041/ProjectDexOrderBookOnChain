@@ -30,6 +30,9 @@ interface IContract {
   balancesSpotToken1: number
   balancesTradeToken1: number
   sendTxLimitOrder : (side: number, amount: number | string, price: number | string) => Promise<void>
+  isLoadingOrderBookByAddress:boolean,
+  orderBookByAddress:Order[]
+  loadOrderBookByAddress: (address: string) => Promise<void>
 }
 
 export const ContractContext = createContext<IContract>({
@@ -39,12 +42,15 @@ export const ContractContext = createContext<IContract>({
   orderBookSell: [],
   orderBookBuy: [],
   priceToken: 0,
-  sendTxMarketOrder:async () => {},
-  balancesSpotToken0:0,
-  balancesTradeToken0:0,
-  balancesSpotToken1:0,
-  balancesTradeToken1:0,
-  sendTxLimitOrder:async () =>{},
+  sendTxMarketOrder: async () => {},
+  balancesSpotToken0: 0,
+  balancesTradeToken0: 0,
+  balancesSpotToken1: 0,
+  balancesTradeToken1: 0,
+  sendTxLimitOrder: async () => {},
+  isLoadingOrderBookByAddress: false,
+  orderBookByAddress: [],
+  loadOrderBookByAddress: async () => {},
 })
 
 
@@ -101,6 +107,9 @@ export const ContractProvider = ({ children }: ChildrenProps) => {
   const [balancesTradeToken1, setBalancesTradeToken1] = useState<number>(0)
 
 
+  // order by address
+  const [orderBookByAddress, setOrderBookByAddress] = useState<Order[]>([])
+  const [isLoadingOrderBookByAddress,setIsLoadingOrderBookByAddress] = useState(false)
 
   // helper
   // const toString = (bytes32) => ethers.utils.parseBytes32String(bytes32)
@@ -116,6 +125,7 @@ export const ContractProvider = ({ children }: ChildrenProps) => {
      loadOrderBook()
      loadPriceToken()
      loadBalances()
+     loadOrderBookByAddress()
 
    }, [])
 
@@ -151,6 +161,8 @@ export const ContractProvider = ({ children }: ChildrenProps) => {
      loadPriceToken()
      loadBalances()
    }
+
+   
 
   
   const loadPriceToken = async () => {
@@ -255,6 +267,47 @@ export const ContractProvider = ({ children }: ChildrenProps) => {
 
   }
 
+  const loadOrderBookByAddress = async (address? : string) => {
+    if (!window.ethereum) return console.log('Please install metamask')
+
+    setIsLoadingOrderBookByAddress(true)
+    try {
+    
+      setOrderBookByAddress([])
+
+      const contract = getPairOrderContract()
+
+      if(address==undefined){
+        address = (await window.ethereum.request({ method: 'eth_accounts' }))[0]
+      }
+      const dataOrderBookByAddress = await contract.getOrderBookByAddress(address)
+       
+
+      dataOrderBookByAddress.map((order) => {
+        console.log(order)
+        const structOrder: Order = {
+          id: order.id.toNumber(),
+          addressTrader: order.trader.toString(),
+          BuyOrSell: order.side,
+          addressToken: order.token.toString(),
+          amount: order.amount.toNumber(),
+          price: order.price.toNumber(),
+          filled: order.filled.toNumber(),
+        }
+        setOrderBookByAddress((prev) => [...prev, structOrder])
+      })
+      console.log(orderBookByAddress)
+
+      setIsLoadingOrderBookByAddress(false)
+
+    } catch (error) {
+       setIsLoadingOrderBookByAddress(false)
+       setOrderBookByAddress([])
+       console.log(error)
+    }
+
+  }
+
  
 
  
@@ -275,6 +328,9 @@ export const ContractProvider = ({ children }: ChildrenProps) => {
         balancesSpotToken1,
         balancesTradeToken1,
         sendTxLimitOrder,
+        isLoadingOrderBookByAddress,
+        orderBookByAddress,
+        loadOrderBookByAddress
       }}
     >
       {!initialLoading && children}
