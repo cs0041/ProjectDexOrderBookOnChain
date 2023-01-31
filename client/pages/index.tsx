@@ -15,7 +15,7 @@ import { useForm, SubmitHandler } from 'react-hook-form'
 import artifact from '../../artifacts/contracts/PairOrder.sol/PairNewOrder.json'
 import {PairNewOrder,PairNewOrder__factory,Token0,Token0__factory,Token1,Token1__factory} from '../../typechain-types'
 import {ContractContext} from '../context/ContratContext'
-
+import UpdateModal from '../components/Modal'
   
     
 interface Inputs {
@@ -43,6 +43,7 @@ const Home = () => {
     isLoadingOrderBookByAddress,
     orderBookByAddress,
     loadOrderBookByAddress,
+    sendTxCancelOrder,
   } = useContext(ContractContext)
 
 
@@ -55,7 +56,13 @@ const Home = () => {
   const [inputSellPriceTokenLimitOrder, setInputSellPriceTokenLimitOrder] = useState<string>()
   const [inputSellAmountTokenLimitOrder, setInputSellAmountTokenLimitOrder] = useState<string>()
 
+  // for update modal
+  const [sideBuyOrSell, setSideBuyOrSell] = useState<number>(-1)
+  const [idUpdate, setIdUpdate] = useState<number>(-1)
+
   const mounted = useIsMounted()
+
+  const [showUpdateModal, setShowUpdateModal] = useState(false)
 
   const { address, isConnected } = useAccount()
   const { data: signer } = useSigner({
@@ -283,8 +290,20 @@ const Home = () => {
             isLoadingOrderBookByAddress? "Loading....... ": orderBookByAddress.map((item) => (
                   <div className='flex flex-row mb-5 space-x-5'>
                       <p>{`${item.BuyOrSell ==0? "Buy" : "Sell"} - price : ${item.price} - amount :  ${item.amount} - filled :  ${item.filled} ---id : ${item.id}`}</p>
-                      <button  className=" text-white rounded bg-red-500 px-3 py-2 font-semibold">
+                      <button  
+                      onClick={()=>sendTxCancelOrder(item.BuyOrSell,item.id)}
+                      className=" text-white rounded bg-red-500 px-3 py-2 font-semibold">
                         cancel order
+                      </button>
+                      <button  
+                      onClick={()=> {
+                        setIdUpdate(item.id)
+                        setSideBuyOrSell(item.BuyOrSell)
+                        setShowUpdateModal(true)
+                      }
+                      }
+                      className=" text-white rounded bg-orange-500 px-3 py-2 font-semibold">
+                        update order
                       </button>
                   </div>
                 
@@ -308,6 +327,10 @@ const Home = () => {
             </button>
   
         </div>
+        {showUpdateModal && <UpdateModal
+        id={idUpdate}  
+        side={sideBuyOrSell}
+        onClose={() => setShowUpdateModal(false)}  />}
       </div>
     )
   )
