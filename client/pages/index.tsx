@@ -40,6 +40,9 @@ const Home = () => {
     balancesSpotToken1,
     balancesTradeToken1,
     sendTxLimitOrder,
+    isLoadingOrderBookByAddress,
+    orderBookByAddress,
+    loadOrderBookByAddress,
   } = useContext(ContractContext)
 
 
@@ -272,6 +275,38 @@ const Home = () => {
             <p>{`Token0 : ${balancesTradeToken0}`}</p>
             <p>{`Token1 : ${balancesTradeToken1}`}</p>
           </div>
+        </div>
+
+        <div>
+          <h1>OPEN ORDER</h1>
+          {address? (
+            isLoadingOrderBookByAddress? "Loading....... ": orderBookByAddress.map((item) => (
+                  <div className='flex flex-row mb-5 space-x-5'>
+                      <p>{`${item.BuyOrSell ==0? "Buy" : "Sell"} - price : ${item.price} - amount :  ${item.amount} - filled :  ${item.filled} ---id : ${item.id}`}</p>
+                      <button  className=" text-white rounded bg-red-500 px-3 py-2 font-semibold">
+                        cancel order
+                      </button>
+                  </div>
+                
+                ))
+          )
+          
+          
+          : "PLS CONNECT WALLET"}
+
+            <button
+              onClick={() => {
+                if(address){
+                  loadOrderBookByAddress(address)
+                }else{
+                  console.log("No address")
+                }
+              }}
+              className="w-full text-white rounded bg-red-500 py-3 font-semibold"
+            >
+             Get Order By Address
+            </button>
+  
         </div>
       </div>
     )
