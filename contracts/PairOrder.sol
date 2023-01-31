@@ -189,6 +189,52 @@ contract PairNewOrder is Ownable,Wallet{
 
     
   }
+  function getOrderBookByAddress(address _trader) external view returns(Order[] memory) {
+
+        uint256 allLengthOrderBookByAddress;
+        uint256 currentNodeID;
+
+        currentNodeID = _nextNodeBuyID[GUARDHEAD];
+        for(uint256 i = 0; i < listBuySize; ++i) {
+          if(payloadOrder[0][currentNodeID].trader == _trader){
+            allLengthOrderBookByAddress++;
+          }
+          currentNodeID = _nextNodeBuyID[currentNodeID];
+        }
+
+        currentNodeID = _nextNodeSellID[GUARDHEAD];
+        for(uint256 i = 0; i < listSellSize; ++i) {
+          if(payloadOrder[1][currentNodeID].trader == _trader){
+            allLengthOrderBookByAddress++;
+          }
+          currentNodeID = _nextNodeSellID[currentNodeID];
+        }
+
+
+        Order[] memory dataList = new Order[](allLengthOrderBookByAddress);
+        uint index = 0;
+
+        currentNodeID = _nextNodeBuyID[GUARDHEAD];
+        for(uint i = 0; i < listBuySize; ++i) {
+          if(payloadOrder[0][currentNodeID].trader == _trader){
+            dataList[index] = payloadOrder[0][currentNodeID];
+            index++;
+          }
+          currentNodeID = _nextNodeBuyID[currentNodeID];
+        }
+
+        currentNodeID = _nextNodeSellID[GUARDHEAD];
+        for(uint i = 0; i < listSellSize ; ++i) {
+          if(payloadOrder[1][currentNodeID].trader == _trader){
+            dataList[index] = payloadOrder[1][currentNodeID];
+            index++;
+          }
+          currentNodeID = _nextNodeSellID[currentNodeID];
+        }
+        return dataList;
+    
+    
+  }
 
 
 
