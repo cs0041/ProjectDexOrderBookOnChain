@@ -498,7 +498,7 @@ describe('UpdateOrder',async () => {
     })
     it("Should revert when UpdateOrder and index-preindex are not contiguous", async() => {
      let isBuy = 0
-      let newPrice = 912
+      let newPrice = 300
       let newAmount = 1
       let index = 3 //  orderBUY  index(1)112 index(2)7 index(3)245 index(4)102 index(5)23
       let prevIndexAdd:BigNumber
@@ -509,7 +509,7 @@ describe('UpdateOrder',async () => {
       prevIndexAdd = BigNumber.from(5)
       prevIndexRemove = BigNumber.from(4)
       
-      await expect(pairorderbook.connect(owner).updateOrder(isBuy, index, newPrice,newAmount,prevIndexAdd,prevIndexRemove)).to.be.revertedWith("index is not pre") 
+      await expect(pairorderbook.connect(owner).updateOrder(isBuy, index, newPrice,newAmount,prevIndexAdd,prevIndexRemove)).to.be.revertedWith("position in linked list not orde") 
     })
 
     it('Should revert when UpdateOrder and not owner  position order', async () => {
