@@ -30,9 +30,12 @@ interface IContract {
   balancesSpotToken1: number
   balancesTradeToken1: number
   sendTxLimitOrder : (side: number, amount: number | string, price: number | string) => Promise<void>
-  isLoadingOrderBookByAddress:boolean,
+  isLoadingOrderBookByAddress:boolean
   orderBookByAddress:Order[]
   loadOrderBookByAddress: (address: string) => Promise<void>
+  sendTxCancelOrder: (side: number, id: number | string) => Promise<void>
+  sendTxUpdateOrder: (side: number, id: number, newAmount: number | string, newPriceOrder: number | string) => Promise<void>
+  
 }
 
 export const ContractContext = createContext<IContract>({
@@ -51,6 +54,8 @@ export const ContractContext = createContext<IContract>({
   isLoadingOrderBookByAddress: false,
   orderBookByAddress: [],
   loadOrderBookByAddress: async () => {},
+  sendTxCancelOrder: async () => {},
+  sendTxUpdateOrder: async () => {},
 })
 
 
@@ -158,11 +163,57 @@ export const ContractProvider = ({ children }: ChildrenProps) => {
        console.log(error)
      }
      loadOrderBook()
-     loadPriceToken()
      loadBalances()
+     loadOrderBookByAddress()
    }
 
-   
+   const sendTxUpdateOrder = async (side: number, id:number,newAmount: number | string, newPriceOrder: number | string) => {
+    // updateOrder(Side _side,uint256 index, uint256 newPriceOrder, uint256 newAmount,uint256 prevIndexAdd,uint256 prevIndexRemove)
+    
+     if (!window.ethereum) return console.log('Please install metamask')
+     try {
+      console.log('side',side)
+      console.log('newAmount', newAmount)
+      console.log('newPriceOrder', newPriceOrder)
+      console.log('id',id)
+       const contract = getPairOrderContract()
+       const prevIndexAdd = await contract._findIndex(newPriceOrder, side)
+       const prevIndexRemove = await contract._findPrevOrder(side, id)
+      console.log('prevIndexAdd', prevIndexAdd.toNumber())
+      console.log('prevIndexRemove', prevIndexRemove.toNumber())
+       const transactionHash = await contract.updateOrder(side,id,newPriceOrder,newAmount,prevIndexAdd,prevIndexRemove) 
+
+      //       prevIndexAdd = await pairorderbook._findIndex(newPrice, isBuy)
+      // prevIndexRemove = await pairorderbook._findPrevOrder(isBuy, index)
+      // await pairorderbook.connect(owner).updateOrder(isBuy, index, newPrice,newAmount,prevIndexAdd,prevIndexRemove)
+
+
+       console.log(transactionHash.hash)
+       await transactionHash.wait()
+     } catch (error) {
+       console.log(error)
+     }
+     loadOrderBook()
+     loadBalances()
+     loadOrderBookByAddress()
+   }
+
+   const sendTxCancelOrder = async (side: number, id: number | string) => {
+
+     if (!window.ethereum) return console.log('Please install metamask')
+     try {
+       const contract = getPairOrderContract()
+       const prevNodeID = await contract._findPrevOrder(side,id)
+       const transactionHash = await contract.removeOrder(side,id,prevNodeID) 
+       console.log(transactionHash.hash)
+       await transactionHash.wait()
+     } catch (error) {
+       console.log(error)
+     }
+     loadOrderBook()
+     loadOrderBookByAddress()
+     loadBalances()
+   }
 
   
   const loadPriceToken = async () => {
@@ -195,9 +246,6 @@ export const ContractProvider = ({ children }: ChildrenProps) => {
       const dataBalancesTradeToken1 = await contract.balancesTrade(accounts[0],ContractToken1Address)
       setBalancesSpotToken1(dataBalancesSpotToken1.toNumber())
       setBalancesTradeToken1(dataBalancesTradeToken1.toNumber())
-      console.log(accounts[0])
-      console.log('suscess load dataBalancesSpotToken0', dataBalancesSpotToken0.toNumber())
-      console.log('suscess load dataBalancesTradeToken0', dataBalancesTradeToken0.toNumber())
 
 
     } catch (error) {
@@ -284,7 +332,6 @@ export const ContractProvider = ({ children }: ChildrenProps) => {
        
 
       dataOrderBookByAddress.map((order) => {
-        console.log(order)
         const structOrder: Order = {
           id: order.id.toNumber(),
           addressTrader: order.trader.toString(),
@@ -296,7 +343,7 @@ export const ContractProvider = ({ children }: ChildrenProps) => {
         }
         setOrderBookByAddress((prev) => [...prev, structOrder])
       })
-      console.log(orderBookByAddress)
+
 
       setIsLoadingOrderBookByAddress(false)
 
@@ -330,7 +377,9 @@ export const ContractProvider = ({ children }: ChildrenProps) => {
         sendTxLimitOrder,
         isLoadingOrderBookByAddress,
         orderBookByAddress,
-        loadOrderBookByAddress
+        loadOrderBookByAddress,
+        sendTxCancelOrder,
+        sendTxUpdateOrder,
       }}
     >
       {!initialLoading && children}
