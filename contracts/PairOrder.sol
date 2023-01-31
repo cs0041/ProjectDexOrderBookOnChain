@@ -76,7 +76,7 @@ contract PairNewOrder is Ownable,Wallet{
    function addBuyOrder(uint256 _amount,uint256 _price,  uint256 prevNodeID)  private {  
     //BUY token0 amount - price
     require(balancesSpot[msg.sender][token1] >= _amount * _price,"not enough balance token for buy");
-    require(_nextNodeBuyID[prevNodeID] != 0,"index not exist");
+    require(_nextNodeBuyID[prevNodeID] != 0,"addBuyOrder index not exist ");
     require(_verifyIndex(prevNodeID, _price,Side.BUY, _nextNodeBuyID[prevNodeID]),"position in linked list not order");
 
     // transfer balance Spot to Trade wallet 
@@ -102,7 +102,7 @@ contract PairNewOrder is Ownable,Wallet{
    function addSellOrder( uint256 _amount,uint256 _price,  uint256 prevNodeID)  private {
     //SELL token0 amount - price  
     require(balancesSpot[msg.sender][token0] >= _amount,"not enough balance token for sell");
-    require(_nextNodeSellID[prevNodeID] != 0,"index not exist");
+    require(_nextNodeSellID[prevNodeID] != 0,"addSellOrder index not exist ");
     require(_verifyIndex(prevNodeID, _price,Side.SELL, _nextNodeSellID[prevNodeID]),"position in linked list not order");
 
     // transfer balance Spot to Trade wallet 
@@ -124,7 +124,6 @@ contract PairNewOrder is Ownable,Wallet{
     listSellSize++;
     nodeSellID++;
   }
-
 
 
 ////////////////////////////////////// Check pre_price > new_price > next_price ////////////////////////////////////// 
@@ -243,7 +242,7 @@ contract PairNewOrder is Ownable,Wallet{
      uint8 side = uint8(_side);
      require(payloadOrder[side][index].trader == msg.sender,"you are not owner of this position order");
      if(_side == Side.BUY) {
-        require(_nextNodeBuyID[index] != 0,"index not exist");
+        require(_nextNodeBuyID[index] != 0,"removeOrder index not exist");
         require(_isPrev(_side,index, prevIndex),"index is not pre");
         
         // transfer balance Trade to Spot wallet 
@@ -255,7 +254,7 @@ contract PairNewOrder is Ownable,Wallet{
         listBuySize--;
 
       } else if(_side == Side.SELL) {
-        require(_nextNodeSellID[index] != 0,"index not exist");
+        require(_nextNodeSellID[index] != 0,"removeOrder index not exist");
         require(_isPrev(_side,index, prevIndex),"index is not pre");
 
         // transfer balance Trade to Spot wallet 
@@ -273,8 +272,8 @@ contract PairNewOrder is Ownable,Wallet{
  function removeOrderNoUpdateBalances(Side _side,uint256 index, uint256 prevIndex) private {
 
      if(_side == Side.BUY) {
-        require(_nextNodeBuyID[index] != 0,"index not exist");
-        require(_isPrev(_side,index, prevIndex),"index is not pre");
+        require(_nextNodeBuyID[index] != 0,"removeOrderNoUpdateBalances index not exist");
+        require(_isPrev(_side,index, prevIndex),"removeOrderNoUpdateBalances index is not pre");
         
 
         _nextNodeBuyID[prevIndex] = _nextNodeBuyID[index];
@@ -344,25 +343,25 @@ contract PairNewOrder is Ownable,Wallet{
 
       if(_side == Side.BUY) {
 
-          require(_nextNodeBuyID[index] != 0,"index not exist");
-          require(_nextNodeBuyID[prevIndexRemove]  != 0,"index not exist");
-          require(_nextNodeBuyID[prevIndexAdd]  != 0,"index not exist");
+          require(_nextNodeBuyID[index] != 0,"index not exist index");
+          require(_nextNodeBuyID[prevIndexRemove]  != 0,"index not exist prevIndexRemove");
+          require(_nextNodeBuyID[prevIndexAdd]  != 0,"index not exist prevIndexAdd");
 
           // removeOrder and createLimitOrder
-          removeOrder(_side,index,prevIndexRemove);
           addBuyOrder( newAmount, newPriceOrder,  prevIndexAdd);
+          removeOrder(_side,index,prevIndexRemove);
 
    
             
       } else if(_side == Side.SELL) {
 
-          require(_nextNodeSellID[index] != 0,"index not exist");
-          require(_nextNodeSellID[prevIndexRemove]  != 0,"index not exist");
-          require(_nextNodeSellID[prevIndexAdd]  != 0,"index not exist");
+          require(_nextNodeSellID[index] != 0,"index not exist index");
+          require(_nextNodeSellID[prevIndexRemove]  != 0,"index not exist prevIndexRemove");
+          require(_nextNodeSellID[prevIndexAdd]  != 0,"index not exist prevIndexAdd");
 
           // removeOrder and createLimitOrder
-          removeOrder(_side,index,prevIndexRemove);
           addSellOrder( newAmount, newPriceOrder,  prevIndexAdd);
+          removeOrder(_side,index,prevIndexRemove);
       }
   }
 
