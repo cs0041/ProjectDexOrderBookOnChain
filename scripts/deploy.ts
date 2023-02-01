@@ -9,7 +9,7 @@ import {PairNewOrder,PairNewOrder__factory,Token0,Token0__factory,Token1,Token1_
 // toEther -> ethers.utils.formatEther
 async function main() {
 
-  const initialSupplyToken0 = 1000
+  const initialSupplyToken0 = 10000
   const initialSupplyToken1 = 10000000
   const [owner,addr1,addr2] = await ethers.getSigners();
   console.log(addr2.address)
@@ -34,21 +34,27 @@ async function main() {
   // approve 
   await token0.connect(owner).approve(pairorderbook.address,ethers.constants.MaxUint256)
   await token1.connect(owner).approve(pairorderbook.address,ethers.constants.MaxUint256)
+  await token0.connect(addr1).approve(pairorderbook.address,ethers.constants.MaxUint256)
+  await token1.connect(addr1).approve(pairorderbook.address,ethers.constants.MaxUint256)
   await token0.connect(addr2).approve(pairorderbook.address,ethers.constants.MaxUint256)
   await token1.connect(addr2).approve(pairorderbook.address,ethers.constants.MaxUint256)
 
   // owner deposit token 
-  await pairorderbook.connect(owner).deposit(initialSupplyToken0-100,token0.address)
+  await pairorderbook.connect(owner).deposit(initialSupplyToken0-2000,token0.address)
   await pairorderbook.connect(owner).deposit(initialSupplyToken1-2000000,token1.address)
 
 
-  // transfer token to addr2
-  await token0.connect(owner).transfer(addr2.address,100)
-  await token1.connect(owner).transfer(addr2.address, 2000000)
+  // transfer token to addr1,2
+  await token0.connect(owner).transfer(addr1.address,1000)
+  await token1.connect(owner).transfer(addr1.address, 1000000)
+  await token0.connect(owner).transfer(addr2.address,1000)
+  await token1.connect(owner).transfer(addr2.address, 1000000)
 
-  // addr2 deposit token 
-  await pairorderbook.connect(addr2).deposit(100, token0.address)
-  await pairorderbook.connect(addr2).deposit(2000000, token1.address)
+  // addr1,2 deposit token 
+  await pairorderbook.connect(addr1).deposit(1000, token0.address)
+  await pairorderbook.connect(addr1).deposit(1000000, token1.address)
+  await pairorderbook.connect(addr2).deposit(1000, token0.address)
+  await pairorderbook.connect(addr2).deposit(1000000, token1.address)
 
 
 
@@ -62,22 +68,44 @@ async function main() {
   let isSell = 1
   let round = 10
 
+  // buy 
+  
   price = 22500
   amount = 5
   prevNodeID = await pairorderbook._findIndex(price, isBuy)
   await pairorderbook.connect(owner).createLimitOrder(isBuy,amount,price,prevNodeID)
 
   price = 21000
-  amount = 20
+  amount = 3
   prevNodeID = await pairorderbook._findIndex(price, isBuy)
   await pairorderbook.connect(owner).createLimitOrder(isBuy,amount,price,prevNodeID)
 
   price = 19000
-  amount = 15
+  amount = 7
+  prevNodeID = await pairorderbook._findIndex(price, isBuy)
+
+  await pairorderbook.connect(owner).createLimitOrder(isBuy,amount,price,prevNodeID)
+  price = 18000
+  amount = 8
+  prevNodeID = await pairorderbook._findIndex(price, isBuy)
+  await pairorderbook.connect(owner).createLimitOrder(isBuy,amount,price,prevNodeID)
+
+  price = 17000
+  amount = 10
+  prevNodeID = await pairorderbook._findIndex(price, isBuy)
+  await pairorderbook.connect(owner).createLimitOrder(isBuy,amount,price,prevNodeID)
+
+  price = 25000
+  amount = 2
+  prevNodeID = await pairorderbook._findIndex(price, isBuy)
+  await pairorderbook.connect(owner).createLimitOrder(isBuy,amount,price,prevNodeID)
+
+  price = 23000
+  amount = 3
   prevNodeID = await pairorderbook._findIndex(price, isBuy)
   await pairorderbook.connect(owner).createLimitOrder(isBuy,amount,price,prevNodeID)
   
-  
+  // sell
 
   price = 24500
   amount = 12
@@ -94,8 +122,25 @@ async function main() {
   prevNodeID = await pairorderbook._findIndex(price, isSell)
   await pairorderbook.connect(owner).createLimitOrder(isSell,amount,price,prevNodeID)
 
+  price = 30000
+  amount = 8
+  prevNodeID = await pairorderbook._findIndex(price, isSell)
+  await pairorderbook.connect(owner).createLimitOrder(isSell,amount,price,prevNodeID)
 
+  price = 27000
+  amount = 5
+  prevNodeID = await pairorderbook._findIndex(price, isSell)
+  await pairorderbook.connect(owner).createLimitOrder(isSell,amount,price,prevNodeID)
 
+  price = 32000
+  amount = 10
+  prevNodeID = await pairorderbook._findIndex(price, isSell)
+  await pairorderbook.connect(owner).createLimitOrder(isSell,amount,price,prevNodeID)
+
+  price = 45000
+  amount = 20
+  prevNodeID = await pairorderbook._findIndex(price, isSell)
+  await pairorderbook.connect(owner).createLimitOrder(isSell,amount,price,prevNodeID)
 
 
   // for (let i = 0; i < round; i++) {
