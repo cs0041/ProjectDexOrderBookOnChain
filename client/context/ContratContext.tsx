@@ -279,7 +279,7 @@ export const ContractProvider = ({ children }: ChildrenProps) => {
         const structOrder: Order = {
           id: order.id.toNumber(),
           addressTrader: order.trader.toString(),
-          BuyOrSell: order.side,
+          BuyOrSell: order.isBuy,
           addressToken: order.token.toString(),
           amount: order.amount.toNumber(),
           price: order.price.toNumber(),
@@ -292,7 +292,7 @@ export const ContractProvider = ({ children }: ChildrenProps) => {
         const structOrder: Order = {
           id: order.id.toNumber(),
           addressTrader: order.trader.toString(),
-          BuyOrSell: order.side,
+          BuyOrSell: order.isBuy,
           addressToken: order.token.toString(),
           amount: order.amount.toNumber(),
           price: order.price.toNumber(),
@@ -335,7 +335,7 @@ export const ContractProvider = ({ children }: ChildrenProps) => {
         const structOrder: Order = {
           id: order.id.toNumber(),
           addressTrader: order.trader.toString(),
-          BuyOrSell: order.side,
+          BuyOrSell: order.isBuy,
           addressToken: order.token.toString(),
           amount: order.amount.toNumber(),
           price: order.price.toNumber(),
