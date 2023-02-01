@@ -1,164 +1,107 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.0;
 
-import "../node_modules/@openzeppelin/contracts/token/ERC20/IERC20.sol";
-import "../node_modules/@openzeppelin/contracts/access/Ownable.sol";
 import "./wallet.sol";
 
-contract PairNewOrder is Ownable,Wallet{
-    enum Side {
-        BUY, //  0 BUY
-        SELL //  1 Sell
-    }
-
-    // address  token0; // Main Token
-    // address  token1; // Ssecondary Token
+contract PairNewOrder is Wallet{
 
     struct Order {
         uint256 id;
         address trader;
-        Side side;
+        uint8 isBuy; 
         address token;
         uint256 amount;
         uint256 price;
         uint256 filled;
+        uint256 nextNodeID;
     }
 
-  mapping(uint8 => mapping (uint256 =>  Order))  payloadOrder;    //  Side (buy or sell) -> nodeID  -> Order
 
-  // node OrderBUY -> descending price token0 for buy
-  mapping(uint256 => uint256) _nextNodeBuyID; 
-  uint256  listBuySize;
-  uint256  nodeBuyID = 1;
-  
+  // node 
+  // Buy Or sell => ID => Order
+  mapping(uint8 => mapping (uint256 => Order )) linkedListsNode; 
 
-  // node OrderSell -> ascending price token0 for sell
-  mapping(uint256 => uint256) _nextNodeSellID; 
-  uint256  listSellSize;
-  uint256  nodeSellID = 1;
+  // list size 0 = buy    1 = sell
+  mapping(uint8 => uint256) listSize;
+
+  // nodeID 0 = nodeIDBuy 1 = nodeIDSell
+  mapping(uint8 => uint256) nodeID;
+
 
   uint256 immutable GUARDHEAD = 0 ;
   uint256 immutable GUARDTAIL = 115792089237316195423570985008687907853269984665640564039457584007913129639935 ;
-
   uint256 public price;
 
 
+
   constructor(address _tokne0 , address _token1) Wallet(_tokne0,_token1)  {
-    _nextNodeBuyID[0] = 115792089237316195423570985008687907853269984665640564039457584007913129639935;
-    _nextNodeSellID[0] = 115792089237316195423570985008687907853269984665640564039457584007913129639935;
+    nodeID[0] =1;
+    nodeID[1] =1;
+    linkedListsNode[0][0].nextNodeID = 115792089237316195423570985008687907853269984665640564039457584007913129639935;
+    linkedListsNode[1][0].nextNodeID  = 115792089237316195423570985008687907853269984665640564039457584007913129639935;
   }
 
 ////////////////////////////////////// CreateLimitOrder ////////////////////////////////////// 
 
- function createLimitOrder(Side side,uint256 amount,uint256 _price,uint256 prevNodeID)  public {
+ function createLimitOrder(uint8 _isBuy,uint256 _amount,uint256 _price,uint256 prevNodeID)  public {
       require(_price > 0,"price must > 0");
-      require(amount > 0,"amount must > 0");
-      // BUY  token0 -> create selltoken1 with (amount*price) to buy token0
-      // SELL token0 -> create selltoken0
+      require(_amount > 0,"amount must > 0");
+      require( linkedListsNode[_isBuy][prevNodeID].nextNodeID != 0,"prevNodeID index not exist ");
+      require(_verifyIndex(prevNodeID, _price,_isBuy, linkedListsNode[_isBuy][prevNodeID].nextNodeID),"position in linked list not order");
 
-        if(side == Side.BUY) {  
-            // buy token0  -> sell token1 
-            // amountToken0 priceToken0
-            addBuyOrder( amount, _price,  prevNodeID);
-        }
-        else if(side == Side.SELL) {
-            // sell token0 -> buy token1
-            addSellOrder( amount, _price,  prevNodeID);
-        }
+      address tokenMain = _isBuy==0 ? token1 : token0;
+      if(_isBuy==0){
+       require(balancesSpot[msg.sender][tokenMain] >= _amount * _price,"not enough balance token for buy");
+       // transfer balance Spot to Trade wallet 
+       balancesSpot[msg.sender][tokenMain] -= (_amount * _price);
+       balancesTrade[msg.sender][tokenMain] += (_amount * _price);
 
+      }else{
+          require(balancesSpot[msg.sender][tokenMain] >= _amount,"not enough balance token for sell");
+          // transfer balance Spot to Trade wallet 
+          balancesSpot[msg.sender][tokenMain] -= _amount;
+          balancesTrade[msg.sender][tokenMain] += _amount;
+      }
 
+      linkedListsNode[_isBuy][nodeID[_isBuy]] = Order(
+      nodeID[_isBuy],      
+      msg.sender,  
+      _isBuy,      
+      tokenMain,      
+      _amount,   
+      _price,    
+      0,
+      linkedListsNode[_isBuy][prevNodeID].nextNodeID);
+
+      linkedListsNode[_isBuy][prevNodeID].nextNodeID = nodeID[_isBuy];
+      listSize[_isBuy]++;
+      nodeID[_isBuy]++;
     }
-
-
-
-////////////////////////////////////// Add Order ////////////////////////////////////// 
-
-   function addBuyOrder(uint256 _amount,uint256 _price,  uint256 prevNodeID)  private {  
-    //BUY token0 amount - price
-    require(balancesSpot[msg.sender][token1] >= _amount * _price,"not enough balance token for buy");
-    require(_nextNodeBuyID[prevNodeID] != 0,"addBuyOrder index not exist ");
-    require(_verifyIndex(prevNodeID, _price,Side.BUY, _nextNodeBuyID[prevNodeID]),"position in linked list not order");
-
-    // transfer balance Spot to Trade wallet 
-    balancesSpot[msg.sender][token1] -= (_amount * _price);
-    balancesTrade[msg.sender][token1] += (_amount * _price);
-
-    payloadOrder[0][nodeBuyID] = Order(
-        nodeBuyID,      
-        msg.sender,  
-        Side.BUY,      
-        token1,      
-        _amount,   
-        _price,    
-        0          
-    );
-
-    _nextNodeBuyID[nodeBuyID] = _nextNodeBuyID[prevNodeID];
-    _nextNodeBuyID[prevNodeID] = nodeBuyID;
-    listBuySize++;
-    nodeBuyID++;
-  }
-
-   function addSellOrder( uint256 _amount,uint256 _price,  uint256 prevNodeID)  private {
-    //SELL token0 amount - price  
-    require(balancesSpot[msg.sender][token0] >= _amount,"not enough balance token for sell");
-    require(_nextNodeSellID[prevNodeID] != 0,"addSellOrder index not exist ");
-    require(_verifyIndex(prevNodeID, _price,Side.SELL, _nextNodeSellID[prevNodeID]),"position in linked list not order");
-
-    // transfer balance Spot to Trade wallet 
-    balancesSpot[msg.sender][token0] -= _amount;
-    balancesTrade[msg.sender][token0] += _amount;
-
-    payloadOrder[1][nodeSellID] = Order(
-        nodeSellID,    
-        msg.sender,  
-        Side.SELL,       
-        token0,     
-        _amount,    
-        _price,    
-        0           
-    );
-
-    _nextNodeSellID[nodeSellID] = _nextNodeSellID[prevNodeID];
-    _nextNodeSellID[prevNodeID] = nodeSellID;
-    listSellSize++;
-    nodeSellID++;
-  }
-
 
 ////////////////////////////////////// Check pre_price > new_price > next_price ////////////////////////////////////// 
 
-  function _verifyIndex(uint256 prevNodeID, uint256 _price, Side _side, uint256 nextNodeID)  internal view returns(bool) {
-    uint8 side = uint8(_side);
-     if(_side == Side.BUY){
-        return (prevNodeID == GUARDHEAD || payloadOrder[side][prevNodeID].price >= _price) && 
-           (nextNodeID == GUARDTAIL || _price > payloadOrder[side][nextNodeID].price);
-     } else if(_side == Side.SELL) {
-         return (prevNodeID == GUARDHEAD || payloadOrder[side][prevNodeID].price <= _price) && 
-           (nextNodeID == GUARDTAIL || _price < payloadOrder[side][nextNodeID].price);
+  function _verifyIndex(uint256 prevNodeID, uint256 _price, uint8 _isBuy, uint256 nextNodeID)  internal view returns(bool) {
+
+     if(_isBuy==0){
+        return (prevNodeID == GUARDHEAD ||  linkedListsNode[0][prevNodeID].price  >= _price) && 
+           (nextNodeID == GUARDTAIL || _price >  linkedListsNode[0][nextNodeID].price);
+     } else {
+         return (prevNodeID == GUARDHEAD || linkedListsNode[1][prevNodeID].price <= _price) && 
+           (nextNodeID == GUARDTAIL || _price < linkedListsNode[1][nextNodeID].price);
      }
-     revert("_verifyIndex revert");
   }
 
 //////////////////////////////////////           For offchain use           ////////////////////////////////////// 
 ////////////////////////////////////// Find index makes  linked list order  ////////////////////////////////////// 
-  function _findIndex(uint256 _price,Side _side) external view returns(uint256) {
+  function _findIndex(uint256 _price,uint8 _isBuy) external view returns(uint256) {
     require(_price > 0,"price must > 0");
     uint256 currentNodeID = GUARDHEAD;
-    if(_side == Side.BUY){
-        while(true) {
-        if(_verifyIndex(currentNodeID, _price,_side, _nextNodeBuyID[currentNodeID]))
-            return currentNodeID;
-        currentNodeID = _nextNodeBuyID[currentNodeID];
-        }
-    } else if(_side == Side.SELL) {
-            while(true) {
-            if(_verifyIndex(currentNodeID, _price,_side, _nextNodeSellID[currentNodeID]))
-                return currentNodeID;
-            currentNodeID = _nextNodeSellID[currentNodeID];
-            }
+    while(true) {
+    if(_verifyIndex(currentNodeID, _price,_isBuy, linkedListsNode[_isBuy][currentNodeID].nextNodeID))
+        return currentNodeID;
+    currentNodeID = linkedListsNode[_isBuy][currentNodeID].nextNodeID;
     }
-    revert("can't find index");
+    revert("_findIndex revert");
   }
 
 
@@ -166,25 +109,14 @@ contract PairNewOrder is Ownable,Wallet{
 ////////////////////////////////////  For offchain use ////////////////////////////////////// 
 ////////////////////////////////////// Get OrderBook ////////////////////////////////////// 
 
-  function getOrderBook(uint8 side) external view returns(Order[] memory) {
-    if(side == 0) {
-        Order[] memory dataList = new Order[](listBuySize);
-        uint256 currentNodeID = _nextNodeBuyID[GUARDHEAD];
-        for(uint256 i = 0; i < listBuySize; ++i) {
-        dataList[i] = payloadOrder[side][currentNodeID];
-        currentNodeID = _nextNodeBuyID[currentNodeID];
-        }
-        return dataList;
-    } else if(side == 1) {
-        Order[] memory dataList = new Order[](listSellSize);
-        uint256 currentNodeID = _nextNodeSellID[GUARDHEAD];
-        for(uint256 i = 0; i < listSellSize; ++i) {
-        dataList[i] = payloadOrder[side][currentNodeID];
-        currentNodeID = _nextNodeSellID[currentNodeID];
-        }
-        return dataList;
-    }
-    revert("Can't Get Data Order Something Wrong");
+  function getOrderBook(uint8 _isBuy) external view returns(Order[] memory) {
+      Order[] memory dataList = new Order[](listSize[_isBuy]);
+      uint256 currentNodeID =  linkedListsNode[_isBuy][GUARDHEAD].nextNodeID;
+      for(uint256 i = 0; i < listSize[_isBuy]; ++i) {
+      dataList[i] = linkedListsNode[_isBuy][currentNodeID];
+      currentNodeID = linkedListsNode[_isBuy][currentNodeID].nextNodeID;
+      }
+      return dataList;
 
     
   }
@@ -193,42 +125,43 @@ contract PairNewOrder is Ownable,Wallet{
         uint256 allLengthOrderBookByAddress;
         uint256 currentNodeID;
 
-        currentNodeID = _nextNodeBuyID[GUARDHEAD];
-        for(uint256 i = 0; i < listBuySize; ++i) {
-          if(payloadOrder[0][currentNodeID].trader == _trader){
+
+        currentNodeID = linkedListsNode[0][GUARDHEAD].nextNodeID;
+        for(uint256 i = 0; i < listSize[0]; ++i) {
+          if(linkedListsNode[0][currentNodeID].trader == _trader){
             allLengthOrderBookByAddress++;
           }
-          currentNodeID = _nextNodeBuyID[currentNodeID];
+          currentNodeID = linkedListsNode[0][currentNodeID].nextNodeID;
         }
 
-        currentNodeID = _nextNodeSellID[GUARDHEAD];
-        for(uint256 i = 0; i < listSellSize; ++i) {
-          if(payloadOrder[1][currentNodeID].trader == _trader){
+        currentNodeID = linkedListsNode[1][GUARDHEAD].nextNodeID;
+        for(uint256 i = 0; i < listSize[1]; ++i) {
+          if(linkedListsNode[1][currentNodeID].trader == _trader){
             allLengthOrderBookByAddress++;
           }
-          currentNodeID = _nextNodeSellID[currentNodeID];
+          currentNodeID = linkedListsNode[1][currentNodeID].nextNodeID;
         }
 
 
         Order[] memory dataList = new Order[](allLengthOrderBookByAddress);
         uint index = 0;
 
-        currentNodeID = _nextNodeBuyID[GUARDHEAD];
-        for(uint i = 0; i < listBuySize; ++i) {
-          if(payloadOrder[0][currentNodeID].trader == _trader){
-            dataList[index] = payloadOrder[0][currentNodeID];
+       currentNodeID = linkedListsNode[0][GUARDHEAD].nextNodeID;
+        for(uint i = 0; i < listSize[0]; ++i) {
+          if(linkedListsNode[0][currentNodeID].trader == _trader){
+            dataList[index] = linkedListsNode[0][currentNodeID];
             index++;
           }
-          currentNodeID = _nextNodeBuyID[currentNodeID];
+          currentNodeID = linkedListsNode[0][currentNodeID].nextNodeID;
         }
 
-        currentNodeID = _nextNodeSellID[GUARDHEAD];
-        for(uint i = 0; i < listSellSize ; ++i) {
-          if(payloadOrder[1][currentNodeID].trader == _trader){
-            dataList[index] = payloadOrder[1][currentNodeID];
+        currentNodeID = linkedListsNode[1][GUARDHEAD].nextNodeID;
+        for(uint i = 0; i < listSize[1] ; ++i) {
+          if(linkedListsNode[1][currentNodeID].trader == _trader){
+            dataList[index] = linkedListsNode[1][currentNodeID];
             index++;
           }
-          currentNodeID = _nextNodeSellID[currentNodeID];
+          currentNodeID = linkedListsNode[1][currentNodeID].nextNodeID;
         }
         return dataList;
     
@@ -238,71 +171,40 @@ contract PairNewOrder is Ownable,Wallet{
 
 
 ////////////////////////////////////// Remove Limit Order   ////////////////////////////////////// 
- function removeOrder(Side _side,uint256 index, uint256 prevIndex) public {
-     uint8 side = uint8(_side);
-     require(payloadOrder[side][index].trader == msg.sender,"you are not owner of this position order");
-     if(_side == Side.BUY) {
-        require(_nextNodeBuyID[index] != 0,"removeOrder index not exist");
-        require(_isPrev(_side,index, prevIndex),"index is not pre");
-        
+ function removeOrder(uint8 _isBuy,uint256 index, uint256 prevIndex) public {
+     require(linkedListsNode[_isBuy][index].trader == msg.sender,"you are not owner of this position order");
+     require(linkedListsNode[_isBuy][index].nextNodeID != 0,"removeOrder index not exist");
+     require(_isPrev(_isBuy,index, prevIndex),"index is not prevIndex");
+     address token =  linkedListsNode[_isBuy][index].token;
+     uint256 _amount =  linkedListsNode[_isBuy][index].amount;
+     uint256 _price =  linkedListsNode[_isBuy][index].price;
+     if(_isBuy==0) {
         // transfer balance Trade to Spot wallet 
-        balancesSpot[msg.sender][payloadOrder[side][index].token] += ( payloadOrder[side][index].amount *  payloadOrder[side][index].price);
-        balancesTrade[msg.sender][payloadOrder[side][index].token] -= ( payloadOrder[side][index].amount *  payloadOrder[side][index].price);
-
-        _nextNodeBuyID[prevIndex] = _nextNodeBuyID[index];
-        _nextNodeBuyID[index] = 0;
-        listBuySize--;
-
-      } else if(_side == Side.SELL) {
-        require(_nextNodeSellID[index] != 0,"removeOrder index not exist");
-        require(_isPrev(_side,index, prevIndex),"index is not pre");
-
+        balancesSpot[msg.sender][token] += ( _amount * _price);
+        balancesTrade[msg.sender][token] -= ( _amount * _price);
+      } else  {
         // transfer balance Trade to Spot wallet 
-        balancesSpot[msg.sender][payloadOrder[side][index].token]  += payloadOrder[side][index].amount ;
-        balancesTrade[msg.sender][payloadOrder[side][index].token] -= payloadOrder[side][index].amount ;
-
-        _nextNodeSellID[prevIndex] = _nextNodeSellID[index];
-        _nextNodeSellID[index] = 0;
-        listSellSize--;
-
+        balancesSpot[msg.sender][token]  += _amount ;
+        balancesTrade[msg.sender][token] -= _amount ;
       }
-
+      linkedListsNode[_isBuy][prevIndex].nextNodeID = linkedListsNode[_isBuy][index].nextNodeID;
+      linkedListsNode[_isBuy][index].nextNodeID = 0;
+      listSize[_isBuy]--;
  }
 
- function removeOrderNoUpdateBalances(Side _side,uint256 index, uint256 prevIndex) private {
-
-     if(_side == Side.BUY) {
-        require(_nextNodeBuyID[index] != 0,"removeOrderNoUpdateBalances index not exist");
-        require(_isPrev(_side,index, prevIndex),"removeOrderNoUpdateBalances index is not pre");
-        
-
-        _nextNodeBuyID[prevIndex] = _nextNodeBuyID[index];
-        _nextNodeBuyID[index] = 0;
-        listBuySize--;
-
-      } else if(_side == Side.SELL) {
-        require(_nextNodeSellID[index] != 0,"index not exist");
-        require(_isPrev(_side,index, prevIndex),"index is not pre");
-
-        _nextNodeSellID[prevIndex] = _nextNodeSellID[index];
-        _nextNodeSellID[index] = 0;
-        listSellSize--;
-
-      }
-
+ function removeOrderNoUpdateBalances(uint8 _isBuy,uint256 index, uint256 prevIndex) private {
+      require(linkedListsNode[_isBuy][index].nextNodeID != 0,"removeOrderNoUpdateBalances index not exist");
+      require(_isPrev(_isBuy,index, prevIndex),"removeOrderNoUpdateBalances index is not prevIndex");
+      linkedListsNode[_isBuy][prevIndex].nextNodeID = linkedListsNode[_isBuy][index].nextNodeID;
+      linkedListsNode[_isBuy][index].nextNodeID = 0;
+      listSize[_isBuy]--;
  }
 
  ////////////////////////////////////// Check isPrev index ////////////////////////////////////// 
 
-  function _isPrev(Side _side,uint256 currentNodeID, uint256 prevNodeID) private view returns(bool) {
-     if(_side == Side.BUY) {
-          return _nextNodeBuyID[prevNodeID] == currentNodeID;
-      } else if(_side == Side.SELL) {
-           return _nextNodeSellID[prevNodeID] == currentNodeID;
-      }
-
-      revert("_isPrev revert");
-   
+  function _isPrev(uint8 _isBuy,uint256 currentNodeID, uint256 prevNodeID) private view returns(bool) {
+    require(linkedListsNode[_isBuy][prevNodeID].nextNodeID != 0,"prevNodeID not exist");
+    return linkedListsNode[_isBuy][prevNodeID].nextNodeID == currentNodeID;
   }
 
   
@@ -310,23 +212,14 @@ contract PairNewOrder is Ownable,Wallet{
 //////////////////////////////////////           For offchain use           ////////////////////////////////////// 
 //////////////////////////////////////         Find PrevOrder index    ////////////////////////////////////// 
 
-  function _findPrevOrder(Side _side,uint256 index) public view returns(uint256) {
+  function _findPrevOrder(uint8 _isBuy,uint256 index) public view returns(uint256) {
     uint256 currentNodeID = GUARDHEAD;
-     if(_side == Side.BUY) {
-          while(_nextNodeBuyID[currentNodeID] != GUARDTAIL) {
-                if(_isPrev(_side,index, currentNodeID))
+    while(linkedListsNode[_isBuy][currentNodeID].nextNodeID !=  GUARDTAIL) {
+                if(_isPrev(_isBuy,index, currentNodeID))
                     return currentNodeID;
-                currentNodeID = _nextNodeBuyID[currentNodeID];
+                currentNodeID = linkedListsNode[_isBuy][currentNodeID].nextNodeID;
             }
-      } else if(_side == Side.SELL) {
-           while(_nextNodeSellID[currentNodeID] != GUARDTAIL) {
-                if(_isPrev(_side,index, currentNodeID))
-                    return currentNodeID;
-                currentNodeID = _nextNodeSellID[currentNodeID];
-            }
-      }
-    
-    revert("_findPrevOrder not exist");
+    revert('_findPrevOrder not exist');
   }
 
 
@@ -335,164 +228,145 @@ contract PairNewOrder is Ownable,Wallet{
 ////////////////////////////////////// Update Limit Order   ////////////////////////////////////// 
 //prevIndexAdd      use  _findIndex(newpayloadOrder)
 //prevIndexRemove   use _findPrevOrder(index)
-  function updateOrder(Side _side,uint256 index, uint256 newPriceOrder, uint256 newAmount,uint256 prevIndexAdd,uint256 prevIndexRemove) public  {
+  function updateOrder(uint8 _isBuy,uint256 index, uint256 newPriceOrder, uint256 newAmount,uint256 prevIndexAdd,uint256 prevIndexRemove) public  {
+     require(linkedListsNode[_isBuy][index].nextNodeID != 0,"updateOrder index not exist");
+     require(linkedListsNode[_isBuy][prevIndexRemove].nextNodeID != 0,"updateOrder index not exist");
+     require(linkedListsNode[_isBuy][prevIndexAdd].nextNodeID != 0,"updateOrder index not exist");
+     if(prevIndexRemove==prevIndexAdd || index==prevIndexAdd){
+        require(_isPrev(_isBuy,index,prevIndexRemove));
+        require(_verifyIndex(prevIndexAdd, newPriceOrder,_isBuy, linkedListsNode[_isBuy][index].nextNodeID));
+        
+        address token =  linkedListsNode[_isBuy][index].token;
+        uint256 _amount =  linkedListsNode[_isBuy][index].amount;
+        uint256 _price =  linkedListsNode[_isBuy][index].price;
+        linkedListsNode[_isBuy][index].price = newPriceOrder;
+        linkedListsNode[_isBuy][index].amount = newAmount;
 
-      uint8 side = uint8(_side);
-      require(payloadOrder[side][index].trader == msg.sender,"you are not owner of this position order");
-    
+          // transfer balance Trade to Spot wallet 
+          if(_isBuy==0) {
+          bool isMoreThan = (newPriceOrder*newAmount) > ( _amount * _price);
+          if(isMoreThan){
+            uint256 diff = (newPriceOrder*newAmount)-( _amount * _price);
+            balancesSpot[msg.sender][token] -= diff;
+            balancesTrade[msg.sender][token] += diff;
+          }else{
+            uint256 diff = ( _amount * _price)-(newPriceOrder*newAmount);
+            balancesSpot[msg.sender][token] += diff;
+            balancesTrade[msg.sender][token] -= diff;
+          }
+        } else  {
+          bool isMoreThan = newAmount >  _amount ;
+          if(isMoreThan){
+            uint256 diff = newAmount- _amount ;
+            balancesSpot[msg.sender][token] -= diff;
+            balancesTrade[msg.sender][token] += diff;
+          }else{
+            uint256 diff = _amount-newAmount ;
+            balancesSpot[msg.sender][token] += diff;
+            balancesTrade[msg.sender][token] -= diff;
+          }
+        }
 
-      if(_side == Side.BUY) {
+     }else{
 
-          require(_nextNodeBuyID[index] != 0,"index not exist index");
-          require(_nextNodeBuyID[prevIndexRemove]  != 0,"index not exist prevIndexRemove");
-          require(_nextNodeBuyID[prevIndexAdd]  != 0,"index not exist prevIndexAdd");
+      // removeOrder and createLimitOrder
+      removeOrder(_isBuy, index, prevIndexRemove);
+      createLimitOrder(_isBuy,newAmount,newPriceOrder,prevIndexAdd);
+     }
 
-          // removeOrder and createLimitOrder
-          addBuyOrder( newAmount, newPriceOrder,  prevIndexAdd);
-          removeOrder(_side,index,prevIndexRemove);
 
-   
-            
-      } else if(_side == Side.SELL) {
-
-          require(_nextNodeSellID[index] != 0,"index not exist index");
-          require(_nextNodeSellID[prevIndexRemove]  != 0,"index not exist prevIndexRemove");
-          require(_nextNodeSellID[prevIndexAdd]  != 0,"index not exist prevIndexAdd");
-
-          // removeOrder and createLimitOrder
-          addSellOrder( newAmount, newPriceOrder,  prevIndexAdd);
-          removeOrder(_side,index,prevIndexRemove);
-      }
+//เท่ากับตัวเอง ไม่ได้ และ น้อยกว่าตัวถึงจนถึงถึงตัวต่อไปไม่ได้
+//22499 - 21000
+// 0 -1 -2 -3     // 0 -1 -2 -3
+// 1,0                  2,1
+// 0 -2 -3                 0 - 1 -3   
+// 1,1                       2,1
+// 1 ----price -----
+// 0 -4- -2 -3
   }
 
 
 
 //////////////////////////////////////  Market Order    ////////////////////////////////////// 
-    function createMarketOrder(Side _side,uint256 amount) public {
+    function createMarketOrder(uint8 _isBuy,uint256 amount) public {
         uint256 totalFilled = 0;
+        (address tokenMain,address tokenSeconry) = _isBuy == 0 ? (token1,token0) : (token0,token1);
+        _isBuy = _isBuy==0? 1 : 0; // toggle isBuy
+        require(balancesSpot[msg.sender][tokenMain] >= amount, "not enough balance token for MarketOrder");
+
         // Market Sell token0
         // sell token0 buy token1
 
-        if(_side == Side.SELL){
-            require(balancesSpot[msg.sender][token0] >= amount, "not enough balance token for sell");
 
-            
-          // _nextNodeBuyID
-          // listBuySize
-          // payloadOrder[uint8(_side)][nodeBuyID] 
-            uint256 currentNodeID = _nextNodeBuyID[GUARDHEAD];
-            for (uint256 i = 0; i < listBuySize && totalFilled < amount; i++) {
+            uint256 currentNodeID = linkedListsNode[_isBuy][GUARDHEAD].nextNodeID;
+            for (uint256 i = 0; i < listSize[_isBuy] && totalFilled < amount; i++) {
 
                 uint256 leftToFill = amount - totalFilled;
-                uint256 availableToFill = payloadOrder[0][currentNodeID].amount -  payloadOrder[0][currentNodeID].filled;
+                uint256 availableToFill = linkedListsNode[_isBuy][currentNodeID].amount -  linkedListsNode[_isBuy][currentNodeID].filled;
                 uint256 filled = 0;
-                if(availableToFill > leftToFill){
+                uint256 cost ;
+                if(_isBuy==1){
+                  if( (availableToFill*linkedListsNode[_isBuy][currentNodeID].price) > leftToFill){
                     filled = leftToFill; //Full Fill 
-                }
-                else{ 
-                    filled = availableToFill; // Fill as much as can Fill
-                }
+                    }
+                    else{ 
+                        filled = (availableToFill*linkedListsNode[_isBuy][currentNodeID].price); // Fill as much as can Fill
+                    }
+                }else{
+                    if(availableToFill > leftToFill){
+                        filled = leftToFill; //Full Fill 
+                    }
+                    else{ 
+                        filled = availableToFill; // Fill as much as can Fill
+                    }
+                  }
 
                 totalFilled = totalFilled + filled;
-                payloadOrder[0][currentNodeID].filled += filled;
-                uint256 cost = filled * payloadOrder[0][currentNodeID].price;
+
+                if(_isBuy==1){
+                  linkedListsNode[_isBuy][currentNodeID].filled += (filled/linkedListsNode[_isBuy][currentNodeID].price);
+                  cost = (filled/linkedListsNode[_isBuy][currentNodeID].price); // amount token0
+                }else{
+                  linkedListsNode[_isBuy][currentNodeID].filled += filled;
+                  cost = filled * linkedListsNode[_isBuy][currentNodeID].price;
+                }
 
                 //msg.sender is the seller
 
                 // sell
-                balancesSpot[msg.sender][token0] -= filled;
-                balancesSpot[payloadOrder[0][currentNodeID].trader][token0] += filled;
+                balancesSpot[msg.sender][tokenMain] -= filled;
+                balancesSpot[linkedListsNode[_isBuy][currentNodeID].trader][tokenMain] += filled;
                 
           
                 // recive after sell
-                balancesSpot[msg.sender][token1] += cost;
-                balancesTrade[payloadOrder[0][currentNodeID].trader][token1] -= cost;
-
+                balancesSpot[msg.sender][tokenSeconry] += cost;
+                balancesTrade[linkedListsNode[_isBuy][currentNodeID].trader][tokenSeconry] -= cost;
 
 
 
                 // update latest price
-                price = payloadOrder[0][currentNodeID].price ;
+                price = linkedListsNode[_isBuy][currentNodeID].price ;
 
-                currentNodeID = _nextNodeBuyID[currentNodeID];
-        }
-
-     
-
-    
-        //Remove 100% filled orders from the orderbook
-        while(listBuySize > 0 && payloadOrder[0][_nextNodeBuyID[GUARDHEAD]].filled == payloadOrder[0][_nextNodeBuyID[GUARDHEAD]].amount ){
-        //Remove the top element in the orders
-             removeOrderNoUpdateBalances(Side.BUY, _nextNodeBuyID[GUARDHEAD],0);
-        }
-
-
-      // Market Buy token0
-      // sell token1 buy token0
-
-      } else if(_side == Side.BUY){
-            require(balancesSpot[msg.sender][token1] >= amount, "not enough balance token for buy");
-          // _nextNodeSellID
-          // listSellSize
-          // payloadOrder[uint8(_side)][nodeSellID] 
-            uint256 currentNodeID = _nextNodeSellID[GUARDHEAD];
-            for (uint256 i = 0; i < listSellSize && totalFilled < amount; i++) {
-                uint256 leftToFill = amount - totalFilled;
-                uint256 availableToFill = payloadOrder[1][currentNodeID].amount -  payloadOrder[1][currentNodeID].filled;
-                uint256 filled = 0;
-                if( (availableToFill*payloadOrder[1][currentNodeID].price) > leftToFill){
-                    filled = leftToFill; //Full Fill 
-                }
-                else{ 
-                    filled = (availableToFill*payloadOrder[1][currentNodeID].price); // Fill as much as can Fill
-                }
-
-                totalFilled = totalFilled + filled;
-                payloadOrder[1][currentNodeID].filled += (filled/payloadOrder[1][currentNodeID].price);
-                uint256 cost = (filled/payloadOrder[1][currentNodeID].price); // amount token0
-
-                //msg.sender is the seller
-
-                // sell
-                balancesSpot[msg.sender][token1] -= filled;
-                balancesSpot[payloadOrder[1][currentNodeID].trader][token1] += filled;
-           
-
-                // recive after sell
-                balancesSpot[msg.sender][token0] += cost;
-                balancesTrade[payloadOrder[1][currentNodeID].trader][token0] -= cost;
-
-
-                // update latest price
-                price = payloadOrder[1][currentNodeID].price ;
-
-                currentNodeID = _nextNodeSellID[currentNodeID];
+                currentNodeID =linkedListsNode[_isBuy][currentNodeID].nextNodeID;
 
                 
         }
-
-     
+        
 
     
-
         //Remove 100% filled orders from the orderbook
-        while(listSellSize > 0 && payloadOrder[1][_nextNodeSellID[GUARDHEAD]].filled == payloadOrder[1][_nextNodeSellID[GUARDHEAD]].amount ){
+        while(listSize[_isBuy] > 0 && linkedListsNode[_isBuy][linkedListsNode[_isBuy][GUARDHEAD].nextNodeID].filled == linkedListsNode[_isBuy][linkedListsNode[_isBuy][GUARDHEAD].nextNodeID].amount ){
         //Remove the top element in the orders
-           removeOrderNoUpdateBalances(Side.SELL, _nextNodeSellID[GUARDHEAD],0);
+             removeOrderNoUpdateBalances(_isBuy,linkedListsNode[_isBuy][GUARDHEAD].nextNodeID,0);
         }
 
-
       }
-    }
-  ////////////////////////////////////// MARKET ORDER    ////////////////////////////////////// 
-
-
+  
+}
 
 
   
- function testOwner() public onlyOwner view returns(string memory ){
-    return "can onlyOwner";
-  }
 
- }
+
+ 
 
