@@ -229,6 +229,8 @@ contract PairNewOrder is Wallet{
 //prevIndexAdd      use  _findIndex(newpayloadOrder)
 //prevIndexRemove   use _findPrevOrder(index)
   function updateOrder(uint8 _isBuy,uint256 index, uint256 newPriceOrder, uint256 newAmount,uint256 prevIndexAdd,uint256 prevIndexRemove) public  {
+    //  require(_price > 0,"price must > 0");
+    // require(_amount > 0,"amount must > 0");
      require(linkedListsNode[_isBuy][index].nextNodeID != 0,"updateOrder index not exist");
      require(linkedListsNode[_isBuy][prevIndexRemove].nextNodeID != 0,"updateOrder index not exist");
      require(linkedListsNode[_isBuy][prevIndexAdd].nextNodeID != 0,"updateOrder index not exist");
