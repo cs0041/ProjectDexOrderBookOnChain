@@ -298,7 +298,7 @@ export const ContractProvider = ({ children }: ChildrenProps) => {
           price: order.price.toNumber(),
           filled: order.filled.toNumber(),
         } 
-        setOrderBookSell((prev) => [...prev, structOrder])
+        setOrderBookSell((prev) => [structOrder, ...prev])
       })
 
 
