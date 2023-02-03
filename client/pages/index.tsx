@@ -16,6 +16,8 @@ import artifact from '../../artifacts/contracts/PairOrder.sol/PairNewOrder.json'
 import {PairNewOrder,PairNewOrder__factory,Token0,Token0__factory,Token1,Token1__factory} from '../../typechain-types'
 import {ContractContext} from '../context/ContratContext'
 import UpdateModal from '../components/Modal'
+import Header from '../components/Header'
+import OrderBook from '../components/OrderBook'
   
     
 interface Inputs {
@@ -28,11 +30,6 @@ interface Inputs {
 
 const Home = () => {
   const {
-    loadOrderBook,
-    loadingOrderBuy,
-    loadingOrderSell,
-    orderBookBuy,
-    orderBookSell,
     priceToken,
     sendTxMarketOrder,
     balancesSpotToken0,
@@ -78,40 +75,29 @@ const Home = () => {
           chainStatus={'full'}
         />
 
+        <Header/>
+        <section className='flex h-screen flex-row flex-1 '>
+          <div className='w-2/12 h-4/6 '>
+              <OrderBook/>
+       
+          </div>
+          <div className='w-10/12 h-4/6 bg-green-300'>
+       
+              Grahp
+          </div>
+          <div className='w-2/12 h-4/6 bg-orange-400'>
+              
+              Market Trades
+          </div>
+
+        </section>
+
         {address && <p>My address is {address}</p>}
 
         <span>Price</span>
         <p>{priceToken ? priceToken : 'wait Price ...'}</p>
 
-        <div className="text-red-500 text-3xl">
-          <p>Sell</p>
-          <p>
-            {loadingOrderSell
-              ? 'Load...'
-              : orderBookSell
-                  .slice(0)
-                  .reverse()
-                  .map((item) => (
-                    <p>{` ${item.price} - ${item.amount - item.filled}`}</p>
-                  ))}
-          </p>
-        </div>
-        <div className="text-green-500 text-3xl">
-          <p>Buy</p>
-          <p>
-            {loadingOrderBuy
-              ? 'Load...'
-              : orderBookBuy?.map((item) => (
-                  <p>{` ${item.price} - ${item.amount - item.filled}`}</p>
-                ))}
-          </p>
-          <button
-            className="text-black rounded-lg bg-red-500 p-2 px-8"
-            onClick={loadOrderBook}
-          >
-            GetDataOrder
-          </button>
-        </div>
+
 
         <h1 className="text-4xl mt-10">Market Order</h1>
 
