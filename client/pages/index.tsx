@@ -32,17 +32,6 @@ interface Inputs {
 // }
 
 const Home = () => {
-  const {
-
-    balancesSpotToken0,
-    balancesTradeToken0,
-    balancesSpotToken1,
-    balancesTradeToken1,
-    isLoadingOrderBookByAddress,
-    orderBookByAddress,
-    loadOrderBookByAddress,
-    sendTxCancelOrder,
-  } = useContext(ContractContext)
 
 
   // for update modal
@@ -83,58 +72,13 @@ const Home = () => {
             </div>
             <div className="w-2/12">Market Trades</div>
           </div>
-          <div className="h-2/6 border-gray-600 border-t-2 ">
+          <div className="h-2/6 border-gray-600 border-t-2 max-h-fit">
             <History />
           </div>
         </section>
 
-        {address && <p>My address is {address}</p>}
+        {/* {address && <p>My address is {address}</p>} */}
 
-        <div>
-          <h1>OPEN ORDER</h1>
-          {address
-            ? isLoadingOrderBookByAddress
-              ? 'Loading....... '
-              : orderBookByAddress.map((item) => (
-                  <div className="flex flex-row mb-5 space-x-5">
-                    <p>{`${item.BuyOrSell == 0 ? 'Buy' : 'Sell'} - price : ${
-                      item.price
-                    } - amount :  ${item.amount} - filled :  ${
-                      item.filled
-                    } ---id : ${item.id}`}</p>
-                    <button
-                      onClick={() => sendTxCancelOrder(item.BuyOrSell, item.id)}
-                      className=" text-white rounded bg-red-500 px-3 py-2 font-semibold"
-                    >
-                      cancel order
-                    </button>
-                    <button
-                      onClick={() => {
-                        setIdUpdate(item.id)
-                        setSideBuyOrSell(item.BuyOrSell)
-                        setShowUpdateModal(true)
-                      }}
-                      className=" text-white rounded bg-orange-500 px-3 py-2 font-semibold"
-                    >
-                      update order
-                    </button>
-                  </div>
-                ))
-            : 'PLS CONNECT WALLET'}
-
-          <button
-            onClick={() => {
-              if (address) {
-                loadOrderBookByAddress(address)
-              } else {
-                console.log('No address')
-              }
-            }}
-            className="w-full text-white rounded bg-red-500 py-3 font-semibold"
-          >
-            Get Order By Address
-          </button>
-        </div>
         {showUpdateModal && (
           <UpdateModal
             id={idUpdate}
