@@ -11,6 +11,7 @@ interface Order {
   id: number
   addressTrader: string
   BuyOrSell: number
+  createdDate:string
   addressToken: string
   amount: number
   price: number
@@ -280,6 +281,7 @@ export const ContractProvider = ({ children }: ChildrenProps) => {
           id: order.id.toNumber(),
           addressTrader: order.trader.toString(),
           BuyOrSell: order.isBuy,
+          createdDate: order.createdDate.toString(),
           addressToken: order.token.toString(),
           amount: order.amount.toNumber(),
           price: order.price.toNumber(),
@@ -293,6 +295,7 @@ export const ContractProvider = ({ children }: ChildrenProps) => {
           id: order.id.toNumber(),
           addressTrader: order.trader.toString(),
           BuyOrSell: order.isBuy,
+          createdDate: order.createdDate.toString(),
           addressToken: order.token.toString(),
           amount: order.amount.toNumber(),
           price: order.price.toNumber(),
@@ -336,6 +339,7 @@ export const ContractProvider = ({ children }: ChildrenProps) => {
           id: order.id.toNumber(),
           addressTrader: order.trader.toString(),
           BuyOrSell: order.isBuy,
+          createdDate: order.createdDate.toString(),
           addressToken: order.token.toString(),
           amount: order.amount.toNumber(),
           price: order.price.toNumber(),
