@@ -15,3 +15,17 @@
     }
 }
 
+
+
+
+/* custom classNames */
+@layer components {
+    .InputOrder {
+        @apply bg-gray-800 flex flex-row text-xl p-2 rounded-sm
+    }
+
+    .HeadSelectTypeOrder {
+      @apply text-xl font-bold  hover:text-yellow-300
+    }
+
+}
