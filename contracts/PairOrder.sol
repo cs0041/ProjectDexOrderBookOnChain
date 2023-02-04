@@ -9,6 +9,7 @@ contract PairNewOrder is Wallet{
         uint256 id;
         address trader;
         uint8 isBuy; 
+        uint256 createdDate;
         address token;
         uint256 amount;
         uint256 price;
@@ -66,7 +67,8 @@ contract PairNewOrder is Wallet{
       linkedListsNode[_isBuy][nodeID[_isBuy]] = Order(
       nodeID[_isBuy],      
       msg.sender,  
-      _isBuy,      
+      _isBuy,   
+      block.timestamp,   
       tokenMain,      
       _amount,   
       _price,    
