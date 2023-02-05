@@ -18,6 +18,33 @@ interface Order {
   filled: number
 }
 
+interface EventCreateLimitOrder {
+  Date:number
+  Side:number
+  amount:number
+  price:number
+}
+
+interface EventMarketOrder {
+  Date:number
+  Side: number
+  amount: number
+}
+
+interface EventRemoveOrder {
+  Date:number
+  Side: number
+  index: number
+}
+
+interface EventUpdateOrder {
+  Date:number
+  Side: number
+  newPriceOrder: number
+  newAmount: number
+}
+
+
 interface IContract {
   loadingOrderSell: boolean
   loadingOrderBuy: boolean
@@ -36,7 +63,7 @@ interface IContract {
   loadOrderBookByAddress: (address: string) => Promise<void>
   sendTxCancelOrder: (side: number, id: number | string) => Promise<void>
   sendTxUpdateOrder: (side: number, id: number, newAmount: number | string, newPriceOrder: number | string) => Promise<void>
-  
+  marketEvent: EventMarketOrder[]
 }
 
 export const ContractContext = createContext<IContract>({
@@ -57,6 +84,7 @@ export const ContractContext = createContext<IContract>({
   loadOrderBookByAddress: async () => {},
   sendTxCancelOrder: async () => {},
   sendTxUpdateOrder: async () => {},
+  marketEvent:[],
 })
 
 
@@ -93,7 +121,7 @@ interface ChildrenProps {
 export const ContractProvider = ({ children }: ChildrenProps) => {
 
 
-  const [initialLoading, setInitialLoading] = useState(false)
+  const [initialLoading, setInitialLoading] = useState(true)
 
   // order sell
   const [orderBookSell, setOrderBookSell] = useState<Order[]>([])
@@ -115,7 +143,13 @@ export const ContractProvider = ({ children }: ChildrenProps) => {
 
   // order by address
   const [orderBookByAddress, setOrderBookByAddress] = useState<Order[]>([])
-  const [isLoadingOrderBookByAddress,setIsLoadingOrderBookByAddress] = useState(false)
+  const [isLoadingOrderBookByAddress,setIsLoadingOrderBookByAddress] = useState(true)
+
+  // Market order
+  const [marketEvent,setMarketEvent] = useState<EventMarketOrder[]>([])
+
+  // History order
+  // const [historyOrderEvent, setHistoryOrderEvent] = useState<EventCreateLimitOrder[] |>
 
   // helper
   // const toString = (bytes32) => ethers.utils.parseBytes32String(bytes32)
@@ -126,12 +160,15 @@ export const ContractProvider = ({ children }: ChildrenProps) => {
  
   
   useEffect(() => {
-     if (!window.ethereum) return console.log('Please install metamask')
-     setInitialLoading(false)
-     loadOrderBook()
-     loadPriceToken()
-     loadBalances()
-     loadOrderBookByAddress()
+    if (!window.ethereum) return console.log('Please install metamask')
+    loadOrderBook()
+    loadPriceToken()
+    loadBalances()
+    loadOrderBookByAddress()
+    fristQueryEvents()
+    queryEvents()
+    
+    setInitialLoading(false)
 
    }, [])
 
@@ -359,6 +396,54 @@ export const ContractProvider = ({ children }: ChildrenProps) => {
 
   }
 
+  const fristQueryEvents = async() => {
+    if (!window.ethereum) return console.log('Please install metamask')
+
+     try {
+        const provider = new ethers.providers.Web3Provider(window.ethereum as any )
+        const blockNumber = await provider.getBlockNumber()
+        const contract = new ethers.Contract(ContractPairOrderAddress, artifactPairNewOrder.abi, provider) as PairNewOrder
+        //const filter = contract.filters.CreateLimitOrder()
+        const filterMarketOrder = contract.filters.MarketOrder()
+
+        const resultsMarketOrder = await contract.queryFilter(filterMarketOrder, 0, blockNumber);
+        resultsMarketOrder.map(async (item) => {
+          const timeDate = (await provider.getBlock(item.blockNumber)).timestamp
+          const structEvent: EventMarketOrder = {
+            Date: timeDate,
+            Side: item.args._isBuy,
+            amount: item.args._amount.toNumber(),
+          }
+          setMarketEvent((prev) => [...prev, structEvent])
+        })
+      } catch (error) {
+        
+      }
+  }
+
+  const queryEvents = async() => {
+     if (!window.ethereum) return console.log('Please install metamask')
+
+     try {
+        // const provider = new ethers.providers.WebSocketProvider(
+        //   `wss://eth-mainnet.g.alchemy.com/v2/${process.env.ALCHEMY_KEY}`
+        // )
+        const provider = new ethers.providers.Web3Provider(window.ethereum as any )
+        const contract = new ethers.Contract(ContractPairOrderAddress, artifactPairNewOrder.abi, provider)
+        contract.on('MarketOrder', async (_isBuy,_amount,event) => {
+           const timeDate = (await provider.getBlock(event.blockNumber)).timestamp
+           const structEvent: EventMarketOrder = {
+            Date: timeDate,
+            Side: _isBuy,
+            amount: _amount.toNumber(),
+          }
+          setMarketEvent((prev) => [structEvent,...prev])
+        })
+      } catch (error) {
+        
+      }
+  }
+
  
 
  
@@ -384,6 +469,7 @@ export const ContractProvider = ({ children }: ChildrenProps) => {
         loadOrderBookByAddress,
         sendTxCancelOrder,
         sendTxUpdateOrder,
+        marketEvent,
       }}
     >
       {!initialLoading && children}
