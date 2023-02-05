@@ -16,7 +16,11 @@ contract PairNewOrder is Wallet{
         uint256 filled;
         uint256 nextNodeID;
     }
-
+  
+  event CreateLimitOrder(uint8 _isBuy,uint256 _amount,uint256 _price);
+  event MarketOrder(uint8 _isBuy,uint256 _amount);
+  event UpdateOrder(uint8 _isBuy,uint256 newPriceOrder,uint256 newAmount);
+  event RemoveOrder(uint8 _isBuy,uint256 index);
 
   // node 
   // Buy Or sell => ID => Order
@@ -63,7 +67,7 @@ contract PairNewOrder is Wallet{
           balancesSpot[msg.sender][tokenMain] -= _amount;
           balancesTrade[msg.sender][tokenMain] += _amount;
       }
-
+      
       linkedListsNode[_isBuy][nodeID[_isBuy]] = Order(
       nodeID[_isBuy],      
       msg.sender,  
@@ -78,6 +82,8 @@ contract PairNewOrder is Wallet{
       linkedListsNode[_isBuy][prevNodeID].nextNodeID = nodeID[_isBuy];
       listSize[_isBuy]++;
       nodeID[_isBuy]++;
+
+      emit  CreateLimitOrder(_isBuy, _amount, _price);
     }
 
 ////////////////////////////////////// Check pre_price > new_price > next_price ////////////////////////////////////// 
@@ -192,6 +198,8 @@ contract PairNewOrder is Wallet{
       linkedListsNode[_isBuy][prevIndex].nextNodeID = linkedListsNode[_isBuy][index].nextNodeID;
       linkedListsNode[_isBuy][index].nextNodeID = 0;
       listSize[_isBuy]--;
+
+      emit RemoveOrder(_isBuy,index);
  }
 
  function removeOrderNoUpdateBalances(uint8 _isBuy,uint256 index, uint256 prevIndex) private {
@@ -277,6 +285,7 @@ contract PairNewOrder is Wallet{
       removeOrder(_isBuy, index, prevIndexRemove);
       createLimitOrder(_isBuy,newAmount,newPriceOrder,prevIndexAdd);
      }
+     emit UpdateOrder(_isBuy,newPriceOrder,newAmount);
 
 
 //เท่ากับตัวเอง ไม่ได้ และ น้อยกว่าตัวถึงจนถึงถึงตัวต่อไปไม่ได้
@@ -363,6 +372,9 @@ contract PairNewOrder is Wallet{
         //Remove the top element in the orders
              removeOrderNoUpdateBalances(_isBuy,linkedListsNode[_isBuy][GUARDHEAD].nextNodeID,0);
         }
+
+        _isBuy = _isBuy==0? 1 : 0; // toggle isBuy
+        emit MarketOrder( _isBuy, amount);
 
       }
   
