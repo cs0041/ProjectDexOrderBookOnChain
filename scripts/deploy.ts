@@ -142,6 +142,10 @@ async function main() {
   prevNodeID = await pairorderbook._findIndex(price, isSell)
   await pairorderbook.connect(owner).createLimitOrder(isSell,amount,price,prevNodeID)
 
+  //Market Order
+  await pairorderbook.connect(addr1).createMarketOrder(1,2)
+  await pairorderbook.connect(addr1).createMarketOrder(1,3)
+  await pairorderbook.connect(addr1).createMarketOrder(0,50000)
 
   // for (let i = 0; i < round; i++) {
   //    // price random  from 1 to 100
