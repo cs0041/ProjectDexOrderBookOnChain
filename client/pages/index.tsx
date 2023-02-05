@@ -21,6 +21,7 @@ import OrderBook from '../components/OrderBook'
 import PanelCommand from '../components/PanelCommand'
 import TradingviewGraph from '../components/TradingviewGraph'
 import History from '../components/History'
+import HistoryMarket from '../components/HistoryMarket'
   
     
 interface Inputs {
@@ -70,7 +71,9 @@ const Home = () => {
                 <PanelCommand />
               </div>
             </div>
-            <div className="w-2/12">Market Trades</div>
+            <div className="w-2/12 ">
+              <HistoryMarket/>
+            </div>
           </div>
           <div className="h-2/6 border-gray-600 border-t-2 max-h-fit">
             <History />
