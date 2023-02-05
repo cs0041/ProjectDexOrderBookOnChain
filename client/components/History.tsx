@@ -74,7 +74,7 @@ const History = (props: Props) => {
         <div>Cancel Order</div>
       </div>
 
-        <div className='overflow-y-scroll  scrollbar-hide max-h-full'>
+        <div className='overflow-y-auto max-h-full'>
                 {orderBookByAddress.map((item) => (
                     <div className=" grid grid-cols-10 text-xl border-b-2 border-gray-700  mb-5 ">
                         <div >{item.createdDate}</div>
