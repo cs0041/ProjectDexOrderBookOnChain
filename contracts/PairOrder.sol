@@ -18,7 +18,7 @@ contract PairNewOrder is Wallet{
     }
   
   event CreateLimitOrder(uint8 _isBuy,uint256 _amount,uint256 _price);
-  event MarketOrder(uint8 _isBuy,uint256 _amount);
+  event MarketOrder(uint8 _isBuy,uint256 _amount,uint256 _price);
   event UpdateOrder(uint8 _isBuy,uint256 newPriceOrder,uint256 newAmount);
   event RemoveOrder(uint8 _isBuy,uint256 index);
 
@@ -306,7 +306,7 @@ contract PairNewOrder is Wallet{
         (address tokenMain,address tokenSeconry) = _isBuy == 0 ? (token1,token0) : (token0,token1);
         _isBuy = _isBuy==0? 1 : 0; // toggle isBuy
         require(balancesSpot[msg.sender][tokenMain] >= amount, "not enough balance token for MarketOrder");
-
+        require( listSize[_isBuy]>0,"No Limit Order");
         // Market Sell token0
         // sell token0 buy token1
 
@@ -319,12 +319,14 @@ contract PairNewOrder is Wallet{
                 uint256 filled = 0;
                 uint256 cost ;
                 if(_isBuy==1){
-                  if( (availableToFill*linkedListsNode[_isBuy][currentNodeID].price) > leftToFill){
+                    if( (availableToFill*linkedListsNode[_isBuy][currentNodeID].price) > leftToFill){
                     filled = leftToFill; //Full Fill 
                     }
                     else{ 
                         filled = (availableToFill*linkedListsNode[_isBuy][currentNodeID].price); // Fill as much as can Fill
                     }
+                
+                    emit MarketOrder(_isBuy, filled/linkedListsNode[_isBuy][currentNodeID].price,linkedListsNode[_isBuy][currentNodeID].price);
                 }else{
                     if(availableToFill > leftToFill){
                         filled = leftToFill; //Full Fill 
@@ -332,6 +334,8 @@ contract PairNewOrder is Wallet{
                     else{ 
                         filled = availableToFill; // Fill as much as can Fill
                     }
+
+                    emit MarketOrder(_isBuy, filled,linkedListsNode[_isBuy][currentNodeID].price);
                   }
 
                 totalFilled = totalFilled + filled;
@@ -342,6 +346,7 @@ contract PairNewOrder is Wallet{
                 }else{
                   linkedListsNode[_isBuy][currentNodeID].filled += filled;
                   cost = filled * linkedListsNode[_isBuy][currentNodeID].price;
+              
                 }
 
                 //msg.sender is the seller
@@ -359,6 +364,8 @@ contract PairNewOrder is Wallet{
 
                 // update latest price
                 price = linkedListsNode[_isBuy][currentNodeID].price ;
+                
+               
 
                 currentNodeID =linkedListsNode[_isBuy][currentNodeID].nextNodeID;
 
@@ -372,9 +379,6 @@ contract PairNewOrder is Wallet{
         //Remove the top element in the orders
              removeOrderNoUpdateBalances(_isBuy,linkedListsNode[_isBuy][GUARDHEAD].nextNodeID,0);
         }
-
-        _isBuy = _isBuy==0? 1 : 0; // toggle isBuy
-        emit MarketOrder( _isBuy, amount);
 
       }
   
