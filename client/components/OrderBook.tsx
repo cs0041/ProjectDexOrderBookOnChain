@@ -1,6 +1,5 @@
-import React, { useContext, useState } from 'react'
+import React, { useContext, useEffect, useState } from 'react'
 import { ContractContext } from '../context/ContratContext'
-
 type Props = {}
 
 enum ShowOrderBookStatus {
@@ -19,6 +18,7 @@ function OrderBook({}: Props) {
   } = useContext(ContractContext)
 
   const [statusShowOrderBook, setStatusShowOrderBook] = useState<ShowOrderBookStatus>(ShowOrderBookStatus.BS)
+
   return (
     <div className="bg-black/20 flex flex-col flex-1 h-full">
       <header className="flex justify-between   p-5 h-[10%]">
@@ -61,7 +61,7 @@ function OrderBook({}: Props) {
       </div>
 
       {statusShowOrderBook === ShowOrderBookStatus.B ? null : (
-        <div className="h-[44%] text-red-500   pr-5 text-base">
+        <div className="h-[44%] text-red-500   pr-5 text-base overflow-y-auto ">
           {orderBookSell.map((item) => (
             <div className="grid grid-cols-3 gap-x-3">
               <div className="text-right ">{item.price}</div>
@@ -77,7 +77,7 @@ function OrderBook({}: Props) {
       )}
 
       {statusShowOrderBook === ShowOrderBookStatus.S ? null : (
-        <div className="h-[44%]  text-green-500  pr-5 text-base">
+        <div className="h-[44%]  text-green-500  pr-5 text-base overflow-y-auto">
           {orderBookBuy.map((item) => (
             <div className="grid grid-cols-3 gap-x-3">
               <div className="text-right">{item.price}</div>
