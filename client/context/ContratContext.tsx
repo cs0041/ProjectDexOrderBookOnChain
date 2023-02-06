@@ -7,44 +7,6 @@ const ContractPairOrderAddress = '0x9fE46736679d2D9a65F0992F2272dE9f3c7fa6e0'
 const ContractToken0Address = '0x5FbDB2315678afecb367f032d93F642f64180aa3'
 const ContractToken1Address = '0xe7f1725E7734CE288F8367e1Bb143E90bb3F0512'
 
-interface Order {
-  id: number
-  addressTrader: string
-  BuyOrSell: number
-  createdDate:string
-  addressToken: string
-  amount: number
-  price: number
-  filled: number
-}
-
-interface EventCreateLimitOrder {
-  Date:number
-  Side:number
-  amount:number
-  price:number
-}
-
-interface EventMarketOrder {
-  Date:number
-  Side: number
-  amount: number
-  price:number
-}
-
-interface EventRemoveOrder {
-  Date:number
-  Side: number
-  index: number
-}
-
-interface EventUpdateOrder {
-  Date:number
-  Side: number
-  newPriceOrder: number
-  newAmount: number
-}
-
 
 interface IContract {
   loadingOrderSell: boolean
@@ -65,6 +27,8 @@ interface IContract {
   sendTxCancelOrder: (side: number, id: number | string) => Promise<void>
   sendTxUpdateOrder: (side: number, id: number, newAmount: number | string, newPriceOrder: number | string) => Promise<void>
   marketEvent: EventMarketOrder[]
+  historyOrderEvent:EventAllOrder[]
+  sumMarketEvent:EventMarketOrder[]
 }
 
 export const ContractContext = createContext<IContract>({
@@ -85,7 +49,9 @@ export const ContractContext = createContext<IContract>({
   loadOrderBookByAddress: async () => {},
   sendTxCancelOrder: async () => {},
   sendTxUpdateOrder: async () => {},
-  marketEvent:[],
+  marketEvent: [],
+  historyOrderEvent: [],
+  sumMarketEvent:[],
 })
 
 
@@ -149,8 +115,11 @@ export const ContractProvider = ({ children }: ChildrenProps) => {
   // Market order
   const [marketEvent,setMarketEvent] = useState<EventMarketOrder[]>([])
 
+  // Sum Market order
+  const [sumMarketEvent,setSumMarketEvent] = useState<EventMarketOrder[]>([])
+
   // History order
-  // const [historyOrderEvent, setHistoryOrderEvent] = useState<EventCreateLimitOrder[] |>
+  const [historyOrderEvent, setHistoryOrderEvent] = useState<EventAllOrder[]>([])
 
   // helper
   // const toString = (bytes32) => ethers.utils.parseBytes32String(bytes32)
@@ -162,12 +131,12 @@ export const ContractProvider = ({ children }: ChildrenProps) => {
   
   useEffect(() => {
     if (!window.ethereum) return console.log('Please install metamask')
-    loadOrderBook()
+    // loadOrderBook()
     loadPriceToken()
     loadBalances()
     loadOrderBookByAddress()
-    fristQueryEvents()
-    //queryEvents()
+    MarketQueryEvents()
+    QueryHisoryEvents()
     
     setInitialLoading(false)
 
@@ -187,6 +156,7 @@ export const ContractProvider = ({ children }: ChildrenProps) => {
      loadOrderBook()
      loadPriceToken()
      loadBalances()
+     QueryHisoryEvents()
    }
 
    const sendTxLimitOrder = async (side: number, amount: number | string, price: number | string) => {
@@ -204,6 +174,7 @@ export const ContractProvider = ({ children }: ChildrenProps) => {
      loadOrderBook()
      loadBalances()
      loadOrderBookByAddress()
+     QueryHisoryEvents()
    }
 
    const sendTxUpdateOrder = async (side: number, id:number,newAmount: number | string, newPriceOrder: number | string) => {
@@ -229,12 +200,13 @@ export const ContractProvider = ({ children }: ChildrenProps) => {
 
        console.log(transactionHash.hash)
        await transactionHash.wait()
-     } catch (error) {
-       console.log(error)
-     }
-     loadOrderBook()
-     loadBalances()
-     loadOrderBookByAddress()
+      } catch (error) {
+        console.log(error)
+      }
+      loadOrderBook()
+      loadBalances()
+      loadOrderBookByAddress()
+      QueryHisoryEvents()
    }
 
    const sendTxCancelOrder = async (side: number, id: number | string) => {
@@ -246,12 +218,13 @@ export const ContractProvider = ({ children }: ChildrenProps) => {
        const transactionHash = await contract.removeOrder(side,id,prevNodeID) 
        console.log(transactionHash.hash)
        await transactionHash.wait()
-     } catch (error) {
-       console.log(error)
-     }
-     loadOrderBook()
-     loadOrderBookByAddress()
-     loadBalances()
+      } catch (error) {
+        console.log(error)
+      }
+      loadOrderBook()
+      loadOrderBookByAddress()
+      loadBalances()
+      QueryHisoryEvents()
    }
 
   
@@ -397,7 +370,7 @@ export const ContractProvider = ({ children }: ChildrenProps) => {
 
   }
 
-  const fristQueryEvents = async() => {
+  const MarketQueryEvents = async() => {
     if (!window.ethereum) return console.log('Please install metamask')
      try {
         const provider = new ethers.providers.Web3Provider(window.ethereum as any )
@@ -405,18 +378,39 @@ export const ContractProvider = ({ children }: ChildrenProps) => {
         const contract = new ethers.Contract(ContractPairOrderAddress, artifactPairNewOrder.abi, provider) as PairNewOrder
         //const filter = contract.filters.CreateLimitOrder()
         const filterMarketOrder = contract.filters.MarketOrder()
+        const filterSumMarketOrder = contract.filters.SumMarketOrder()
 
-        const resultsMarketOrder = await contract.queryFilter(filterMarketOrder, 0, blockNumber)
-        resultsMarketOrder.map(async (item) => {
+
+          const [
+            dataMarketOrder,
+            dataSumMarketOrder,
+          ] = await Promise.all([
+            await contract.queryFilter(filterMarketOrder, 0, blockNumber),
+            await contract.queryFilter(filterSumMarketOrder, 0, blockNumber)
+          ])
+
+        dataMarketOrder.map(async (item) => {
           const timeDate = (await provider.getBlock(item.blockNumber)).timestamp
           const structEvent: EventMarketOrder = {
             Date: timeDate,
             Side: item.args._isBuy,
             amount: item.args._amount.toNumber(),
-            price:item.args._price.toNumber(),
+            price: item.args._price.toNumber(),
           }
-          console.log(structEvent)
-          setMarketEvent((prev) => [...prev, structEvent])
+          // console.log(structEvent)
+          setMarketEvent((prev) => [structEvent, ...prev])
+        })
+
+        dataSumMarketOrder.map(async (item) => {
+          const timeDate = (await provider.getBlock(item.blockNumber)).timestamp
+          const structEvent: EventMarketOrder = {
+            Date: timeDate,
+            Side: item.args._isBuy,
+            amount: item.args._amount.toNumber(),
+            price: item.args._lastPrice.toNumber(),
+          }
+          // console.log(structEvent)
+          setSumMarketEvent((prev) => [structEvent, ...prev])
         })
 
         contract.on('MarketOrder', async (_isBuy,_amount,_price,event) => {
@@ -428,7 +422,106 @@ export const ContractProvider = ({ children }: ChildrenProps) => {
              price: _price.toNumber(),
            }
           setMarketEvent((prev) => [structEvent,...prev])
+          // loadOrderBook()
         })
+        
+        contract.on('SumMarketOrder', async (_isBuy,_amount,_price,event) => {
+           const timeDate = (await provider.getBlock(event.blockNumber)).timestamp
+           const structEvent: EventMarketOrder = {
+             Date: timeDate,
+             Side: _isBuy,
+             amount: _amount.toNumber(),
+             price: _price.toNumber(),
+           }
+          setSumMarketEvent((prev) => [structEvent, ...prev])
+          // loadOrderBook()
+        })
+      } catch (error) {
+        
+      }
+  }
+
+  const QueryHisoryEvents = async() => {
+    if (!window.ethereum) return console.log('Please install metamask')
+     try {
+        setHistoryOrderEvent([])
+        const provider = new ethers.providers.Web3Provider(window.ethereum as any )
+        const blockNumber = await provider.getBlockNumber()
+        const contract = new ethers.Contract(ContractPairOrderAddress, artifactPairNewOrder.abi, provider) as PairNewOrder
+        const address = ( await window.ethereum.request({ method: 'eth_accounts' }))[0]
+        const filterLimitOrder = contract.filters.CreateLimitOrder(null,null,null,address)
+        const filterUpdateOrder = contract.filters.UpdateOrder(null,null,null,address)
+        const filterRemoveOrder = contract.filters.RemoveOrder(null, null,null,address)
+        const filterMarketOrder = contract.filters.SumMarketOrder(null,null,null,address)
+        const [
+          dataLimitOrder,
+          dataUpdateOrder,
+          dataRemoveOrder,
+          dataMarketOrder,
+        ] = await Promise.all([
+          await contract.queryFilter(filterLimitOrder, 0, blockNumber),
+          await contract.queryFilter(filterUpdateOrder, 0, blockNumber),
+          await contract.queryFilter(filterRemoveOrder, 0, blockNumber),
+          await contract.queryFilter(filterMarketOrder, 0, blockNumber),
+        ])
+
+        dataLimitOrder.map(async (item) => {
+          const timeDate = (await provider.getBlock(item.blockNumber)).timestamp
+          const structEvent: EventAllOrder = {
+            Date: timeDate,
+            Side: item.args._isBuy,
+            amount: item.args._amount.toNumber(),
+            price: item.args._price.toNumber(),
+            Type: "Limit",
+          }
+          setHistoryOrderEvent((prev) => [...prev, structEvent])
+        })
+        dataUpdateOrder.map(async (item) => {
+          const timeDate = (await provider.getBlock(item.blockNumber)).timestamp
+          const structEvent: EventAllOrder = {
+            Date: timeDate,
+            Side: item.args._isBuy,
+            amount: item.args.newAmount.toNumber(),
+            price: item.args.newPriceOrder.toNumber(),
+            Type: "Update",
+          }
+          setHistoryOrderEvent((prev) => [...prev, structEvent])
+        })
+        dataRemoveOrder.map(async (item) => {
+          const timeDate = (await provider.getBlock(item.blockNumber)).timestamp
+          const structEvent: EventAllOrder = {
+            Date: timeDate,
+            Side: item.args._isBuy,
+            amount: item.args._amount.toNumber(),
+            price: item.args._price.toNumber(),
+            Type: "Remove",
+          }
+          setHistoryOrderEvent((prev) => [...prev, structEvent])
+        })
+        dataMarketOrder.map(async (item) => {
+          const timeDate = (await provider.getBlock(item.blockNumber)).timestamp
+          const structEvent: EventAllOrder = {
+            Date: timeDate,
+            Side: item.args._isBuy,
+            amount: item.args._amount.toNumber(),
+            price: 0,
+            Type: "Market",
+          }
+          setHistoryOrderEvent((prev) => [...prev, structEvent])
+        })
+
+          contract.on('CreateLimitOrder', async () => {
+             loadOrderBook()
+          })
+          contract.on('UpdateOrder', async () => {
+             loadOrderBook()
+          })
+          contract.on('RemoveOrder', async () => {
+             loadOrderBook()
+          })
+
+        
+
       } catch (error) {
         
       }
@@ -483,6 +576,8 @@ export const ContractProvider = ({ children }: ChildrenProps) => {
         sendTxCancelOrder,
         sendTxUpdateOrder,
         marketEvent,
+        historyOrderEvent,
+        sumMarketEvent
       }}
     >
       {!initialLoading && children}
