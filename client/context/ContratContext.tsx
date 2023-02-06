@@ -29,6 +29,7 @@ interface EventMarketOrder {
   Date:number
   Side: number
   amount: number
+  price:number
 }
 
 interface EventRemoveOrder {
@@ -166,7 +167,7 @@ export const ContractProvider = ({ children }: ChildrenProps) => {
     loadBalances()
     loadOrderBookByAddress()
     fristQueryEvents()
-    queryEvents()
+    //queryEvents()
     
     setInitialLoading(false)
 
@@ -398,7 +399,6 @@ export const ContractProvider = ({ children }: ChildrenProps) => {
 
   const fristQueryEvents = async() => {
     if (!window.ethereum) return console.log('Please install metamask')
-
      try {
         const provider = new ethers.providers.Web3Provider(window.ethereum as any )
         const blockNumber = await provider.getBlockNumber()
@@ -406,43 +406,56 @@ export const ContractProvider = ({ children }: ChildrenProps) => {
         //const filter = contract.filters.CreateLimitOrder()
         const filterMarketOrder = contract.filters.MarketOrder()
 
-        const resultsMarketOrder = await contract.queryFilter(filterMarketOrder, 0, blockNumber);
+        const resultsMarketOrder = await contract.queryFilter(filterMarketOrder, 0, blockNumber)
         resultsMarketOrder.map(async (item) => {
           const timeDate = (await provider.getBlock(item.blockNumber)).timestamp
           const structEvent: EventMarketOrder = {
             Date: timeDate,
             Side: item.args._isBuy,
             amount: item.args._amount.toNumber(),
+            price:item.args._price.toNumber(),
           }
+          console.log(structEvent)
           setMarketEvent((prev) => [...prev, structEvent])
         })
-      } catch (error) {
-        
-      }
-  }
 
-  const queryEvents = async() => {
-     if (!window.ethereum) return console.log('Please install metamask')
-
-     try {
-        // const provider = new ethers.providers.WebSocketProvider(
-        //   `wss://eth-mainnet.g.alchemy.com/v2/${process.env.ALCHEMY_KEY}`
-        // )
-        const provider = new ethers.providers.Web3Provider(window.ethereum as any )
-        const contract = new ethers.Contract(ContractPairOrderAddress, artifactPairNewOrder.abi, provider)
-        contract.on('MarketOrder', async (_isBuy,_amount,event) => {
+        contract.on('MarketOrder', async (_isBuy,_amount,_price,event) => {
            const timeDate = (await provider.getBlock(event.blockNumber)).timestamp
            const structEvent: EventMarketOrder = {
-            Date: timeDate,
-            Side: _isBuy,
-            amount: _amount.toNumber(),
-          }
+             Date: timeDate,
+             Side: _isBuy,
+             amount: _amount.toNumber(),
+             price: _price.toNumber(),
+           }
           setMarketEvent((prev) => [structEvent,...prev])
         })
       } catch (error) {
         
       }
   }
+
+  // const queryEvents = async() => {
+  //    if (!window.ethereum) return console.log('Please install metamask')
+
+  //    try {
+  //       // const provider = new ethers.providers.WebSocketProvider(
+  //       //   `wss://eth-mainnet.g.alchemy.com/v2/${process.env.ALCHEMY_KEY}`
+  //       // )
+  //       const provider = new ethers.providers.Web3Provider(window.ethereum as any )
+  //       const contract = new ethers.Contract(ContractPairOrderAddress, artifactPairNewOrder.abi, provider)
+  //       contract.on('MarketOrder', async (_isBuy,_amount,event) => {
+  //          const timeDate = (await provider.getBlock(event.blockNumber)).timestamp
+  //          const structEvent: EventMarketOrder = {
+  //           Date: timeDate,
+  //           Side: _isBuy,
+  //           amount: _amount.toNumber(),
+  //         }
+  //         setMarketEvent((prev) => [structEvent,...prev])
+  //       })
+  //     } catch (error) {
+        
+  //     }
+  // }
 
  
 
