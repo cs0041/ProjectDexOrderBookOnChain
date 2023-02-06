@@ -17,10 +17,11 @@ contract PairNewOrder is Wallet{
         uint256 nextNodeID;
     }
   
-  event CreateLimitOrder(uint8 _isBuy,uint256 _amount,uint256 _price);
+  event CreateLimitOrder(uint8 _isBuy,uint256 _amount,uint256 _price,address indexed trader);
   event MarketOrder(uint8 _isBuy,uint256 _amount,uint256 _price);
-  event UpdateOrder(uint8 _isBuy,uint256 newPriceOrder,uint256 newAmount);
-  event RemoveOrder(uint8 _isBuy,uint256 index);
+  event SumMarketOrder(uint8 _isBuy,uint256 _amount,uint256 _lastPrice,address indexed trader);
+  event UpdateOrder(uint8 _isBuy,uint256 newPriceOrder,uint256 newAmount,address indexed trader);
+  event RemoveOrder(uint8 _isBuy,uint256 _amount,uint256 _price,address indexed trader);
 
   // node 
   // Buy Or sell => ID => Order
@@ -83,7 +84,7 @@ contract PairNewOrder is Wallet{
       listSize[_isBuy]++;
       nodeID[_isBuy]++;
 
-      emit  CreateLimitOrder(_isBuy, _amount, _price);
+      emit  CreateLimitOrder(_isBuy, _amount, _price,msg.sender);
     }
 
 ////////////////////////////////////// Check pre_price > new_price > next_price ////////////////////////////////////// 
@@ -186,20 +187,21 @@ contract PairNewOrder is Wallet{
      address token =  linkedListsNode[_isBuy][index].token;
      uint256 _amount =  linkedListsNode[_isBuy][index].amount;
      uint256 _price =  linkedListsNode[_isBuy][index].price;
+     uint256 _filled =   linkedListsNode[_isBuy][index].filled;
      if(_isBuy==0) {
         // transfer balance Trade to Spot wallet 
-        balancesSpot[msg.sender][token] += ( _amount * _price);
-        balancesTrade[msg.sender][token] -= ( _amount * _price);
+        balancesSpot[msg.sender][token] += ( (_amount-_filled) * _price);
+        balancesTrade[msg.sender][token] -= ( (_amount-_filled) * _price);
       } else  {
         // transfer balance Trade to Spot wallet 
-        balancesSpot[msg.sender][token]  += _amount ;
-        balancesTrade[msg.sender][token] -= _amount ;
+        balancesSpot[msg.sender][token]  += (_amount-_filled) ;
+        balancesTrade[msg.sender][token] -= (_amount-_filled) ;
       }
       linkedListsNode[_isBuy][prevIndex].nextNodeID = linkedListsNode[_isBuy][index].nextNodeID;
       linkedListsNode[_isBuy][index].nextNodeID = 0;
       listSize[_isBuy]--;
 
-      emit RemoveOrder(_isBuy,index);
+      emit RemoveOrder(_isBuy,_amount,_price,msg.sender);
  }
 
  function removeOrderNoUpdateBalances(uint8 _isBuy,uint256 index, uint256 prevIndex) private {
@@ -285,7 +287,7 @@ contract PairNewOrder is Wallet{
       removeOrder(_isBuy, index, prevIndexRemove);
       createLimitOrder(_isBuy,newAmount,newPriceOrder,prevIndexAdd);
      }
-     emit UpdateOrder(_isBuy,newPriceOrder,newAmount);
+     emit UpdateOrder(_isBuy,newPriceOrder,newAmount,msg.sender);
 
 
 //เท่ากับตัวเอง ไม่ได้ และ น้อยกว่าตัวถึงจนถึงถึงตัวต่อไปไม่ได้
@@ -379,6 +381,8 @@ contract PairNewOrder is Wallet{
         //Remove the top element in the orders
              removeOrderNoUpdateBalances(_isBuy,linkedListsNode[_isBuy][GUARDHEAD].nextNodeID,0);
         }
+        emit SumMarketOrder( _isBuy, amount,price,msg.sender);
+        
 
       }
   
