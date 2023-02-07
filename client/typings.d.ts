@@ -1,15 +1,15 @@
 interface EventMarketOrder {
   Date: number
   Side: number
-  amount: number
-  price: number
+  amount: string
+  price: string
 }
 
 interface EventAllOrder {
   Date: number
   Side: number
-  amount: number
-  price: number
+  amount: string
+  price: string
   Type: String
 }
 
@@ -21,7 +21,7 @@ interface Order {
   BuyOrSell: number
   createdDate: string
   addressToken: string
-  amount: number
-  price: number
-  filled: number
+  amount: string
+  price: string
+  filled: string
 }

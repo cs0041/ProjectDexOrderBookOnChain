@@ -3,23 +3,23 @@ import { ethers } from 'ethers'
 import artifactPairNewOrder from '../../artifacts/contracts/PairOrder.sol/PairNewOrder.json'
 import artifactToken from '../../artifacts/contracts/Token0.sol/Token0.json'
 import {PairNewOrder,PairNewOrder__factory,Token0,Token0__factory,Token1,Token1__factory} from '../../typechain-types'
-const ContractPairOrderAddress = '0x9fE46736679d2D9a65F0992F2272dE9f3c7fa6e0'
-const ContractToken0Address = '0x5FbDB2315678afecb367f032d93F642f64180aa3'
-const ContractToken1Address = '0xe7f1725E7734CE288F8367e1Bb143E90bb3F0512'
-
-
+// const ContractPairOrderAddress = '0x9fE46736679d2D9a65F0992F2272dE9f3c7fa6e0'
+// const ContractToken0Address = '0x5FbDB2315678afecb367f032d93F642f64180aa3'
+// const ContractToken1Address = '0xe7f1725E7734CE288F8367e1Bb143E90bb3F0512'
+const initBlockTime = 31822005
+import { ContractPairOrderAddress,ContractToken0Address,ContractToken1Address } from '../utils/Address'
 interface IContract {
   loadingOrderSell: boolean
   loadingOrderBuy: boolean
   loadOrderBook: () => Promise<void>
   orderBookSell: Order[]
   orderBookBuy: Order[]
-  priceToken: number
+  priceToken: string
   sendTxMarketOrder: (side: number, amount: number | string) => Promise<void>
-  balancesSpotToken0: number
-  balancesTradeToken0: number
-  balancesSpotToken1: number
-  balancesTradeToken1: number
+  balancesSpotToken0: string
+  balancesTradeToken0: string
+  balancesSpotToken1: string
+  balancesTradeToken1: string
   sendTxLimitOrder : (side: number, amount: number | string, price: number | string) => Promise<void>
   isLoadingOrderBookByAddress:boolean
   orderBookByAddress:Order[]
@@ -29,6 +29,8 @@ interface IContract {
   marketEvent: EventMarketOrder[]
   historyOrderEvent:EventAllOrder[]
   sumMarketEvent:EventMarketOrder[]
+  sendTxDeposit: (amount: number | string, addressToken: string) => Promise<void>
+  sendTxWithdraw: (amount: number | string, addressToken: string) => Promise<void>
 }
 
 export const ContractContext = createContext<IContract>({
@@ -37,12 +39,12 @@ export const ContractContext = createContext<IContract>({
   loadOrderBook: async () => {},
   orderBookSell: [],
   orderBookBuy: [],
-  priceToken: 0,
+  priceToken: "",
   sendTxMarketOrder: async () => {},
-  balancesSpotToken0: 0,
-  balancesTradeToken0: 0,
-  balancesSpotToken1: 0,
-  balancesTradeToken1: 0,
+  balancesSpotToken0: "",
+  balancesTradeToken0: "",
+  balancesSpotToken1: "",
+  balancesTradeToken1: "",
   sendTxLimitOrder: async () => {},
   isLoadingOrderBookByAddress: false,
   orderBookByAddress: [],
@@ -51,7 +53,9 @@ export const ContractContext = createContext<IContract>({
   sendTxUpdateOrder: async () => {},
   marketEvent: [],
   historyOrderEvent: [],
-  sumMarketEvent:[],
+  sumMarketEvent: [],
+  sendTxDeposit: async () => {},
+  sendTxWithdraw:async () => {},
 })
 
 
@@ -72,13 +76,13 @@ const getPairOrderContract = () => {
 
   return pairordercontract
 }
-// const getTokenContract = (tokenAddress : string) => {
-//   const provider = new ethers.providers.Web3Provider(window.ethereum as any)
-//   const signer = provider.getSigner()
-//   const tokenContract = new ethers.Contract(tokenAddress, artifactToken.abi, signer) as Token0
+const getTokenContract = (tokenAddress : string) => {
+  const provider = new ethers.providers.Web3Provider(window.ethereum as any)
+  const signer = provider.getSigner()
+  const tokenContract = new ethers.Contract(tokenAddress, artifactToken.abi, signer) as Token0
 
-//   return tokenContract
-// }
+  return tokenContract
+}
 
 interface ChildrenProps {
   children: React.ReactNode
@@ -99,13 +103,13 @@ export const ContractProvider = ({ children }: ChildrenProps) => {
   const [loadingOrderBuy, setLoadingOrderBuy] = useState(false)
 
   // price 
-  const [priceToken,setPriceToken] = useState<number>(0)
+  const [priceToken,setPriceToken] = useState<string>("")
 
   // balances
-  const [balancesSpotToken0, setBalancesSpotToken0] = useState<number>(0)
-  const [balancesTradeToken0, setBalancesTradeToken0] = useState<number>(0)
-  const [balancesSpotToken1, setBalancesSpotToken1] = useState<number>(0)
-  const [balancesTradeToken1, setBalancesTradeToken1] = useState<number>(0)
+  const [balancesSpotToken0, setBalancesSpotToken0] = useState<string>("")
+  const [balancesTradeToken0, setBalancesTradeToken0] = useState<string>("")
+  const [balancesSpotToken1, setBalancesSpotToken1] = useState<string>("")
+  const [balancesTradeToken1, setBalancesTradeToken1] = useState<string>("")
 
 
   // order by address
@@ -123,9 +127,11 @@ export const ContractProvider = ({ children }: ChildrenProps) => {
 
   // helper
   // const toString = (bytes32) => ethers.utils.parseBytes32String(bytes32)
-  const toWei = (ether :string) => ethers.utils.parseEther(ether)
-  const toEther = (wei : string) => ethers.utils.formatEther(wei)
+  const toWei = (ether :string|number) => ethers.utils.parseEther(String(ether))
+  const toEther = (wei : string|number|ethers.BigNumber) => ethers.utils.formatEther(wei)
   const toFixUnits = (amount : number, decimal :string) => ethers.utils.formatUnits(amount, decimal)
+  const toEtherandFixFloatingPoint  = (amount : ethers.BigNumber) => Number(ethers.utils.formatEther(amount)).toFixed(6)
+
 
  
   
@@ -142,11 +148,45 @@ export const ContractProvider = ({ children }: ChildrenProps) => {
 
    }, [])
 
-   const sendTxMarketOrder = async (side: number, amount: number | string) => {
+   const sendTxDeposit = async (_amount: number | string , addressToken : string) => {
+     if (!window.ethereum) return console.log('Please install metamask')
+     try {
+      const amount = toWei(_amount)
+      const contract = getPairOrderContract()
+      const token = getTokenContract(addressToken)
+      const address = ( await window.ethereum.request({ method: 'eth_accounts' }))[0]
+      // const amountApprove = (await token.allowance(address,ContractPairOrderAddress)).toNumber()
+      const transactionHashApprove =  await token.approve(ContractPairOrderAddress,amount)
+      await transactionHashApprove.wait()
+        // if (amountApprove< amount.to){
+        //     const transactionHashApprove = await token.approve(ContractPairOrderAddress,amount)
+        // }
+      const transactionHash = await contract.deposit(amount, addressToken)
+      console.log(transactionHash.hash)
+      await transactionHash.wait()
+     } catch (error) {
+       console.log(error)
+     }
+     loadBalances()
+   }
+   const sendTxWithdraw = async (_amount: number | string , addressToken : string) => {
+     if (!window.ethereum) return console.log('Please install metamask')
+     try {
+      const amount = toWei(_amount)
+      const contract = getPairOrderContract()
+      const transactionHash = await contract.withdraw(amount, addressToken)
+      console.log(transactionHash.hash)
+      await transactionHash.wait()
+     } catch (error) {
+       console.log(error)
+     }
+     loadBalances()
+   }
+   const sendTxMarketOrder = async (side: number, _amount: number | string) => {
      if (!window.ethereum) return console.log('Please install metamask')
      try {
        const contract = getPairOrderContract()
-
+       const amount = toWei(_amount)
        const transactionHash = await contract.createMarketOrder(side, amount)
        console.log(transactionHash.hash)
        await transactionHash.wait()
@@ -159,10 +199,12 @@ export const ContractProvider = ({ children }: ChildrenProps) => {
      QueryHisoryEvents()
    }
 
-   const sendTxLimitOrder = async (side: number, amount: number | string, price: number | string) => {
+   const sendTxLimitOrder = async (side: number, _amount: number | string, _price: number | string) => {
     
      if (!window.ethereum) return console.log('Please install metamask')
      try {
+       const amount = toWei(_amount)
+       const price = toWei(_price)
        const contract = getPairOrderContract()
        const prevNodeID = await contract._findIndex(price,side)
        const transactionHash = await contract.createLimitOrder(side,amount,price,prevNodeID) 
@@ -177,11 +219,13 @@ export const ContractProvider = ({ children }: ChildrenProps) => {
      QueryHisoryEvents()
    }
 
-   const sendTxUpdateOrder = async (side: number, id:number,newAmount: number | string, newPriceOrder: number | string) => {
+   const sendTxUpdateOrder = async (side: number, id:number,_newAmount: number | string, _newPriceOrder: number | string) => {
     // updateOrder(Side _side,uint256 index, uint256 newPriceOrder, uint256 newAmount,uint256 prevIndexAdd,uint256 prevIndexRemove)
     
      if (!window.ethereum) return console.log('Please install metamask')
      try {
+      const newAmount = toWei(_newAmount)
+      const newPriceOrder = toWei(_newPriceOrder)
       console.log('side',side)
       console.log('newAmount', newAmount)
       console.log('newPriceOrder', newPriceOrder)
@@ -236,7 +280,7 @@ export const ContractProvider = ({ children }: ChildrenProps) => {
 
       const dataPriceToken = await contract.price()
 
-      setPriceToken(dataPriceToken.toNumber())
+      setPriceToken(toEtherandFixFloatingPoint(dataPriceToken))
     } catch (error) {
        console.log(error)
     }
@@ -251,13 +295,13 @@ export const ContractProvider = ({ children }: ChildrenProps) => {
 
       const dataBalancesSpotToken0 = await contract.balancesSpot(accounts[0],ContractToken0Address)
       const dataBalancesTradeToken0 = await contract.balancesTrade(accounts[0],ContractToken0Address)
-      setBalancesSpotToken0(dataBalancesSpotToken0.toNumber())
-      setBalancesTradeToken0(dataBalancesTradeToken0.toNumber())
+      setBalancesSpotToken0(toEtherandFixFloatingPoint(dataBalancesSpotToken0))
+      setBalancesTradeToken0(toEtherandFixFloatingPoint(dataBalancesTradeToken0))
 
       const dataBalancesSpotToken1 = await contract.balancesSpot(accounts[0],ContractToken1Address)
       const dataBalancesTradeToken1 = await contract.balancesTrade(accounts[0],ContractToken1Address)
-      setBalancesSpotToken1(dataBalancesSpotToken1.toNumber())
-      setBalancesTradeToken1(dataBalancesTradeToken1.toNumber())
+      setBalancesSpotToken1(toEtherandFixFloatingPoint(dataBalancesSpotToken1))
+      setBalancesTradeToken1(toEtherandFixFloatingPoint(dataBalancesTradeToken1)  )
 
 
     } catch (error) {
@@ -290,13 +334,13 @@ export const ContractProvider = ({ children }: ChildrenProps) => {
       dataOrderBuy.map((order)=>{
         const structOrder: Order = {
           id: order.id.toNumber(),
-          addressTrader: order.trader.toString(),
+          addressTrader: order.trader,
           BuyOrSell: order.isBuy,
           createdDate: order.createdDate.toString(),
           addressToken: order.token.toString(),
-          amount: order.amount.toNumber(),
-          price: order.price.toNumber(),
-          filled: order.filled.toNumber(),
+          amount: toEtherandFixFloatingPoint(order.amount),
+          price: toEtherandFixFloatingPoint(order.price),
+          filled: toEtherandFixFloatingPoint(order.filled),
         } 
         setOrderBookBuy((prev) => [...prev, structOrder])
       })
@@ -308,9 +352,9 @@ export const ContractProvider = ({ children }: ChildrenProps) => {
           BuyOrSell: order.isBuy,
           createdDate: order.createdDate.toString(),
           addressToken: order.token.toString(),
-          amount: order.amount.toNumber(),
-          price: order.price.toNumber(),
-          filled: order.filled.toNumber(),
+          amount: toEtherandFixFloatingPoint(order.amount),
+          price: toEtherandFixFloatingPoint(order.price),
+          filled: toEtherandFixFloatingPoint(order.filled),
         } 
         setOrderBookSell((prev) => [structOrder, ...prev])
       })
@@ -352,9 +396,9 @@ export const ContractProvider = ({ children }: ChildrenProps) => {
           BuyOrSell: order.isBuy,
           createdDate: order.createdDate.toString(),
           addressToken: order.token.toString(),
-          amount: order.amount.toNumber(),
-          price: order.price.toNumber(),
-          filled: order.filled.toNumber(),
+          amount: toEtherandFixFloatingPoint(order.amount),
+          price: toEtherandFixFloatingPoint(order.price),
+          filled: toEtherandFixFloatingPoint(order.filled),
         }
         setOrderBookByAddress((prev) => [...prev, structOrder])
       })
@@ -385,8 +429,8 @@ export const ContractProvider = ({ children }: ChildrenProps) => {
             dataMarketOrder,
             dataSumMarketOrder,
           ] = await Promise.all([
-            await contract.queryFilter(filterMarketOrder, 0, blockNumber),
-            await contract.queryFilter(filterSumMarketOrder, 0, blockNumber)
+            await contract.queryFilter(filterMarketOrder, initBlockTime, blockNumber),
+            await contract.queryFilter(filterSumMarketOrder, initBlockTime, blockNumber)
           ])
 
         dataMarketOrder.map(async (item) => {
@@ -394,8 +438,8 @@ export const ContractProvider = ({ children }: ChildrenProps) => {
           const structEvent: EventMarketOrder = {
             Date: timeDate,
             Side: item.args._isBuy,
-            amount: item.args._amount.toNumber(),
-            price: item.args._price.toNumber(),
+            amount: toEtherandFixFloatingPoint(item.args._amount),
+            price: toEtherandFixFloatingPoint(item.args._price),
           }
           // console.log(structEvent)
           setMarketEvent((prev) => [structEvent, ...prev])
@@ -406,8 +450,8 @@ export const ContractProvider = ({ children }: ChildrenProps) => {
           const structEvent: EventMarketOrder = {
             Date: timeDate,
             Side: item.args._isBuy,
-            amount: item.args._amount.toNumber(),
-            price: item.args._lastPrice.toNumber(),
+            amount: toEtherandFixFloatingPoint(item.args._amount),
+            price: toEtherandFixFloatingPoint(item.args._lastPrice),
           }
           // console.log(structEvent)
           setSumMarketEvent((prev) => [structEvent, ...prev])
@@ -418,9 +462,10 @@ export const ContractProvider = ({ children }: ChildrenProps) => {
            const structEvent: EventMarketOrder = {
              Date: timeDate,
              Side: _isBuy,
-             amount: _amount.toNumber(),
-             price: _price.toNumber(),
+             amount: toEtherandFixFloatingPoint(_amount),
+             price: toEtherandFixFloatingPoint(_price),
            }
+           console.log("MarketOrder tigger",structEvent)
           setMarketEvent((prev) => [structEvent,...prev])
           // loadOrderBook()
         })
@@ -430,9 +475,10 @@ export const ContractProvider = ({ children }: ChildrenProps) => {
            const structEvent: EventMarketOrder = {
              Date: timeDate,
              Side: _isBuy,
-             amount: _amount.toNumber(),
-             price: _price.toNumber(),
+             amount: toEtherandFixFloatingPoint(_amount),
+             price: toEtherandFixFloatingPoint(_price),
            }
+             console.log('SumMarketOrder tigger', structEvent)
           setSumMarketEvent((prev) => [structEvent, ...prev])
           // loadOrderBook()
         })
@@ -459,10 +505,10 @@ export const ContractProvider = ({ children }: ChildrenProps) => {
           dataRemoveOrder,
           dataMarketOrder,
         ] = await Promise.all([
-          await contract.queryFilter(filterLimitOrder, 0, blockNumber),
-          await contract.queryFilter(filterUpdateOrder, 0, blockNumber),
-          await contract.queryFilter(filterRemoveOrder, 0, blockNumber),
-          await contract.queryFilter(filterMarketOrder, 0, blockNumber),
+          await contract.queryFilter(filterLimitOrder, initBlockTime, blockNumber),
+          await contract.queryFilter(filterUpdateOrder, initBlockTime, blockNumber),
+          await contract.queryFilter(filterRemoveOrder, initBlockTime, blockNumber),
+          await contract.queryFilter(filterMarketOrder, initBlockTime, blockNumber),
         ])
 
         dataLimitOrder.map(async (item) => {
@@ -470,10 +516,11 @@ export const ContractProvider = ({ children }: ChildrenProps) => {
           const structEvent: EventAllOrder = {
             Date: timeDate,
             Side: item.args._isBuy,
-            amount: item.args._amount.toNumber(),
-            price: item.args._price.toNumber(),
-            Type: "Limit",
+            amount: toEtherandFixFloatingPoint(item.args._amount),
+            price: toEtherandFixFloatingPoint(item.args._price),
+            Type: 'Limit',
           }
+          console.log('dataLimitOrder',structEvent)
           setHistoryOrderEvent((prev) => [...prev, structEvent])
         })
         dataUpdateOrder.map(async (item) => {
@@ -481,10 +528,11 @@ export const ContractProvider = ({ children }: ChildrenProps) => {
           const structEvent: EventAllOrder = {
             Date: timeDate,
             Side: item.args._isBuy,
-            amount: item.args.newAmount.toNumber(),
-            price: item.args.newPriceOrder.toNumber(),
-            Type: "Update",
+            amount: toEtherandFixFloatingPoint(item.args.newAmount),
+            price: toEtherandFixFloatingPoint(item.args.newPriceOrder),
+            Type: 'Update',
           }
+           console.log('dataUpdateOrder', structEvent)
           setHistoryOrderEvent((prev) => [...prev, structEvent])
         })
         dataRemoveOrder.map(async (item) => {
@@ -492,10 +540,11 @@ export const ContractProvider = ({ children }: ChildrenProps) => {
           const structEvent: EventAllOrder = {
             Date: timeDate,
             Side: item.args._isBuy,
-            amount: item.args._amount.toNumber(),
-            price: item.args._price.toNumber(),
-            Type: "Remove",
+            amount: toEtherandFixFloatingPoint(item.args._amount),
+            price: toEtherandFixFloatingPoint(item.args._price),
+            Type: 'Remove',
           }
+             console.log('dataRemoveOrder', structEvent)
           setHistoryOrderEvent((prev) => [...prev, structEvent])
         })
         dataMarketOrder.map(async (item) => {
@@ -503,10 +552,11 @@ export const ContractProvider = ({ children }: ChildrenProps) => {
           const structEvent: EventAllOrder = {
             Date: timeDate,
             Side: item.args._isBuy,
-            amount: item.args._amount.toNumber(),
-            price: 0,
-            Type: "Market",
+            amount: toEtherandFixFloatingPoint(item.args._amount),
+            price: '0',
+            Type: 'Market',
           }
+             console.log('dataMarketOrder', structEvent)
           setHistoryOrderEvent((prev) => [...prev, structEvent])
         })
 
@@ -577,7 +627,9 @@ export const ContractProvider = ({ children }: ChildrenProps) => {
         sendTxUpdateOrder,
         marketEvent,
         historyOrderEvent,
-        sumMarketEvent
+        sumMarketEvent,
+        sendTxDeposit,
+        sendTxWithdraw
       }}
     >
       {!initialLoading && children}

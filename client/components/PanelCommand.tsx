@@ -28,7 +28,7 @@ const {
   const [inputSellPriceTokenLimitOrder, setInputSellPriceTokenLimitOrder] = useState<string>()
   const [inputSellAmountTokenLimitOrder, setInputSellAmountTokenLimitOrder] = useState<string>()
   return (
-    <div className="h-full p-5  bg-black/30">
+    <div className="h-full  p-5  bg-black/30">
       <div className="space-x-5">
         <button
           onClick={() => setSelectlimitMarket(LimitMarketStatus.Limit)}
@@ -62,7 +62,7 @@ const {
         </div>
       </div> */}
 
-      <div className="mt-2 flex-row flex space-x-10 justify-center">
+      <div className="mt-2 flex-row flex space-x-10 justify-center  ">
         <div className="space-y-4  w-1/2 ">
           <span className="text-xl text-gray-400">Balances <span className='text-white'>{balancesSpotToken1}</span></span>
           {selectlimitMarket === LimitMarketStatus.Limit && (

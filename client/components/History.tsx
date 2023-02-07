@@ -125,7 +125,7 @@ const History = (props: Props) => {
                   />
                 </div>
                 <div>{item.filled}</div>
-                <div>{item.price * item.amount}</div>
+                <div>{Number(item.price) * Number(item.amount)}</div>
                 <TrashIcon
                   onClick={() => sendTxCancelOrder(item.BuyOrSell, item.id)}
                   className="h-8 w-8  hover:text-red-500 cursor-pointer"
@@ -170,7 +170,7 @@ const History = (props: Props) => {
                     ? 'Buy'
                     : 'Sell'}
                 </div>
-                <div> {item.price === 0 ? 'Market' : item.price} </div>
+                <div> {item.price === "0" ? 'Market' : item.price} </div>
                 <div> {item.amount} </div>
               </div>
             ))}

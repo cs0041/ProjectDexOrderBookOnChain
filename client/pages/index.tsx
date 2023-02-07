@@ -1,5 +1,5 @@
 import { ConnectButton } from '@rainbow-me/rainbowkit'
-import type { NextPage } from 'next'
+import type { GetServerSideProps, NextPage } from 'next'
 import Head from 'next/head'
 import Image from 'next/image'
 import { useAccount, useSigner } from 'wagmi'
@@ -22,11 +22,13 @@ import PanelCommand from '../components/PanelCommand'
 import TradingviewGraph from '../components/TradingviewGraph'
 import History from '../components/History'
 import HistoryMarket from '../components/HistoryMarket'
+import { GetMarketOrder } from '../utils/GetMarketOrder'
   
     
-interface Inputs {
-  data: number
-}
+// interface Props {
+//    MarketOrder:EventMarketOrder[]
+// }
+
 // const wagmigotchiContract = {
 //   address: contractFaucetAddress,
 //   abi: contractFaucetABI,
@@ -67,12 +69,12 @@ const Home = () => {
               <div className=" h-[65%]">
                 <TradingviewGraph />
               </div>
-              <div className=" h-[35%]">
+              <div className=" h-[35%] ">
                 <PanelCommand />
               </div>
             </div>
-            <div className="w-2/12 ">
-              <HistoryMarket/>
+            <div className="w-2/12  min-w-fit ">
+              <HistoryMarket />
             </div>
           </div>
           <div className="h-2/6 border-gray-600 border-t-2 max-h-fit">
@@ -95,3 +97,18 @@ const Home = () => {
 }
 
 export default Home
+
+// Backend Code
+// export const getServerSideProps: GetServerSideProps<Props> = async () => {
+//   const [
+//     MarketOrder,
+//   ] = await Promise.all([
+//     GetMarketOrder()
+//   ])
+
+//   return {
+//     props: {
+//       MarketOrder
+//     },
+//   }
+// }

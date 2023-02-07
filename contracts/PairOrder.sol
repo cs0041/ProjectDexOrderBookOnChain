@@ -57,10 +57,10 @@ contract PairNewOrder is Wallet{
 
       address tokenMain = _isBuy==0 ? token1 : token0;
       if(_isBuy==0){
-       require(balancesSpot[msg.sender][tokenMain] >= _amount * _price,"not enough balance token for buy");
+       require(balancesSpot[msg.sender][tokenMain] >= (_amount * _price)/10 ** 18,"not enough balance token for buy");
        // transfer balance Spot to Trade wallet 
-       balancesSpot[msg.sender][tokenMain] -= (_amount * _price);
-       balancesTrade[msg.sender][tokenMain] += (_amount * _price);
+       balancesSpot[msg.sender][tokenMain] -= (_amount * _price)/10 ** 18;
+       balancesTrade[msg.sender][tokenMain] += (_amount * _price)/10 ** 18;
 
       }else{
           require(balancesSpot[msg.sender][tokenMain] >= _amount,"not enough balance token for sell");
@@ -190,8 +190,8 @@ contract PairNewOrder is Wallet{
      uint256 _filled =   linkedListsNode[_isBuy][index].filled;
      if(_isBuy==0) {
         // transfer balance Trade to Spot wallet 
-        balancesSpot[msg.sender][token] += ( (_amount-_filled) * _price);
-        balancesTrade[msg.sender][token] -= ( (_amount-_filled) * _price);
+        balancesSpot[msg.sender][token] += ( (_amount-_filled) * _price)/10 ** 18;
+        balancesTrade[msg.sender][token] -= ( (_amount-_filled) * _price)/10 ** 18;
       } else  {
         // transfer balance Trade to Spot wallet 
         balancesSpot[msg.sender][token]  += (_amount-_filled) ;
@@ -260,11 +260,11 @@ contract PairNewOrder is Wallet{
           if(_isBuy==0) {
           bool isMoreThan = (newPriceOrder*newAmount) > ( _amount * _price);
           if(isMoreThan){
-            uint256 diff = (newPriceOrder*newAmount)-( _amount * _price);
+            uint256 diff = ((newPriceOrder*newAmount)-( _amount * _price))/10 ** 18;
             balancesSpot[msg.sender][token] -= diff;
             balancesTrade[msg.sender][token] += diff;
           }else{
-            uint256 diff = ( _amount * _price)-(newPriceOrder*newAmount);
+            uint256 diff = (( _amount * _price)-(newPriceOrder*newAmount))/10 ** 18;
             balancesSpot[msg.sender][token] += diff;
             balancesTrade[msg.sender][token] -= diff;
           }
@@ -290,14 +290,7 @@ contract PairNewOrder is Wallet{
      emit UpdateOrder(_isBuy,newPriceOrder,newAmount,msg.sender);
 
 
-//เท่ากับตัวเอง ไม่ได้ และ น้อยกว่าตัวถึงจนถึงถึงตัวต่อไปไม่ได้
-//22499 - 21000
-// 0 -1 -2 -3     // 0 -1 -2 -3
-// 1,0                  2,1
-// 0 -2 -3                 0 - 1 -3   
-// 1,1                       2,1
-// 1 ----price -----
-// 0 -4- -2 -3
+
   }
 
 
@@ -321,14 +314,14 @@ contract PairNewOrder is Wallet{
                 uint256 filled = 0;
                 uint256 cost ;
                 if(_isBuy==1){
-                    if( (availableToFill*linkedListsNode[_isBuy][currentNodeID].price) > leftToFill){
+                    if( (availableToFill*linkedListsNode[_isBuy][currentNodeID].price)/10 ** 18 > leftToFill){
                     filled = leftToFill; //Full Fill 
                     }
                     else{ 
-                        filled = (availableToFill*linkedListsNode[_isBuy][currentNodeID].price); // Fill as much as can Fill
+                        filled = (availableToFill*linkedListsNode[_isBuy][currentNodeID].price)/10 ** 18; // Fill as much as can Fill
                     }
                 
-                    emit MarketOrder(_isBuy, filled/linkedListsNode[_isBuy][currentNodeID].price,linkedListsNode[_isBuy][currentNodeID].price);
+                    emit MarketOrder(_isBuy, ((filled * 10 ** 18)/linkedListsNode[_isBuy][currentNodeID].price),linkedListsNode[_isBuy][currentNodeID].price);
                 }else{
                     if(availableToFill > leftToFill){
                         filled = leftToFill; //Full Fill 
@@ -343,11 +336,11 @@ contract PairNewOrder is Wallet{
                 totalFilled = totalFilled + filled;
 
                 if(_isBuy==1){
-                  linkedListsNode[_isBuy][currentNodeID].filled += (filled/linkedListsNode[_isBuy][currentNodeID].price);
-                  cost = (filled/linkedListsNode[_isBuy][currentNodeID].price); // amount token0
+                  linkedListsNode[_isBuy][currentNodeID].filled += (filled* 10 ** 18)/linkedListsNode[_isBuy][currentNodeID].price;
+                  cost = (filled* 10 ** 18)/linkedListsNode[_isBuy][currentNodeID].price; // amount token0
                 }else{
                   linkedListsNode[_isBuy][currentNodeID].filled += filled;
-                  cost = filled * linkedListsNode[_isBuy][currentNodeID].price;
+                  cost = (filled * linkedListsNode[_isBuy][currentNodeID].price)/10 ** 18;
               
                 }
 

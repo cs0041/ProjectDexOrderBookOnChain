@@ -60,17 +60,25 @@ const TradingviewGraph = (props: Props) => {
   const [priceaction, setPrice] = useState<number []>([])
   const [timeaction, setTime] = useState<string[]>([])
   
+  const sorting = () => {
+    sumMarketEvent.sort(function (a, b) {
+      return b.Date - a.Date
+    })
+  }
   const getPriceAndTime = () => {
+    sorting()
     let chartprice:number[] = []
     let charttime:string[] = []
     sumMarketEvent.forEach((value) => {
-      chartprice.push(value.price)
+      chartprice.push(Number(value.price))
       charttime.push(ConvertDateTime(value.Date))
     })
     chartprice.reverse()
     charttime.reverse()
+    
     setPrice(chartprice)
     setTime(charttime)
+    sorting()
   }
 
   useEffect(() => {
@@ -107,7 +115,7 @@ const TradingviewGraph = (props: Props) => {
   return (
     <div className='h-full py-12'>
       {/* <Line data={data as any} /> */}
-      <Line  data={data as any} />;
+      <Line  data={data as any} />
     </div>
   )
 }

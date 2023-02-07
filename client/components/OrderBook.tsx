@@ -65,8 +65,8 @@ function OrderBook({}: Props) {
           {orderBookSell.map((item) => (
             <div className="grid grid-cols-3 gap-x-3">
               <div className="text-right ">{item.price}</div>
-              <div className="text-right "> {item.amount - item.filled}</div>
-              <div className="text-right "> {item.amount * item.price}</div>
+              <div className="text-right "> {Number(item.amount) - Number(item.filled)}</div>
+              <div className="text-right "> {(Number(item.amount) - Number(item.filled)) * Number(item.price)}</div>
             </div>
           ))}
         </div>
@@ -81,8 +81,8 @@ function OrderBook({}: Props) {
           {orderBookBuy.map((item) => (
             <div className="grid grid-cols-3 gap-x-3">
               <div className="text-right">{item.price}</div>
-              <div className="text-right"> {item.amount - item.filled}</div>
-              <div className="text-right"> {item.amount * item.price}</div>
+              <div className="text-right "> {Number(item.amount) - Number(item.filled)}</div>
+              <div className="text-right "> {(Number(item.amount) - Number(item.filled)) * Number(item.price)}</div>
             </div>
           ))}
         </div>

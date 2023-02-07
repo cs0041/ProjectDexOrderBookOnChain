@@ -14,16 +14,22 @@ import { BigNumber } from 'ethers'
 import { orderToList } from './helper/OrderToList'
 import { FindSum } from './helper/FindSum'
 
+  const toWei = (ether :string|number) => ethers.utils.parseEther(String(ether))
+  const toEther = (wei : string|number|ethers.BigNumber) => ethers.utils.formatEther(wei)
+  const toFixUnits = (amount : number, decimal :string) => ethers.utils.formatUnits(amount, decimal)
+  const toEtherandFixFloatingPoint  = (amount : ethers.BigNumber) => Number(ethers.utils.formatEther(amount)).toFixed(6)
+
+
 describe('PairNewOrder', async () => {
   let pairorderbook: PairNewOrder
   let token0: Token0
   let token1: Token1
   let owner: SignerWithAddress
   let addr1: SignerWithAddress
-  const initialSupply = 1000 // initialSupply Token
+  const initialSupply = toWei(1000) // initialSupply Token
 
   beforeEach(async () => {
-    ;[owner, addr1] = await ethers.getSigners()
+    [owner, addr1] = await ethers.getSigners()
 
     const TOKEN0 = (await ethers.getContractFactory(
       'Token0',
@@ -60,18 +66,18 @@ describe('PairNewOrder', async () => {
       let isBuy = 0
       let isSell = 1
 
-      prevNodeID = await pairorderbook._findIndex(price, isBuy)
+      prevNodeID = await pairorderbook._findIndex(toWei(price), isBuy)
       await expect(
         pairorderbook
           .connect(owner)
-          .createLimitOrder(isBuy, amount, price, prevNodeID)
+          .createLimitOrder(isBuy, toWei(amount),toWei(price), prevNodeID)
       ).to.be.revertedWith('amount must > 0')
 
-      prevNodeID = await pairorderbook._findIndex(price, isBuy)
+      prevNodeID = await pairorderbook._findIndex(toWei(price), isBuy)
       await expect(
         pairorderbook
           .connect(owner)
-          .createLimitOrder(isBuy, amount, price, prevNodeID)
+          .createLimitOrder(isBuy, toWei(amount), toWei(price), prevNodeID)
       ).to.be.revertedWith('amount must > 0')
     })
 
@@ -105,120 +111,134 @@ describe('PairNewOrder', async () => {
 
       amount = 1
       price = 1001
-      prevNodeID = await pairorderbook._findIndex(price, isBuy)
+      prevNodeID = await pairorderbook._findIndex(toWei(price), isBuy)
       await expect(
         pairorderbook
           .connect(owner)
-          .createLimitOrder(isBuy, amount, price, prevNodeID)
+          .createLimitOrder(isBuy, toWei(amount), toWei(price), prevNodeID)
       ).to.be.revertedWith('not enough balance token for buy')
 
       amount = 1001
       price = 1
-      prevNodeID = await pairorderbook._findIndex(price, isSell)
+      prevNodeID = await pairorderbook._findIndex(toWei(price), isSell)
       await expect(
         pairorderbook
           .connect(owner)
-          .createLimitOrder(isSell, amount, price, prevNodeID)
+          .createLimitOrder(isSell, toWei(amount), toWei(price), prevNodeID)
       ).to.be.revertedWith('not enough balance token for sell')
     })
 
-    it(' Should order when create 10 Order buy', async () => {
+    it(' Should order when create 5 Order buy', async () => {
       let price: number
       let amount = 1
       let prevNodeID: BigNumber
-      let round = 10
       let isBuy = 0
       let isSell = 1
 
-      // Loop createLimitOrder
-      let resultOrder = []
-      for (let i = 0; i < round; i++) {
-        // price random  from 1 to 100
-        price = Math.floor(Math.random() * 100) + 1
-        prevNodeID = await pairorderbook._findIndex(price, isBuy)
-        await pairorderbook
-          .connect(owner)
-          .createLimitOrder(isBuy, amount, price, prevNodeID)
-        resultOrder.push(price)
-      }
-
-      // Sort the numbers in descending order:
-      resultOrder.sort(function (a, b) {
-        return b - a
-      })
+      // buy price 100
+      price = 100
+      prevNodeID = await pairorderbook._findIndex(toWei(price), isBuy)
+      await pairorderbook.connect(owner).createLimitOrder(isBuy, toWei(amount), toWei(price), prevNodeID)
+      // buy price 300
+      price = 300
+      prevNodeID = await pairorderbook._findIndex(toWei(price), isBuy)
+      await pairorderbook.connect(owner).createLimitOrder(isBuy, toWei(amount), toWei(price), prevNodeID)
+      // buy price 150
+      price = 150
+      prevNodeID = await pairorderbook._findIndex(toWei(price), isBuy)
+      await pairorderbook.connect(owner).createLimitOrder(isBuy, toWei(amount), toWei(price), prevNodeID)
+      // buy price 101.42
+      price = 101.42
+      prevNodeID = await pairorderbook._findIndex(toWei(price), isBuy)
+      await pairorderbook.connect(owner).createLimitOrder(isBuy, toWei(amount), toWei(price), prevNodeID)
+      // buy price 99.67
+      price = 99.67
+      prevNodeID = await pairorderbook._findIndex(toWei(price), isBuy)
+      await pairorderbook.connect(owner).createLimitOrder(isBuy, toWei(amount), toWei(price), prevNodeID)
 
       //cheack OrderBook
-      let a = await pairorderbook.getOrderBook(isBuy)
       expect(
         orderToList(await pairorderbook.getOrderBook(isBuy))
-      ).to.deep.equal(resultOrder)
+      ).to.deep.equal([
+        toWei(300),
+        toWei(150),
+        toWei(101.42),
+        toWei(100),
+        toWei(99.67),
+      ])
 
       //empty
       expect(await pairorderbook.getOrderBook(isSell)).to.deep.equal([])
 
-      //cheack balancesSpot and balancesTrade
-      expect(
-        await pairorderbook.balancesSpot(owner.address, token1.address)
-      ).to.be.equal(initialSupply - FindSum(resultOrder))
-      expect(
-        await pairorderbook.balancesTrade(owner.address, token1.address)
-      ).to.be.equal(FindSum(resultOrder))
+      // cheack balancesSpot and balancesTrade 1
+      let spot1 = await pairorderbook.balancesSpot(owner.address, token1.address)
+      let trade1 = await pairorderbook.balancesTrade(owner.address, token1.address)
+      expect(spot1).to.be.equal(initialSupply.sub(trade1) )
+      expect(trade1).to.be.equal(initialSupply.sub(spot1))
 
-      expect(
-        await pairorderbook.balancesSpot(owner.address, token0.address)
-      ).to.be.equal(initialSupply)
-      expect(
-        await pairorderbook.balancesTrade(owner.address, token0.address)
-      ).to.be.equal(0)
+       // cheack balancesSpot and balancesTrade 0
+      let spot0 = await pairorderbook.balancesSpot(owner.address, token0.address)
+      let trade0 = await pairorderbook.balancesTrade(owner.address, token0.address)
+      expect(spot0).to.be.equal(initialSupply)
+      expect(trade0).to.be.equal(0)
+
     })
 
-    it(' Should order when create 10 Order sell', async () => {
+    it(' Should order when create 5 Order sell', async () => {
       let price: number
       let amount = 1
       let prevNodeID: BigNumber
       let isBuy = 0
       let isSell = 1
-      let round = 10
 
-      // Loop createLimitOrder
-      let resultOrder = []
-      for (let i = 0; i < round; i++) {
-        // price random  from 1 to 100
-        price = Math.floor(Math.random() * 100) + 1
-        prevNodeID = await pairorderbook._findIndex(price, isSell)
-        await pairorderbook
-          .connect(owner)
-          .createLimitOrder(isSell, amount, price, prevNodeID)
-        resultOrder.push(price)
-      }
-
-      // Sort the numbers in ascending order
-      resultOrder.sort(function (a, b) {
-        return a - b
-      })
+      // Sell price 52.24
+      price = 52.24
+      prevNodeID = await pairorderbook._findIndex(toWei(price), isSell)
+      await pairorderbook.connect(owner).createLimitOrder(isSell, toWei(amount), toWei(price), prevNodeID)
+      // Sell price 195.23
+      price = 195.23
+      prevNodeID = await pairorderbook._findIndex(toWei(price), isSell)
+      await pairorderbook.connect(owner).createLimitOrder(isSell, toWei(amount), toWei(price), prevNodeID)
+      // Sell price 152.51
+      price = 152.51
+      prevNodeID = await pairorderbook._findIndex(toWei(price), isSell)
+      await pairorderbook.connect(owner).createLimitOrder(isSell, toWei(amount), toWei(price), prevNodeID)
+      // Sell price 11.42
+      price = 11.42
+      prevNodeID = await pairorderbook._findIndex(toWei(price), isSell)
+      await pairorderbook.connect(owner).createLimitOrder(isSell, toWei(amount), toWei(price), prevNodeID)
+      // Sell price 9.1
+      price = 9.1
+      prevNodeID = await pairorderbook._findIndex(toWei(price), isSell)
+      await pairorderbook.connect(owner).createLimitOrder(isSell, toWei(amount), toWei(price), prevNodeID)
 
       //cheack OrderBook
+
       expect(
         orderToList(await pairorderbook.getOrderBook(isSell))
-      ).to.deep.equal(resultOrder)
+      ).to.deep.equal([
+        toWei(9.1),
+        toWei(11.42),
+        toWei(52.24),
+        toWei(152.51),
+        toWei(195.23),
+      ])
 
       //empty
       expect(await pairorderbook.getOrderBook(isBuy)).to.deep.equal([])
 
-      //cheack balancesSpot and balancesTrade
-      expect(
-        await pairorderbook.balancesSpot(owner.address, token1.address)
-      ).to.be.equal(initialSupply)
-      expect(
-        await pairorderbook.balancesTrade(owner.address, token1.address)
-      ).to.be.equal(0)
+      // cheack balancesSpot and balancesTrade 1
+      let spot1 = await pairorderbook.balancesSpot(owner.address, token1.address)
+      let trade1 = await pairorderbook.balancesTrade(owner.address, token1.address)
+      expect(spot1).to.be.equal(initialSupply)
+      expect(trade1).to.be.equal(0)
 
-      expect(
-        await pairorderbook.balancesSpot(owner.address, token0.address)
-      ).to.be.equal(initialSupply - 10)
-      expect(
-        await pairorderbook.balancesTrade(owner.address, token0.address)
-      ).to.be.equal(10)
+       // cheack balancesSpot and balancesTrade 0
+      let spot0 = await pairorderbook.balancesSpot(owner.address, token0.address)
+      let trade0 = await pairorderbook.balancesTrade(owner.address, token0.address)
+      expect(spot0).to.be.equal(initialSupply.sub(trade0))
+      expect(trade0).to.be.equal(initialSupply.sub(spot0))
+
     })
 
     it(' Should order when create 5 Order buy and 5 Order sell', async () => {
@@ -229,65 +249,87 @@ describe('PairNewOrder', async () => {
       let isSell = 1
       let round = 10
 
-      // Loop createLimitOrder
-      let resultBuyOrder = []
-      let resultSellOrder = []
-      let amountSell = 0
-      for (let i = 0; i < round; i++) {
-        // price random  from 1 to 100
-        price = Math.floor(Math.random() * 100) + 1
+       // buy price 100
+      price = 100
+      prevNodeID = await pairorderbook._findIndex(toWei(price), isBuy)
+      await pairorderbook.connect(owner).createLimitOrder(isBuy, toWei(amount), toWei(price), prevNodeID)
+      // buy price 300
+      price = 300
+      prevNodeID = await pairorderbook._findIndex(toWei(price), isBuy)
+      await pairorderbook.connect(owner).createLimitOrder(isBuy, toWei(amount), toWei(price), prevNodeID)
 
-        // random Buy or Sell
-        let randomBuyorSell = Math.random() >= 0.5 ? true : false // true -> sell false -> buy
-        if (randomBuyorSell) {
-          prevNodeID = await pairorderbook._findIndex(price, isSell)
-          await pairorderbook
-            .connect(owner)
-            .createLimitOrder(isSell, amount, price, prevNodeID)
-          resultSellOrder.push(price)
-          amountSell++
-        } else {
-          prevNodeID = await pairorderbook._findIndex(price, isBuy)
-          await pairorderbook
-            .connect(owner)
-            .createLimitOrder(isBuy, amount, price, prevNodeID)
-          resultBuyOrder.push(price)
-        }
-      }
+      // Sell price 52.24
+      price = 52.24
+      prevNodeID = await pairorderbook._findIndex(toWei(price), isSell)
+      await pairorderbook.connect(owner).createLimitOrder(isSell, toWei(amount), toWei(price), prevNodeID)
+      // Sell price 195.23
+      price = 195.23
+      prevNodeID = await pairorderbook._findIndex(toWei(price), isSell)
+      await pairorderbook.connect(owner).createLimitOrder(isSell, toWei(amount), toWei(price), prevNodeID)
 
-      // Sort the numbers in descending order:
-      resultBuyOrder.sort(function (a, b) {
-        return b - a
-      })
+      // buy price 150
+      price = 150
+      prevNodeID = await pairorderbook._findIndex(toWei(price), isBuy)
+      await pairorderbook.connect(owner).createLimitOrder(isBuy, toWei(amount), toWei(price), prevNodeID)
+      // buy price 101.42
+      price = 101.42
+      prevNodeID = await pairorderbook._findIndex(toWei(price), isBuy)
+      await pairorderbook.connect(owner).createLimitOrder(isBuy, toWei(amount), toWei(price), prevNodeID)
 
-      // Sort the numbers in ascending order
-      resultSellOrder.sort(function (a, b) {
-        return a - b
-      })
+      // Sell price 152.51
+      price = 152.51
+      prevNodeID = await pairorderbook._findIndex(toWei(price), isSell)
+      await pairorderbook.connect(owner).createLimitOrder(isSell, toWei(amount), toWei(price), prevNodeID)
+      // Sell price 11.42
+      price = 11.42
+      prevNodeID = await pairorderbook._findIndex(toWei(price), isSell)
+      await pairorderbook.connect(owner).createLimitOrder(isSell, toWei(amount), toWei(price), prevNodeID)
+
+      // buy price 99.67
+      price = 99.67
+      prevNodeID = await pairorderbook._findIndex(toWei(price), isBuy)
+      await pairorderbook.connect(owner).createLimitOrder(isBuy, toWei(amount), toWei(price), prevNodeID)
+  
+      // Sell price 9.1
+      price = 9.1
+      prevNodeID = await pairorderbook._findIndex(toWei(price), isSell)
+      await pairorderbook.connect(owner).createLimitOrder(isSell, toWei(amount), toWei(price), prevNodeID)
+
+
+     
 
       //cheack OrderBook
       expect(
         orderToList(await pairorderbook.getOrderBook(isBuy))
-      ).to.deep.equal(resultBuyOrder)
+      ).to.deep.equal([
+        toWei(300),
+        toWei(150),
+        toWei(101.42),
+        toWei(100),
+        toWei(99.67),
+      ])
 
       expect(
         orderToList(await pairorderbook.getOrderBook(isSell))
-      ).to.deep.equal(resultSellOrder)
+      ).to.deep.equal([
+        toWei(9.1),
+        toWei(11.42),
+        toWei(52.24),
+        toWei(152.51),
+        toWei(195.23),
+      ])
 
-      //cheack balancesSpot and balancesTrade
-      expect(
-        await pairorderbook.balancesSpot(owner.address, token1.address)
-      ).to.be.equal(initialSupply - FindSum(resultBuyOrder))
-      expect(
-        await pairorderbook.balancesTrade(owner.address, token1.address)
-      ).to.be.equal(FindSum(resultBuyOrder))
+       // cheack balancesSpot and balancesTrade 1
+      let spot1 = await pairorderbook.balancesSpot(owner.address, token1.address)
+      let trade1 = await pairorderbook.balancesTrade(owner.address, token1.address)
+      expect(spot1).to.be.equal(initialSupply.sub(trade1))
+      expect(trade1).to.be.equal(initialSupply.sub(spot1))
 
-      expect(
-        await pairorderbook.balancesSpot(owner.address, token0.address)
-      ).to.be.equal(initialSupply - amountSell)
-      expect(
-        await pairorderbook.balancesTrade(owner.address, token0.address)
-      ).to.be.equal(amountSell)
+       // cheack balancesSpot and balancesTrade 0
+      let spot0 = await pairorderbook.balancesSpot(owner.address, token0.address)
+      let trade0 = await pairorderbook.balancesTrade(owner.address, token0.address)
+      expect(spot0).to.be.equal(initialSupply.sub(trade0))
+      expect(trade0).to.be.equal(initialSupply.sub(spot0))
     })
   })
 
