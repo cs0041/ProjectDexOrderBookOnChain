@@ -34,7 +34,7 @@ const hardhat: Chain = {
 }
 
 const { chains, provider } = configureChains(
-  [hardhat],
+  [polygonMumbai],
   [
     alchemyProvider({ apiKey: '' }),
     infuraProvider({ apiKey: '' }),

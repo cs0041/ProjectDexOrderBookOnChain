@@ -8,7 +8,7 @@ import {PairNewOrder,PairNewOrder__factory,Token0,Token0__factory,Token1,Token1_
 // toWei   ->ethers.utils.parseEther
 // toEther -> ethers.utils.formatEther
 async function main() {
-
+  console.log("Start")
   const initialSupplyToken0 = 10000
   const initialSupplyToken1 = 10000000
   const [owner,addr1,addr2] = await ethers.getSigners();
@@ -76,7 +76,7 @@ async function main() {
   await pairorderbook.connect(owner).createLimitOrder(isBuy,amount,price,prevNodeID)
 
   price = 21000
-  amount = 3
+  amount = 2
   prevNodeID = await pairorderbook._findIndex(price, isBuy)
   await pairorderbook.connect(owner).createLimitOrder(isBuy,amount,price,prevNodeID)
 
@@ -100,20 +100,16 @@ async function main() {
   prevNodeID = await pairorderbook._findIndex(price, isBuy)
   await pairorderbook.connect(owner).createLimitOrder(isBuy,amount,price,prevNodeID)
 
-  price = 23000
-  amount = 3
-  prevNodeID = await pairorderbook._findIndex(price, isBuy)
-  await pairorderbook.connect(owner).createLimitOrder(isBuy,amount,price,prevNodeID)
   
   // sell
 
   price = 24500
-  amount = 12
+  amount = 1
   prevNodeID = await pairorderbook._findIndex(price, isSell)
   await pairorderbook.connect(owner).createLimitOrder(isSell,amount,price,prevNodeID)
 
   price = 23000
-  amount = 9
+  amount = 1
   prevNodeID = await pairorderbook._findIndex(price, isSell)
   await pairorderbook.connect(owner).createLimitOrder(isSell,amount,price,prevNodeID)
  
@@ -143,9 +139,9 @@ async function main() {
   await pairorderbook.connect(owner).createLimitOrder(isSell,amount,price,prevNodeID)
 
   //Market Order
-  await pairorderbook.connect(addr1).createMarketOrder(1,2)
-  await pairorderbook.connect(addr1).createMarketOrder(1,3)
-  await pairorderbook.connect(addr1).createMarketOrder(0,50000)
+  //await pairorderbook.connect(addr1).createMarketOrder(1,2)
+  await pairorderbook.connect(addr1).createMarketOrder(1,20)
+  await pairorderbook.connect(addr1).createMarketOrder(0,100000)
 
   // for (let i = 0; i < round; i++) {
   //    // price random  from 1 to 100
