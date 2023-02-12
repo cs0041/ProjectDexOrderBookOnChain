@@ -32,6 +32,7 @@ interface IContract {
   // sumMarketEvent:EventMarketOrder[]
   sendTxDeposit: (amount: number | string, addressToken: string) => Promise<void>
   sendTxWithdraw: (amount: number | string, addressToken: string) => Promise<void>
+  tradingViewList: TypeTradingView[]
 }
 
 export const ContractContext = createContext<IContract>({
@@ -57,6 +58,7 @@ export const ContractContext = createContext<IContract>({
   // sumMarketEvent: [],
   sendTxDeposit: async () => {},
   sendTxWithdraw:async () => {},
+  tradingViewList:[]
 })
 
 
@@ -116,17 +118,16 @@ export const ContractProvider = ({ children }: ChildrenProps) => {
     useState(true)
 
   // Market order
-  const [marketEvent, setMarketEvent] = useState<
-    PairNewOrder.OrderMarketStructOutput[]
-  >([])
+  const [marketEvent, setMarketEvent] = useState< PairNewOrder.OrderMarketStructOutput[]>([])
 
   // Sum Market order
   const [sumMarketEvent, setSumMarketEvent] = useState<EventMarketOrder[]>([])
 
   // History order
-  const [historyOrderEvent, setHistoryOrderEvent] = useState<
-    PairNewOrder.OrderHistoryStructOutput[]
-  >([])
+  const [historyOrderEvent, setHistoryOrderEvent] = useState<PairNewOrder.OrderHistoryStructOutput[]>([])
+
+  // tradingView
+  const [tradingViewList, setTradingViewList] = useState<TypeTradingView[]>([])
 
   // helper
   // const toString = (bytes32) => ethers.utils.parseBytes32String(bytes32)
@@ -469,13 +470,23 @@ export const ContractProvider = ({ children }: ChildrenProps) => {
   const loadHistoryMarketOrder = async () => {
     if (!window.ethereum) return console.log('Please install metamask')
     try {
-      console.log('loadHistoryMarketOrder')
       const contract = getPairOrderContract()
 
       const data = await contract.getMarketOrder()
       const covertData = Object.keys(data).map((key) => data[key as any])
-      console.log(covertData)
       setMarketEvent(covertData.reverse())
+
+      data.map((item)=>{
+         const data: TypeTradingView = {
+           close: Number(ethers.utils.formatEther(item.price)),
+           high: Number(ethers.utils.formatEther(item.price)),
+           low: Number(ethers.utils.formatEther(item.price)),
+           open: 50,
+           time: item.date.toNumber(),
+         }
+
+        setTradingViewList((prev) => [...prev,data])
+      })
     } catch (error) {
       console.log(error)
     }
@@ -688,6 +699,7 @@ export const ContractProvider = ({ children }: ChildrenProps) => {
         // sumMarketEvent,
         sendTxDeposit,
         sendTxWithdraw,
+        tradingViewList,
       }}
     >
       {!initialLoading && children}
