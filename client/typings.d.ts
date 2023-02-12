@@ -11,7 +11,16 @@ interface EventAllOrder {
   amount: string
   price: string
   Type: String
+  
 }
+interface TypeOrderHistory {
+  Type: string
+  isBuy: number
+  amount: number
+  price: number
+  Trader: string
+}
+
 
 
 
