@@ -21,9 +21,6 @@ interface TypeOrderHistory {
   Trader: string
 }
 
-
-
-
 interface Order {
   id: number
   addressTrader: string
@@ -33,4 +30,16 @@ interface Order {
   amount: string
   price: string
   filled: string
+}
+
+// interface TypeTradingView {
+//   time: string
+//   value: number
+// }
+interface TypeTradingView {
+  time: number
+  open: number
+  high: number
+  low: number
+  close: number
 }
