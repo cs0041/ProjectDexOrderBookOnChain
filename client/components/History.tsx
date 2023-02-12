@@ -4,6 +4,9 @@ import UpdateModal from '../components/Modal'
 import { useAccount } from 'wagmi'
 import { AdjustmentsHorizontalIcon } from '@heroicons/react/24/outline'
 import { TrashIcon } from '@heroicons/react/24/outline'
+import { ethers } from 'ethers'
+import { ConvertDateTime } from '../utils/DateTime'
+
 type Props = {}
 
 enum ShowOrderStatus {
@@ -12,33 +15,28 @@ enum ShowOrderStatus {
 }
 
 const History = (props: Props) => {
+  const { address, isConnected } = useAccount()
 
-    const { address, isConnected } = useAccount()
-
-    const { 
-        isLoadingOrderBookByAddress,
-        orderBookByAddress,
-        sendTxCancelOrder,
-        loadOrderBookByAddress,
-        historyOrderEvent
-    } = useContext(ContractContext)
-
-     useEffect(() => {
-       const sorting = () => {
-         historyOrderEvent.sort(function (a, b) {
-           return b.Date - a.Date
-         })
-       }
-       sorting()
-     }, [historyOrderEvent])
-
-    // for update modal
-    const [sideBuyOrSell, setSideBuyOrSell] = useState<number>(-1)
-    const [idUpdate, setIdUpdate] = useState<number>(-1)
-    const [showUpdateModal, setShowUpdateModal] = useState(false)
+  const {
+    isLoadingOrderBookByAddress,
+    orderBookByAddress,
+    sendTxCancelOrder,
+    loadOrderBookByAddress,
+    historyOrderEvent,
+  } = useContext(ContractContext)
+  // helper
+  const toEther = (wei: string | number | ethers.BigNumber) => ethers.utils.formatEther(wei)
+  const toEtherandFixFloatingPoint = (amount: ethers.BigNumber) => Number(ethers.utils.formatEther(amount)).toFixed(6)
 
 
-    const [selectShowOrder, setSelectShowOrder] = useState<ShowOrderStatus>(ShowOrderStatus.OpenOrder)
+  // for update modal
+  const [sideBuyOrSell, setSideBuyOrSell] = useState<number>(-1)
+  const [idUpdate, setIdUpdate] = useState<number>(-1)
+  const [showUpdateModal, setShowUpdateModal] = useState(false)
+
+  const [selectShowOrder, setSelectShowOrder] = useState<ShowOrderStatus>(
+    ShowOrderStatus.OpenOrder
+  )
   return (
     <div className="p-5  h-full ">
       <div className="space-x-5 mb-5">
@@ -91,15 +89,14 @@ const History = (props: Props) => {
           <div className="overflow-y-auto max-h-full">
             {orderBookByAddress.map((item) => (
               <div className=" grid grid-cols-9 text-xl border-b-2 border-gray-700  p-3">
-                <div>{item.createdDate}</div>
+                <div>{ConvertDateTime(Number(item.createdDate))}</div>
                 <div> BTC/USDT</div>
                 <div>Limit</div>
                 <div
                   className={`${
                     item.BuyOrSell === 0 ? 'text-green-500' : 'text-red-500'
                   }  `}
-                >
-                  {' '}
+                 >
                   {item.BuyOrSell === 0 ? 'Buy' : 'Sell'}
                 </div>
                 <div className="flex flex-row">
@@ -148,30 +145,35 @@ const History = (props: Props) => {
           <div className="overflow-y-auto max-h-full">
             {historyOrderEvent.map((item) => (
               <div className=" grid grid-cols-6 text-xl border-b-2 border-gray-700  p-3">
-                <div>{item.Date}</div>
+                <div>{ConvertDateTime(item.date.toNumber())}</div>
                 <div> BTC/USDT</div>
                 <div>{item.Type}</div>
                 <div
                   className={`${
                     item.Type === 'Market'
-                      ? item.Side === 1
+                      ? item.isBuy === 1
                         ? 'text-green-500'
                         : 'text-red-500'
-                      : item.Side === 0
+                      : item.isBuy === 0
                       ? 'text-green-500'
                       : 'text-red-500'
                   } `}
                 >
                   {item.Type === 'Market'
-                    ? item.Side === 0
+                    ? item.isBuy === 0
                       ? 'Sell'
                       : 'Buy'
-                    : item.Side === 0
+                    : item.isBuy === 0
                     ? 'Buy'
                     : 'Sell'}
                 </div>
-                <div> {item.price === "0" ? 'Market' : item.price} </div>
-                <div> {item.amount} </div>
+                <div>
+                  
+                  {Number(toEtherandFixFloatingPoint(item.price)) === 0
+                    ? 'Market'
+                    : toEtherandFixFloatingPoint(item.price)}
+                </div>
+                <div> {toEtherandFixFloatingPoint(item.amount)} </div>
               </div>
             ))}
           </div>
