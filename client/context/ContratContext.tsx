@@ -6,7 +6,8 @@ import {PairNewOrder,PairNewOrder__factory,Token0,Token0__factory,Token1,Token1_
 // const ContractPairOrderAddress = '0x9fE46736679d2D9a65F0992F2272dE9f3c7fa6e0'
 // const ContractToken0Address = '0x5FbDB2315678afecb367f032d93F642f64180aa3'
 // const ContractToken1Address = '0xe7f1725E7734CE288F8367e1Bb143E90bb3F0512'
-const initBlockTime = 31944832
+const initBlockTime = 31949670
+
 import { ContractPairOrderAddress,ContractToken0Address,ContractToken1Address } from '../utils/Address'
 interface IContract {
   loadingOrderSell: boolean
@@ -26,9 +27,9 @@ interface IContract {
   loadOrderBookByAddress: (address: string) => Promise<void>
   sendTxCancelOrder: (side: number, id: number | string) => Promise<void>
   sendTxUpdateOrder: (side: number, id: number, newAmount: number | string, newPriceOrder: number | string) => Promise<void>
-  marketEvent: EventMarketOrder[]
-  historyOrderEvent:EventAllOrder[]
-  sumMarketEvent:EventMarketOrder[]
+  marketEvent: PairNewOrder.OrderMarketStructOutput[]
+  historyOrderEvent:PairNewOrder.OrderHistoryStructOutput[]
+  // sumMarketEvent:EventMarketOrder[]
   sendTxDeposit: (amount: number | string, addressToken: string) => Promise<void>
   sendTxWithdraw: (amount: number | string, addressToken: string) => Promise<void>
 }
@@ -53,7 +54,7 @@ export const ContractContext = createContext<IContract>({
   sendTxUpdateOrder: async () => {},
   marketEvent: [],
   historyOrderEvent: [],
-  sumMarketEvent: [],
+  // sumMarketEvent: [],
   sendTxDeposit: async () => {},
   sendTxWithdraw:async () => {},
 })
@@ -90,8 +91,6 @@ interface ChildrenProps {
 
 
 export const ContractProvider = ({ children }: ChildrenProps) => {
-
-
   const [initialLoading, setInitialLoading] = useState(true)
 
   // order sell
@@ -99,190 +98,231 @@ export const ContractProvider = ({ children }: ChildrenProps) => {
   const [loadingOrderSell, setLoadingOrderSell] = useState(false)
 
   // order buy
-  const [orderBookBuy, setOrderBookBuy] = useState <Order[]>([])
+  const [orderBookBuy, setOrderBookBuy] = useState<Order[]>([])
   const [loadingOrderBuy, setLoadingOrderBuy] = useState(false)
 
-  // price 
-  const [priceToken,setPriceToken] = useState<string>("")
+  // price
+  const [priceToken, setPriceToken] = useState<string>('')
 
   // balances
-  const [balancesSpotToken0, setBalancesSpotToken0] = useState<string>("")
-  const [balancesTradeToken0, setBalancesTradeToken0] = useState<string>("")
-  const [balancesSpotToken1, setBalancesSpotToken1] = useState<string>("")
-  const [balancesTradeToken1, setBalancesTradeToken1] = useState<string>("")
-
+  const [balancesSpotToken0, setBalancesSpotToken0] = useState<string>('')
+  const [balancesTradeToken0, setBalancesTradeToken0] = useState<string>('')
+  const [balancesSpotToken1, setBalancesSpotToken1] = useState<string>('')
+  const [balancesTradeToken1, setBalancesTradeToken1] = useState<string>('')
 
   // order by address
   const [orderBookByAddress, setOrderBookByAddress] = useState<Order[]>([])
-  const [isLoadingOrderBookByAddress,setIsLoadingOrderBookByAddress] = useState(true)
+  const [isLoadingOrderBookByAddress, setIsLoadingOrderBookByAddress] =
+    useState(true)
 
   // Market order
-  const [marketEvent,setMarketEvent] = useState<EventMarketOrder[]>([])
+  const [marketEvent, setMarketEvent] = useState<
+    PairNewOrder.OrderMarketStructOutput[]
+  >([])
 
   // Sum Market order
-  const [sumMarketEvent,setSumMarketEvent] = useState<EventMarketOrder[]>([])
+  const [sumMarketEvent, setSumMarketEvent] = useState<EventMarketOrder[]>([])
 
   // History order
-  const [historyOrderEvent, setHistoryOrderEvent] = useState<EventAllOrder[]>([])
+  const [historyOrderEvent, setHistoryOrderEvent] = useState<
+    PairNewOrder.OrderHistoryStructOutput[]
+  >([])
 
   // helper
   // const toString = (bytes32) => ethers.utils.parseBytes32String(bytes32)
-  const toWei = (ether :string|number) => ethers.utils.parseEther(String(ether))
-  const toEther = (wei : string|number|ethers.BigNumber) => ethers.utils.formatEther(wei)
-  const toFixUnits = (amount : number, decimal :string) => ethers.utils.formatUnits(amount, decimal)
-  const toEtherandFixFloatingPoint  = (amount : ethers.BigNumber) => Number(ethers.utils.formatEther(amount)).toFixed(6)
+  const toWei = (ether: string | number) =>
+    ethers.utils.parseEther(String(ether))
+  const toEther = (wei: string | number | ethers.BigNumber) =>
+    ethers.utils.formatEther(wei)
+  const toFixUnits = (amount: number, decimal: string) =>
+    ethers.utils.formatUnits(amount, decimal)
+  const toEtherandFixFloatingPoint = (amount: ethers.BigNumber) =>
+    Number(ethers.utils.formatEther(amount)).toFixed(6)
 
-
- 
-  
   useEffect(() => {
     if (!window.ethereum) return console.log('Please install metamask')
-    // loadOrderBook()
+    loadOrderBook()
     loadPriceToken()
     loadBalances()
     loadOrderBookByAddress()
-    MarketQueryEvents()
-    QueryHisoryEvents()
-    
+
+    loadHistoryByAddress()
+    loadHistoryMarketOrder()
+
+    addlistenerMarketEvents()
+    // MarketQueryEvents()
+    // QueryHisoryEvents()
+
     setInitialLoading(false)
+  }, [])
 
-   }, [])
-
-   const sendTxDeposit = async (_amount: number | string , addressToken : string) => {
-     if (!window.ethereum) return console.log('Please install metamask')
-     try {
+  const sendTxDeposit = async (
+    _amount: number | string,
+    addressToken: string
+  ) => {
+    if (!window.ethereum) return console.log('Please install metamask')
+    try {
       const amount = toWei(_amount)
       const contract = getPairOrderContract()
       const token = getTokenContract(addressToken)
-      const address = ( await window.ethereum.request({ method: 'eth_accounts' }))[0]
+      const address = (
+        await window.ethereum.request({ method: 'eth_accounts' })
+      )[0]
       // const amountApprove = (await token.allowance(address,ContractPairOrderAddress)).toNumber()
-      const transactionHashApprove =  await token.approve(ContractPairOrderAddress,amount)
+      const transactionHashApprove = await token.approve(
+        ContractPairOrderAddress,
+        amount
+      )
       await transactionHashApprove.wait()
-        // if (amountApprove< amount.to){
-        //     const transactionHashApprove = await token.approve(ContractPairOrderAddress,amount)
-        // }
+      // if (amountApprove< amount.to){
+      //     const transactionHashApprove = await token.approve(ContractPairOrderAddress,amount)
+      // }
       const transactionHash = await contract.deposit(amount, addressToken)
       console.log(transactionHash.hash)
       await transactionHash.wait()
-     } catch (error) {
-       console.log(error)
-     }
-     loadBalances()
-   }
-   const sendTxWithdraw = async (_amount: number | string , addressToken : string) => {
-     if (!window.ethereum) return console.log('Please install metamask')
-     try {
+    } catch (error) {
+      console.log(error)
+    }
+    loadBalances()
+  }
+  const sendTxWithdraw = async (
+    _amount: number | string,
+    addressToken: string
+  ) => {
+    if (!window.ethereum) return console.log('Please install metamask')
+    try {
       const amount = toWei(_amount)
       const contract = getPairOrderContract()
       const transactionHash = await contract.withdraw(amount, addressToken)
       console.log(transactionHash.hash)
       await transactionHash.wait()
-     } catch (error) {
-       console.log(error)
-     }
-     loadBalances()
-   }
-   const sendTxMarketOrder = async (side: number, _amount: number | string) => {
-     if (!window.ethereum) return console.log('Please install metamask')
-     try {
-       const contract = getPairOrderContract()
-       const amount = toWei(_amount)
-       const transactionHash = await contract.createMarketOrder(side, amount)
-       console.log(transactionHash.hash)
-       await transactionHash.wait()
-     } catch (error) {
-       console.log(error)
-     }
-     loadOrderBook()
-     loadPriceToken()
-     loadBalances()
-     QueryHisoryEvents()
-   }
+    } catch (error) {
+      console.log(error)
+    }
+    loadBalances()
+  }
+  const sendTxMarketOrder = async (side: number, _amount: number | string) => {
+    if (!window.ethereum) return console.log('Please install metamask')
+    try {
+      const contract = getPairOrderContract()
+      const amount = toWei(_amount)
+      const transactionHash = await contract.createMarketOrder(side, amount)
+      console.log(transactionHash.hash)
+      await transactionHash.wait()
+    } catch (error) {
+      console.log(error)
+    }
+    loadOrderBook()
+    loadPriceToken()
+    loadBalances()
+    loadHistoryByAddress()
+    loadHistoryMarketOrder()
+    // QueryHisoryEvents()
+  }
 
-   const sendTxLimitOrder = async (side: number, _amount: number | string, _price: number | string) => {
-    
-     if (!window.ethereum) return console.log('Please install metamask')
-     try {
-       const amount = toWei(_amount)
-       const price = toWei(_price)
-       const contract = getPairOrderContract()
-       const prevNodeID = await contract._findIndex(price,side)
-       const transactionHash = await contract.createLimitOrder(side,amount,price,prevNodeID) 
-       console.log(transactionHash.hash)
-       await transactionHash.wait()
-     } catch (error) {
-       console.log(error)
-     }
-     loadOrderBook()
-     loadBalances()
-     loadOrderBookByAddress()
-     QueryHisoryEvents()
-   }
+  const sendTxLimitOrder = async (
+    side: number,
+    _amount: number | string,
+    _price: number | string
+  ) => {
+    if (!window.ethereum) return console.log('Please install metamask')
+    try {
+      const amount = toWei(_amount)
+      const price = toWei(_price)
+      const contract = getPairOrderContract()
+      const prevNodeID = await contract._findIndex(price, side)
+      const transactionHash = await contract.createLimitOrder(
+        side,
+        amount,
+        price,
+        prevNodeID
+      )
+      console.log(transactionHash.hash)
+      await transactionHash.wait()
+    } catch (error) {
+      console.log(error)
+    }
+    loadOrderBook()
+    loadBalances()
+    loadOrderBookByAddress()
+    loadHistoryByAddress()
+    // QueryHisoryEvents()
+  }
 
-   const sendTxUpdateOrder = async (side: number, id:number,_newAmount: number | string, _newPriceOrder: number | string) => {
+  const sendTxUpdateOrder = async (
+    side: number,
+    id: number,
+    _newAmount: number | string,
+    _newPriceOrder: number | string
+  ) => {
     // updateOrder(Side _side,uint256 index, uint256 newPriceOrder, uint256 newAmount,uint256 prevIndexAdd,uint256 prevIndexRemove)
-    
-     if (!window.ethereum) return console.log('Please install metamask')
-     try {
+
+    if (!window.ethereum) return console.log('Please install metamask')
+    try {
       const newAmount = toWei(_newAmount)
       const newPriceOrder = toWei(_newPriceOrder)
-      console.log('side',side)
+      console.log('side', side)
       console.log('newAmount', newAmount)
       console.log('newPriceOrder', newPriceOrder)
-      console.log('id',id)
-       const contract = getPairOrderContract()
-       const prevIndexAdd = await contract._findIndex(newPriceOrder, side)
-       const prevIndexRemove = await contract._findPrevOrder(side, id)
+      console.log('id', id)
+      const contract = getPairOrderContract()
+      const prevIndexAdd = await contract._findIndex(newPriceOrder, side)
+      const prevIndexRemove = await contract._findPrevOrder(side, id)
       console.log('prevIndexAdd', prevIndexAdd.toNumber())
       console.log('prevIndexRemove', prevIndexRemove.toNumber())
-       const transactionHash = await contract.updateOrder(side,id,newPriceOrder,newAmount,prevIndexAdd,prevIndexRemove) 
+      const transactionHash = await contract.updateOrder(
+        side,
+        id,
+        newPriceOrder,
+        newAmount,
+        prevIndexAdd,
+        prevIndexRemove
+      )
 
       //       prevIndexAdd = await pairorderbook._findIndex(newPrice, isBuy)
       // prevIndexRemove = await pairorderbook._findPrevOrder(isBuy, index)
       // await pairorderbook.connect(owner).updateOrder(isBuy, index, newPrice,newAmount,prevIndexAdd,prevIndexRemove)
 
+      console.log(transactionHash.hash)
+      await transactionHash.wait()
+    } catch (error) {
+      console.log(error)
+    }
+    loadOrderBook()
+    loadBalances()
+    loadOrderBookByAddress()
+    loadHistoryByAddress()
+    // QueryHisoryEvents()
+  }
 
-       console.log(transactionHash.hash)
-       await transactionHash.wait()
-      } catch (error) {
-        console.log(error)
-      }
-      loadOrderBook()
-      loadBalances()
-      loadOrderBookByAddress()
-      QueryHisoryEvents()
-   }
+  const sendTxCancelOrder = async (side: number, id: number | string) => {
+    if (!window.ethereum) return console.log('Please install metamask')
+    try {
+      const contract = getPairOrderContract()
+      const prevNodeID = await contract._findPrevOrder(side, id)
+      const transactionHash = await contract.removeOrder(side, id, prevNodeID)
+      console.log(transactionHash.hash)
+      await transactionHash.wait()
+    } catch (error) {
+      console.log(error)
+    }
+    loadOrderBook()
+    loadOrderBookByAddress()
+    loadBalances()
+    loadHistoryByAddress()
+    // QueryHisoryEvents()
+  }
 
-   const sendTxCancelOrder = async (side: number, id: number | string) => {
-
-     if (!window.ethereum) return console.log('Please install metamask')
-     try {
-       const contract = getPairOrderContract()
-       const prevNodeID = await contract._findPrevOrder(side,id)
-       const transactionHash = await contract.removeOrder(side,id,prevNodeID) 
-       console.log(transactionHash.hash)
-       await transactionHash.wait()
-      } catch (error) {
-        console.log(error)
-      }
-      loadOrderBook()
-      loadOrderBookByAddress()
-      loadBalances()
-      QueryHisoryEvents()
-   }
-
-  
   const loadPriceToken = async () => {
     if (!window.ethereum) return console.log('Please install metamask')
     try {
-
       const contract = getPairOrderContract()
 
       const dataPriceToken = await contract.price()
 
       setPriceToken(toEtherandFixFloatingPoint(dataPriceToken))
     } catch (error) {
-       console.log(error)
+      console.log(error)
     }
   }
 
@@ -293,23 +333,30 @@ export const ContractProvider = ({ children }: ChildrenProps) => {
 
       const accounts = await window.ethereum.request({ method: 'eth_accounts' })
 
-      const dataBalancesSpotToken0 = await contract.balancesSpot(accounts[0],ContractToken0Address)
-      const dataBalancesTradeToken0 = await contract.balancesTrade(accounts[0],ContractToken0Address)
+      const [dataBalancesSpotToken0, dataBalancesTradeToken0] =
+        await Promise.all([
+          await contract.balancesSpot(accounts[0], ContractToken0Address),
+          await contract.balancesTrade(accounts[0], ContractToken0Address),
+        ])
       setBalancesSpotToken0(toEtherandFixFloatingPoint(dataBalancesSpotToken0))
-      setBalancesTradeToken0(toEtherandFixFloatingPoint(dataBalancesTradeToken0))
+      setBalancesTradeToken0(
+        toEtherandFixFloatingPoint(dataBalancesTradeToken0)
+      )
 
-      const dataBalancesSpotToken1 = await contract.balancesSpot(accounts[0],ContractToken1Address)
-      const dataBalancesTradeToken1 = await contract.balancesTrade(accounts[0],ContractToken1Address)
+      const [dataBalancesSpotToken1, dataBalancesTradeToken1] =
+        await Promise.all([
+          await contract.balancesSpot(accounts[0], ContractToken1Address),
+          await contract.balancesTrade(accounts[0], ContractToken1Address),
+        ])
+
       setBalancesSpotToken1(toEtherandFixFloatingPoint(dataBalancesSpotToken1))
-      setBalancesTradeToken1(toEtherandFixFloatingPoint(dataBalancesTradeToken1)  )
-
-
+      setBalancesTradeToken1(
+        toEtherandFixFloatingPoint(dataBalancesTradeToken1)
+      )
     } catch (error) {
-       console.log(error)
+      console.log(error)
     }
   }
-
-
 
   const loadOrderBook = async () => {
     if (!window.ethereum) return console.log('Please install metamask')
@@ -317,21 +364,17 @@ export const ContractProvider = ({ children }: ChildrenProps) => {
     setLoadingOrderBuy(true)
     setLoadingOrderSell(true)
     try {
-    
       setOrderBookBuy([])
       setOrderBookSell([])
 
       const contract = getPairOrderContract()
 
-      const [
-        dataOrderSell,
-        dataOrderBuy,
-         ] = await Promise.all([
+      const [dataOrderSell, dataOrderBuy] = await Promise.all([
         await contract.getOrderBook(1),
         await contract.getOrderBook(0),
       ])
 
-      dataOrderBuy.map((order)=>{
+      dataOrderBuy.map((order) => {
         const structOrder: Order = {
           id: order.id.toNumber(),
           addressTrader: order.trader,
@@ -341,11 +384,11 @@ export const ContractProvider = ({ children }: ChildrenProps) => {
           amount: toEtherandFixFloatingPoint(order.amount),
           price: toEtherandFixFloatingPoint(order.price),
           filled: toEtherandFixFloatingPoint(order.filled),
-        } 
+        }
         setOrderBookBuy((prev) => [...prev, structOrder])
       })
 
-      dataOrderSell.map((order)=>{
+      dataOrderSell.map((order) => {
         const structOrder: Order = {
           id: order.id.toNumber(),
           addressTrader: order.trader.toString(),
@@ -355,39 +398,36 @@ export const ContractProvider = ({ children }: ChildrenProps) => {
           amount: toEtherandFixFloatingPoint(order.amount),
           price: toEtherandFixFloatingPoint(order.price),
           filled: toEtherandFixFloatingPoint(order.filled),
-        } 
+        }
         setOrderBookSell((prev) => [structOrder, ...prev])
       })
 
-
       setLoadingOrderBuy(false)
       setLoadingOrderSell(false)
-
     } catch (error) {
-       setLoadingOrderBuy(false)
-       setLoadingOrderSell(false)
-       setOrderBookBuy([])
-       setOrderBookSell([])
-       console.log(error)
+      setLoadingOrderBuy(false)
+      setLoadingOrderSell(false)
+      setOrderBookBuy([])
+      setOrderBookSell([])
+      console.log(error)
     }
-
   }
 
-  const loadOrderBookByAddress = async (address? : string) => {
+  const loadOrderBookByAddress = async (address?: string) => {
     if (!window.ethereum) return console.log('Please install metamask')
 
     setIsLoadingOrderBookByAddress(true)
     try {
-    
       setOrderBookByAddress([])
 
       const contract = getPairOrderContract()
 
-      if(address==undefined){
+      if (address == undefined) {
         address = (await window.ethereum.request({ method: 'eth_accounts' }))[0]
       }
-      const dataOrderBookByAddress = await contract.getOrderBookByAddress(address)
-       
+      const dataOrderBookByAddress = await contract.getOrderBookByAddress(
+        address
+      )
 
       dataOrderBookByAddress.map((order) => {
         const structOrder: Order = {
@@ -403,207 +443,225 @@ export const ContractProvider = ({ children }: ChildrenProps) => {
         setOrderBookByAddress((prev) => [...prev, structOrder])
       })
 
-
       setIsLoadingOrderBookByAddress(false)
-
     } catch (error) {
-       setIsLoadingOrderBookByAddress(false)
-       setOrderBookByAddress([])
-       console.log(error)
+      setIsLoadingOrderBookByAddress(false)
+      setOrderBookByAddress([])
+      console.log(error)
     }
-
   }
 
-  const MarketQueryEvents = async() => {
+  const loadHistoryByAddress = async () => {
+    if (!window.ethereum) return console.log('Please install metamask')
+    try {
+      const contract = getPairOrderContract()
+
+      const accounts = await window.ethereum.request({ method: 'eth_accounts' })
+
+      const data = await contract.getOrderHisotyByAddress(accounts[0])
+      const covertData = Object.keys(data).map((key) => data[key as any])
+
+      setHistoryOrderEvent(covertData.reverse())
+    } catch (error) {
+      console.log(error)
+    }
+  }
+  const loadHistoryMarketOrder = async () => {
+    if (!window.ethereum) return console.log('Please install metamask')
+    try {
+      console.log('loadHistoryMarketOrder')
+      const contract = getPairOrderContract()
+
+      const data = await contract.getMarketOrder()
+      const covertData = Object.keys(data).map((key) => data[key as any])
+      console.log(covertData)
+      setMarketEvent(covertData.reverse())
+    } catch (error) {
+      console.log(error)
+    }
+  }
+
+  const addlistenerMarketEvents = async() => {
     if (!window.ethereum) return console.log('Please install metamask')
      try {
         const provider = new ethers.providers.Web3Provider(window.ethereum as any )
-        const blockNumber = await provider.getBlockNumber()
         const contract = new ethers.Contract(ContractPairOrderAddress, artifactPairNewOrder.abi, provider) as PairNewOrder
-        //const filter = contract.filters.CreateLimitOrder()
-        const filterMarketOrder = contract.filters.MarketOrder()
-        const filterSumMarketOrder = contract.filters.SumMarketOrder()
-
-
-          const [
-            dataMarketOrder,
-            dataSumMarketOrder,
-          ] = await Promise.all([
-            await contract.queryFilter(filterMarketOrder, initBlockTime, blockNumber),
-            await contract.queryFilter(filterSumMarketOrder, initBlockTime, blockNumber)
-          ])
-
-        dataMarketOrder.map(async (item) => {
-          const timeDate = (await provider.getBlock(item.blockNumber)).timestamp
-          const structEvent: EventMarketOrder = {
-            Date: timeDate,
-            Side: item.args._isBuy,
-            amount: toEtherandFixFloatingPoint(item.args._amount),
-            price: toEtherandFixFloatingPoint(item.args._price),
-          }
-          // console.log(structEvent)
-          setMarketEvent((prev) => [structEvent, ...prev])
-        })
-
-        dataSumMarketOrder.map(async (item) => {
-          const timeDate = (await provider.getBlock(item.blockNumber)).timestamp
-          const structEvent: EventMarketOrder = {
-            Date: timeDate,
-            Side: item.args._isBuy,
-            amount: toEtherandFixFloatingPoint(item.args._amount),
-            price: toEtherandFixFloatingPoint(item.args._lastPrice),
-          }
-          // console.log(structEvent)
-          setSumMarketEvent((prev) => [structEvent, ...prev])
-        })
-
+        
         contract.on('MarketOrder', async (_isBuy,_amount,_price,event) => {
-           const timeDate = (await provider.getBlock(event.blockNumber)).timestamp
-           const structEvent: EventMarketOrder = {
-             Date: timeDate,
-             Side: _isBuy,
-             amount: toEtherandFixFloatingPoint(_amount),
-             price: toEtherandFixFloatingPoint(_price),
-           }
-           console.log("MarketOrder tigger",structEvent)
-          setMarketEvent((prev) => [structEvent,...prev])
-          // loadOrderBook()
+          loadHistoryMarketOrder()
+          loadOrderBook() 
         })
-        
-        contract.on('SumMarketOrder', async (_isBuy,_amount,_price,event) => {
-           const timeDate = (await provider.getBlock(event.blockNumber)).timestamp
-           const structEvent: EventMarketOrder = {
-             Date: timeDate,
-             Side: _isBuy,
-             amount: toEtherandFixFloatingPoint(_amount),
-             price: toEtherandFixFloatingPoint(_price),
-           }
-             console.log('SumMarketOrder tigger', structEvent)
-          setSumMarketEvent((prev) => [structEvent, ...prev])
-          // loadOrderBook()
-        })
+
       } catch (error) {
-        
+
       }
   }
 
-  const QueryHisoryEvents = async() => {
-    if (!window.ethereum) return console.log('Please install metamask')
-     try {
-        setHistoryOrderEvent([])
-        const provider = new ethers.providers.Web3Provider(window.ethereum as any )
-        const blockNumber = await provider.getBlockNumber()
-        const contract = new ethers.Contract(ContractPairOrderAddress, artifactPairNewOrder.abi, provider) as PairNewOrder
-        const address = ( await window.ethereum.request({ method: 'eth_accounts' }))[0]
-        const filterLimitOrder = contract.filters.CreateLimitOrder(null,null,null,address)
-        const filterUpdateOrder = contract.filters.UpdateOrder(null,null,null,address)
-        const filterRemoveOrder = contract.filters.RemoveOrder(null, null,null,address)
-        const filterMarketOrder = contract.filters.SumMarketOrder(null,null,null,address)
-        const [
-          dataLimitOrder,
-          dataUpdateOrder,
-          dataRemoveOrder,
-          dataMarketOrder,
-        ] = await Promise.all([
-          await contract.queryFilter(filterLimitOrder, initBlockTime, blockNumber),
-          await contract.queryFilter(filterUpdateOrder, initBlockTime, blockNumber),
-          await contract.queryFilter(filterRemoveOrder, initBlockTime, blockNumber),
-          await contract.queryFilter(filterMarketOrder, initBlockTime, blockNumber),
-        ])
-
-        dataLimitOrder.map(async (item) => {
-          const timeDate = (await provider.getBlock(item.blockNumber)).timestamp
-          const structEvent: EventAllOrder = {
-            Date: timeDate,
-            Side: item.args._isBuy,
-            amount: toEtherandFixFloatingPoint(item.args._amount),
-            price: toEtherandFixFloatingPoint(item.args._price),
-            Type: 'Limit',
-          }
-          console.log('dataLimitOrder',structEvent)
-          setHistoryOrderEvent((prev) => [...prev, structEvent])
-        })
-        dataUpdateOrder.map(async (item) => {
-          const timeDate = (await provider.getBlock(item.blockNumber)).timestamp
-          const structEvent: EventAllOrder = {
-            Date: timeDate,
-            Side: item.args._isBuy,
-            amount: toEtherandFixFloatingPoint(item.args.newAmount),
-            price: toEtherandFixFloatingPoint(item.args.newPriceOrder),
-            Type: 'Update',
-          }
-           console.log('dataUpdateOrder', structEvent)
-          setHistoryOrderEvent((prev) => [...prev, structEvent])
-        })
-        dataRemoveOrder.map(async (item) => {
-          const timeDate = (await provider.getBlock(item.blockNumber)).timestamp
-          const structEvent: EventAllOrder = {
-            Date: timeDate,
-            Side: item.args._isBuy,
-            amount: toEtherandFixFloatingPoint(item.args._amount),
-            price: toEtherandFixFloatingPoint(item.args._price),
-            Type: 'Remove',
-          }
-             console.log('dataRemoveOrder', structEvent)
-          setHistoryOrderEvent((prev) => [...prev, structEvent])
-        })
-        dataMarketOrder.map(async (item) => {
-          const timeDate = (await provider.getBlock(item.blockNumber)).timestamp
-          const structEvent: EventAllOrder = {
-            Date: timeDate,
-            Side: item.args._isBuy,
-            amount: toEtherandFixFloatingPoint(item.args._amount),
-            price: '0',
-            Type: 'Market',
-          }
-             console.log('dataMarketOrder', structEvent)
-          setHistoryOrderEvent((prev) => [...prev, structEvent])
-        })
-
-          contract.on('CreateLimitOrder', async () => {
-             loadOrderBook()
-          })
-          contract.on('UpdateOrder', async () => {
-             loadOrderBook()
-          })
-          contract.on('RemoveOrder', async () => {
-             loadOrderBook()
-          })
-
-        
-
-      } catch (error) {
-        
-      }
-  }
-
-  // const queryEvents = async() => {
-  //    if (!window.ethereum) return console.log('Please install metamask')
-
+  /////////////////////////////////////////////////////////////////////
+  // QueryEvents for the backend But now use another method instead  //
+  /////////////////////////////////////////////////////////////////////
+  // const MarketQueryEvents = async() => {
+  //   if (!window.ethereum) return console.log('Please install metamask')
   //    try {
-  //       // const provider = new ethers.providers.WebSocketProvider(
-  //       //   `wss://eth-mainnet.g.alchemy.com/v2/${process.env.ALCHEMY_KEY}`
-  //       // )
   //       const provider = new ethers.providers.Web3Provider(window.ethereum as any )
-  //       const contract = new ethers.Contract(ContractPairOrderAddress, artifactPairNewOrder.abi, provider)
-  //       contract.on('MarketOrder', async (_isBuy,_amount,event) => {
+  //       const blockNumber = await provider.getBlockNumber()
+  //       const contract = new ethers.Contract(ContractPairOrderAddress, artifactPairNewOrder.abi, provider) as PairNewOrder
+  //       //const filter = contract.filters.CreateLimitOrder()
+  //       const filterMarketOrder = contract.filters.MarketOrder()
+  //       const filterSumMarketOrder = contract.filters.SumMarketOrder()
+
+  //         const [
+  //           dataMarketOrder,
+  //           dataSumMarketOrder,
+  //         ] = await Promise.all([
+  //           await contract.queryFilter(filterMarketOrder, initBlockTime, blockNumber),
+  //           await contract.queryFilter(filterSumMarketOrder, initBlockTime, blockNumber)
+  //         ])
+
+  //       dataMarketOrder.map(async (item) => {
+  //         const timeDate = (await provider.getBlock(item.blockNumber)).timestamp
+  //         const structEvent: EventMarketOrder = {
+  //           Date: timeDate,
+  //           Side: item.args._isBuy,
+  //           amount: toEtherandFixFloatingPoint(item.args._amount),
+  //           price: toEtherandFixFloatingPoint(item.args._price),
+  //         }
+  //         // console.log(structEvent)
+  //         setMarketEvent((prev) => [structEvent, ...prev])
+  //       })
+
+  //       dataSumMarketOrder.map(async (item) => {
+  //         const timeDate = (await provider.getBlock(item.blockNumber)).timestamp
+  //         const structEvent: EventMarketOrder = {
+  //           Date: timeDate,
+  //           Side: item.args._isBuy,
+  //           amount: toEtherandFixFloatingPoint(item.args._amount),
+  //           price: toEtherandFixFloatingPoint(item.args._lastPrice),
+  //         }
+  //         // console.log(structEvent)
+  //         setSumMarketEvent((prev) => [structEvent, ...prev])
+  //       })
+
+  //       contract.on('MarketOrder', async (_isBuy,_amount,_price,event) => {
   //          const timeDate = (await provider.getBlock(event.blockNumber)).timestamp
   //          const structEvent: EventMarketOrder = {
-  //           Date: timeDate,
-  //           Side: _isBuy,
-  //           amount: _amount.toNumber(),
-  //         }
+  //            Date: timeDate,
+  //            Side: _isBuy,
+  //            amount: toEtherandFixFloatingPoint(_amount),
+  //            price: toEtherandFixFloatingPoint(_price),
+  //          }
+  //          console.log("MarketOrder tigger",structEvent)
   //         setMarketEvent((prev) => [structEvent,...prev])
+  //         // loadOrderBook()
+  //       })
+
+  //       contract.on('SumMarketOrder', async (_isBuy,_amount,_price,event) => {
+  //          const timeDate = (await provider.getBlock(event.blockNumber)).timestamp
+  //          const structEvent: EventMarketOrder = {
+  //            Date: timeDate,
+  //            Side: _isBuy,
+  //            amount: toEtherandFixFloatingPoint(_amount),
+  //            price: toEtherandFixFloatingPoint(_price),
+  //          }
+  //            console.log('SumMarketOrder tigger', structEvent)
+  //         setSumMarketEvent((prev) => [structEvent, ...prev])
+  //         // loadOrderBook()
   //       })
   //     } catch (error) {
-        
+
   //     }
   // }
 
- 
+  /////////////////////////////////////////////////////////////////////
+  // QueryEvents for the backend But now use another method instead  //
+  /////////////////////////////////////////////////////////////////////
+  // const QueryHisoryEvents = async() => {
+  //   if (!window.ethereum) return console.log('Please install metamask')
+  //    try {
+  //       setHistoryOrderEvent([])
+  //       const provider = new ethers.providers.Web3Provider(window.ethereum as any )
+  //       const blockNumber = await provider.getBlockNumber()
+  //       const contract = new ethers.Contract(ContractPairOrderAddress, artifactPairNewOrder.abi, provider) as PairNewOrder
+  //       const address = ( await window.ethereum.request({ method: 'eth_accounts' }))[0]
+  //       const filterLimitOrder = contract.filters.CreateLimitOrder(null,null,null,address)
+  //       const filterUpdateOrder = contract.filters.UpdateOrder(null,null,null,address)
+  //       const filterRemoveOrder = contract.filters.RemoveOrder(null, null,null,address)
+  //       const filterMarketOrder = contract.filters.SumMarketOrder(null,null,null,address)
+  //       const [
+  //         dataLimitOrder,
+  //         dataUpdateOrder,
+  //         dataRemoveOrder,
+  //         dataMarketOrder,
+  //       ] = await Promise.all([
+  //         await contract.queryFilter(filterLimitOrder, initBlockTime, blockNumber),
+  //         await contract.queryFilter(filterUpdateOrder, initBlockTime, blockNumber),
+  //         await contract.queryFilter(filterRemoveOrder, initBlockTime, blockNumber),
+  //         await contract.queryFilter(filterMarketOrder, initBlockTime, blockNumber),
+  //       ])
 
- 
-  
+  //       dataLimitOrder.map(async (item) => {
+  //         const timeDate = (await provider.getBlock(item.blockNumber)).timestamp
+  //         const structEvent: EventAllOrder = {
+  //           Date: timeDate,
+  //           Side: item.args._isBuy,
+  //           amount: toEtherandFixFloatingPoint(item.args._amount),
+  //           price: toEtherandFixFloatingPoint(item.args._price),
+  //           Type: 'Limit',
+  //         }
+  //         console.log('dataLimitOrder',structEvent)
+  //         setHistoryOrderEvent((prev) => [...prev, structEvent])
+  //       })
+  //       dataUpdateOrder.map(async (item) => {
+  //         const timeDate = (await provider.getBlock(item.blockNumber)).timestamp
+  //         const structEvent: EventAllOrder = {
+  //           Date: timeDate,
+  //           Side: item.args._isBuy,
+  //           amount: toEtherandFixFloatingPoint(item.args.newAmount),
+  //           price: toEtherandFixFloatingPoint(item.args.newPriceOrder),
+  //           Type: 'Update',
+  //         }
+  //          console.log('dataUpdateOrder', structEvent)
+  //         setHistoryOrderEvent((prev) => [...prev, structEvent])
+  //       })
+  //       dataRemoveOrder.map(async (item) => {
+  //         const timeDate = (await provider.getBlock(item.blockNumber)).timestamp
+  //         const structEvent: EventAllOrder = {
+  //           Date: timeDate,
+  //           Side: item.args._isBuy,
+  //           amount: toEtherandFixFloatingPoint(item.args._amount),
+  //           price: toEtherandFixFloatingPoint(item.args._price),
+  //           Type: 'Remove',
+  //         }
+  //            console.log('dataRemoveOrder', structEvent)
+  //         setHistoryOrderEvent((prev) => [...prev, structEvent])
+  //       })
+  //       dataMarketOrder.map(async (item) => {
+  //         const timeDate = (await provider.getBlock(item.blockNumber)).timestamp
+  //         const structEvent: EventAllOrder = {
+  //           Date: timeDate,
+  //           Side: item.args._isBuy,
+  //           amount: toEtherandFixFloatingPoint(item.args._amount),
+  //           price: '0',
+  //           Type: 'Market',
+  //         }
+  //            console.log('dataMarketOrder', structEvent)
+  //         setHistoryOrderEvent((prev) => [...prev, structEvent])
+  //       })
+
+  //         contract.on('CreateLimitOrder', async () => {
+  //            loadOrderBook()
+  //         })
+  //         contract.on('UpdateOrder', async () => {
+  //            loadOrderBook()
+  //         })
+  //         contract.on('RemoveOrder', async () => {
+  //            loadOrderBook()
+  //         })
+
+  //     } catch (error) {
+
+  //     }
+  // }
 
   return (
     <ContractContext.Provider
@@ -627,9 +685,9 @@ export const ContractProvider = ({ children }: ChildrenProps) => {
         sendTxUpdateOrder,
         marketEvent,
         historyOrderEvent,
-        sumMarketEvent,
+        // sumMarketEvent,
         sendTxDeposit,
-        sendTxWithdraw
+        sendTxWithdraw,
       }}
     >
       {!initialLoading && children}
