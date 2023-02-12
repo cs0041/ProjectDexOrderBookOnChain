@@ -1,4 +1,5 @@
 import { time } from 'console'
+import { ethers } from 'ethers'
 import React, { useContext, useEffect } from 'react'
 import { useAccount } from 'wagmi'
 import { ContractContext } from '../context/ContratContext'
@@ -11,16 +12,19 @@ import { ConvertDateTime } from '../utils/DateTime'
 function HistoryMarket() {
   const { marketEvent,loadOrderBook,loadOrderBookByAddress }=  useContext(ContractContext)
   const { address, isConnected } = useAccount()
-  useEffect(() => {
-      const sorting = () => {
-          marketEvent.sort(function (a, b) {
-            return b.Date - a.Date
-          })
-      }
-      sorting()
-      loadOrderBook()
-      loadOrderBookByAddress(address!)
-  }, [marketEvent])
+  // useEffect(() => {
+  //     const sorting = () => {
+  //         marketEvent.sort(function (a, b) {
+  //           return b.Date - a.Date
+  //         })
+  //     }
+  //     sorting()
+  //     loadOrderBook()
+  //     loadOrderBookByAddress(address!)
+  // }, [marketEvent])
+
+  //helper
+  const toEtherandFixFloatingPoint = (amount: ethers.BigNumber) => Number(ethers.utils.formatEther(amount)).toFixed(6)
 
   return (
     <div className="h-full  ml-10 py-3">
@@ -33,15 +37,15 @@ function HistoryMarket() {
       <div className="overflow-y-auto max-h-full pb-10 ">
         {marketEvent.map((item, index) => (
           <div className=" grid grid-cols-3 text-base  py-2 ">
-            <div>{ConvertDateTime(item.Date)}</div>
+            <div>{ConvertDateTime(item.date.toNumber())}</div>
             <div
               className={` ${
-                item.Side === 0 ? 'text-red-500' : 'text-green-500'
+                item.isBuy === 0 ? 'text-red-500' : 'text-green-500'
               }`}
             >
-              {item.price}
+              {toEtherandFixFloatingPoint(item.price)}
             </div>
-            <div>{item.amount}</div>
+            <div>{toEtherandFixFloatingPoint(item.amount)}</div>
           </div>
         ))}
       </div>
