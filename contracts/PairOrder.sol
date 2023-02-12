@@ -18,10 +18,11 @@ contract PairNewOrder is Wallet{
     }
   
   event CreateLimitOrder(uint8 _isBuy,uint256 _amount,uint256 _price,address indexed trader);
-  event MarketOrder(uint8 _isBuy,uint256 _amount,uint256 _price);
-  event SumMarketOrder(uint8 _isBuy,uint256 _amount,uint256 _lastPrice,address indexed trader);
+  event SumMarketOrder(uint8 _isBuy,uint256 _amount,address indexed trader);
   event UpdateOrder(uint8 _isBuy,uint256 newPriceOrder,uint256 newAmount,address indexed trader);
   event RemoveOrder(uint8 _isBuy,uint256 _amount,uint256 _price,address indexed trader);
+
+  event MarketOrder(uint8 _isBuy,uint256 _amount,uint256 _price);
 
   // node 
   // Buy Or sell => ID => Order
@@ -36,6 +37,26 @@ contract PairNewOrder is Wallet{
 
   uint256 immutable GUARDHEAD = 0 ;
   uint256 immutable GUARDTAIL = 115792089237316195423570985008687907853269984665640564039457584007913129639935 ;
+  
+  // There is this section to query data directly through the blockchain, 
+  // no backend required, just used for testing purposes. 
+  // not a good way
+  OrderMarket[] orderMarket;
+  struct OrderMarket {
+        uint8 isBuy;
+        uint256 amount;
+        uint256 price;
+        uint256 date;
+    }
+  mapping(address => OrderHistory[])  orderHistory;
+  struct OrderHistory {
+    string Type;
+    uint8 isBuy;
+    uint256 amount;
+    uint256 price;
+    address Trader;
+    uint256 date;
+  }
   uint256 public price;
 
 
@@ -84,6 +105,10 @@ contract PairNewOrder is Wallet{
       listSize[_isBuy]++;
       nodeID[_isBuy]++;
 
+      // There is this section to query data directly through the blockchain, 
+      // no backend required, just used for testing purposes. 
+      // not a good way
+      orderHistory[msg.sender].push(OrderHistory("LimitOrder",_isBuy,_amount,_price,msg.sender,block.timestamp));
       emit  CreateLimitOrder(_isBuy, _amount, _price,msg.sender);
     }
 
@@ -201,6 +226,10 @@ contract PairNewOrder is Wallet{
       linkedListsNode[_isBuy][index].nextNodeID = 0;
       listSize[_isBuy]--;
 
+      // There is this section to query data directly through the blockchain, 
+      // no backend required, just used for testing purposes. 
+      // not a good way
+      orderHistory[msg.sender].push(OrderHistory("CanCelOrder",_isBuy,_amount,_price,msg.sender,block.timestamp));
       emit RemoveOrder(_isBuy,_amount,_price,msg.sender);
  }
 
@@ -287,6 +316,11 @@ contract PairNewOrder is Wallet{
       removeOrder(_isBuy, index, prevIndexRemove);
       createLimitOrder(_isBuy,newAmount,newPriceOrder,prevIndexAdd);
      }
+
+     // There is this section to query data directly through the blockchain, 
+     // no backend required, just used for testing purposes. 
+     // not a good way
+     orderHistory[msg.sender].push(OrderHistory("UpdateOrder",_isBuy,newAmount,newPriceOrder,msg.sender,block.timestamp));
      emit UpdateOrder(_isBuy,newPriceOrder,newAmount,msg.sender);
 
 
@@ -321,6 +355,7 @@ contract PairNewOrder is Wallet{
                         filled = (availableToFill*linkedListsNode[_isBuy][currentNodeID].price)/10 ** 18; // Fill as much as can Fill
                     }
                 
+                    orderMarket.push(OrderMarket(_isBuy, ((filled * 10 ** 18)/linkedListsNode[_isBuy][currentNodeID].price),linkedListsNode[_isBuy][currentNodeID].price,block.timestamp));
                     emit MarketOrder(_isBuy, ((filled * 10 ** 18)/linkedListsNode[_isBuy][currentNodeID].price),linkedListsNode[_isBuy][currentNodeID].price);
                 }else{
                     if(availableToFill > leftToFill){
@@ -329,7 +364,7 @@ contract PairNewOrder is Wallet{
                     else{ 
                         filled = availableToFill; // Fill as much as can Fill
                     }
-
+                    orderMarket.push(OrderMarket(_isBuy, filled,linkedListsNode[_isBuy][currentNodeID].price,block.timestamp));
                     emit MarketOrder(_isBuy, filled,linkedListsNode[_isBuy][currentNodeID].price);
                   }
 
@@ -356,11 +391,9 @@ contract PairNewOrder is Wallet{
                 balancesTrade[linkedListsNode[_isBuy][currentNodeID].trader][tokenSeconry] -= cost;
 
 
-
-                // update latest price
+                 // update latest price
                 price = linkedListsNode[_isBuy][currentNodeID].price ;
-                
-               
+
 
                 currentNodeID =linkedListsNode[_isBuy][currentNodeID].nextNodeID;
 
@@ -374,11 +407,25 @@ contract PairNewOrder is Wallet{
         //Remove the top element in the orders
              removeOrderNoUpdateBalances(_isBuy,linkedListsNode[_isBuy][GUARDHEAD].nextNodeID,0);
         }
-        emit SumMarketOrder( _isBuy, amount,price,msg.sender);
+
+        // There is this section to query data directly through the blockchain, 
+        // no backend required, just used for testing purposes. 
+        // not a good way
+        orderHistory[msg.sender].push(OrderHistory("MarketOrder",_isBuy,amount,0,msg.sender,block.timestamp));
+        emit SumMarketOrder( _isBuy, amount,msg.sender);
+        
         
 
       }
-  
+
+      function getOrderHisotyByAddress(address _address) external view returns(OrderHistory[] memory){
+        return orderHistory[_address];
+      }
+      
+      function getMarketOrder() external view returns(OrderMarket[] memory){
+        return orderMarket;
+      }
+
 }
 
 
