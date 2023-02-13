@@ -32,10 +32,11 @@ interface Order {
   filled: string
 }
 
-// interface TypeTradingView {
-//   time: string
-//   value: number
-// }
+interface TypesTradingViewOriginal{
+  time: number
+  price: number
+}
+
 interface TypeTradingView {
   time: number
   open: number
