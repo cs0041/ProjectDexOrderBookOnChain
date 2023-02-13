@@ -11,7 +11,6 @@
     "@heroicons/react": "^2.0.14",
     "@mui/material": "^5.11.7",
     "@rainbow-me/rainbowkit": "^0.8.1",
-    "chart.js": "^4.2.0",
     "ethers": "^5.7.2",
     "lightweight-charts": "^4.0.0",
     "next": "latest",
