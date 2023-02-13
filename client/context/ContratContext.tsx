@@ -9,6 +9,7 @@ import {PairNewOrder,PairNewOrder__factory,Token0,Token0__factory,Token1,Token1_
 const initBlockTime = 31949670
 
 import { ContractPairOrderAddress,ContractToken0Address,ContractToken1Address } from '../utils/Address'
+import { convertToOHLC } from '../utils/CovertCandle'
 interface IContract {
   loadingOrderSell: boolean
   loadingOrderBuy: boolean
@@ -210,15 +211,15 @@ export const ContractProvider = ({ children }: ChildrenProps) => {
       const transactionHash = await contract.createMarketOrder(side, amount)
       console.log(transactionHash.hash)
       await transactionHash.wait()
+      loadOrderBook()
+      loadPriceToken()
+      loadBalances()
+      loadHistoryByAddress()
+      loadHistoryMarketOrder()
     } catch (error) {
       console.log(error)
     }
-    loadOrderBook()
-    loadPriceToken()
-    loadBalances()
-    loadHistoryByAddress()
-    loadHistoryMarketOrder()
-    // QueryHisoryEvents()
+
   }
 
   const sendTxLimitOrder = async (
@@ -240,14 +241,14 @@ export const ContractProvider = ({ children }: ChildrenProps) => {
       )
       console.log(transactionHash.hash)
       await transactionHash.wait()
+      loadOrderBook()
+      loadBalances()
+      loadOrderBookByAddress()
+      loadHistoryByAddress()
     } catch (error) {
       console.log(error)
     }
-    loadOrderBook()
-    loadBalances()
-    loadOrderBookByAddress()
-    loadHistoryByAddress()
-    // QueryHisoryEvents()
+
   }
 
   const sendTxUpdateOrder = async (
@@ -286,14 +287,14 @@ export const ContractProvider = ({ children }: ChildrenProps) => {
 
       console.log(transactionHash.hash)
       await transactionHash.wait()
+      loadOrderBook()
+      loadBalances()
+      loadOrderBookByAddress()
+      loadHistoryByAddress()
     } catch (error) {
       console.log(error)
     }
-    loadOrderBook()
-    loadBalances()
-    loadOrderBookByAddress()
-    loadHistoryByAddress()
-    // QueryHisoryEvents()
+
   }
 
   const sendTxCancelOrder = async (side: number, id: number | string) => {
@@ -304,14 +305,14 @@ export const ContractProvider = ({ children }: ChildrenProps) => {
       const transactionHash = await contract.removeOrder(side, id, prevNodeID)
       console.log(transactionHash.hash)
       await transactionHash.wait()
+      loadOrderBook()
+      loadOrderBookByAddress()
+      loadBalances()
+      loadHistoryByAddress()
     } catch (error) {
       console.log(error)
     }
-    loadOrderBook()
-    loadOrderBookByAddress()
-    loadBalances()
-    loadHistoryByAddress()
-    // QueryHisoryEvents()
+
   }
 
   const loadPriceToken = async () => {
@@ -476,17 +477,23 @@ export const ContractProvider = ({ children }: ChildrenProps) => {
       const covertData = Object.keys(data).map((key) => data[key as any])
       setMarketEvent(covertData.reverse())
 
+      let temp: TypesTradingViewOriginal[] = []
       data.map((item)=>{
-         const data: TypeTradingView = {
-           close: Number(ethers.utils.formatEther(item.price)),
-           high: Number(ethers.utils.formatEther(item.price)),
-           low: Number(ethers.utils.formatEther(item.price)),
-           open: 50,
+         const data: TypesTradingViewOriginal = {
+           price: Number(ethers.utils.formatEther(item.price)),
            time: item.date.toNumber(),
+           //  close: Number(ethers.utils.formatEther(item.price)),
+           //  high: Number(ethers.utils.formatEther(item.price)),
+           //  low: Number(ethers.utils.formatEther(item.price)),
+           //  open: 50,
+           //  time: item.date.toNumber(),
          }
-
-        setTradingViewList((prev) => [...prev,data])
+         temp.push(data)
+        // setTradingViewList((prev) => [...prev,data])
       })
+      setTradingViewList(convertToOHLC(temp))
+      // console.log("temp",temp)
+      // convertToOHLC(tradingViewList)
     } catch (error) {
       console.log(error)
     }
@@ -498,9 +505,18 @@ export const ContractProvider = ({ children }: ChildrenProps) => {
         const provider = new ethers.providers.Web3Provider(window.ethereum as any )
         const contract = new ethers.Contract(ContractPairOrderAddress, artifactPairNewOrder.abi, provider) as PairNewOrder
         
-        contract.on('MarketOrder', async (_isBuy,_amount,_price,event) => {
+        contract.on('MarketOrder', async () => {
           loadHistoryMarketOrder()
           loadOrderBook() 
+        })
+        contract.on('CreateLimitOrder', async () => {
+             loadOrderBook()
+        })
+        contract.on('UpdateOrder', async () => {
+             loadOrderBook()
+        })
+        contract.on('RemoveOrder', async () => {
+             loadOrderBook()
         })
 
       } catch (error) {
