@@ -76,7 +76,10 @@ contract PairNewOrder is Wallet{
       require( linkedListsNode[_isBuy][prevNodeID].nextNodeID != 0,"prevNodeID index not exist ");
       require(_verifyIndex(prevNodeID, _price,_isBuy, linkedListsNode[_isBuy][prevNodeID].nextNodeID),"position in linked list not order");
 
-      address tokenMain = _isBuy==0 ? token1 : token0;
+      _amount = createMarketOrder(_isBuy,_amount,_price); 
+
+      address tokenMain = _isBuy==0 ? token1 : token0;   
+       
       if(_isBuy==0){
        require(balancesSpot[msg.sender][tokenMain] >= (_amount * _price)/10 ** 18,"not enough balance token for buy");
        // transfer balance Spot to Trade wallet 
@@ -330,7 +333,7 @@ contract PairNewOrder is Wallet{
 
 
 //////////////////////////////////////  Market Order    ////////////////////////////////////// 
-    function createMarketOrder(uint8 _isBuy,uint256 amount) public {
+    function createMarketOrder(uint8 _isBuy,uint256 amount,uint256 _price) public returns(uint256) {
         uint256 totalFilled = 0;
         (address tokenMain,address tokenSeconry) = _isBuy == 0 ? (token1,token0) : (token0,token1);
         _isBuy = _isBuy==0? 1 : 0; // toggle isBuy
@@ -342,7 +345,15 @@ contract PairNewOrder is Wallet{
 
             uint256 currentNodeID = linkedListsNode[_isBuy][GUARDHEAD].nextNodeID;
             for (uint256 i = 0; i < listSize[_isBuy] && totalFilled < amount; i++) {
-
+                if(_isBuy==1){
+                  if(_price < linkedListsNode[_isBuy][currentNodeID].price){
+                    break;
+                  }
+                }else{
+                  if(_price > linkedListsNode[_isBuy][currentNodeID].price){
+                    break;
+                  }
+                }
                 uint256 leftToFill = amount - totalFilled;
                 uint256 availableToFill = linkedListsNode[_isBuy][currentNodeID].amount -  linkedListsNode[_isBuy][currentNodeID].filled;
                 uint256 filled = 0;
@@ -414,7 +425,7 @@ contract PairNewOrder is Wallet{
         orderHistory[msg.sender].push(OrderHistory("MarketOrder",_isBuy,amount,0,msg.sender,block.timestamp));
         emit SumMarketOrder( _isBuy, amount,msg.sender);
         
-        
+        return amount-totalFilled;
 
       }
 
