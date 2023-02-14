@@ -351,15 +351,17 @@ contract PairNewOrder is Wallet{
             uint256 currentNodeID = linkedListsNode[isBuy][GUARDHEAD].nextNodeID;
             for (uint256 i = 0; i < listSize[isBuy] && totalFilled < amount; i++) {
                  Order storage _order = linkedListsNode[isBuy][currentNodeID];
-                if(isBuy==1){ 
-                  if(_price < _order.price){
-                    break;
-                  }
-                }else{
-                  if(_price > _order.price){
-                    break;
-                  }
-                }
+                 if(_price!=0){
+                    if(isBuy==1){ 
+                      if(_price < _order.price){
+                        break;
+                      }
+                    }else{
+                      if(_price > _order.price){
+                        break;
+                      }
+                    }
+                 }
                 uint256 leftToFill = amount - totalFilled;
                 uint256 availableToFill = _order.amount -  _order.filled;
                 uint256 filled = 0;
