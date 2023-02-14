@@ -2,6 +2,7 @@
 pragma solidity ^0.8.0;
 
 import "./wallet.sol";
+import "../node_modules/hardhat/console.sol";
 
 contract PairNewOrder is Wallet{
 
@@ -76,18 +77,22 @@ contract PairNewOrder is Wallet{
       require( linkedListsNode[_isBuy][prevNodeID].nextNodeID != 0,"prevNodeID index not exist ");
       require(_verifyIndex(prevNodeID, _price,_isBuy, linkedListsNode[_isBuy][prevNodeID].nextNodeID),"position in linked list not order");
 
-      _amount = createMarketOrder(_isBuy,_amount,_price); 
 
       address tokenMain = _isBuy==0 ? token1 : token0;   
        
       if(_isBuy==0){
        require(balancesSpot[msg.sender][tokenMain] >= (_amount * _price)/10 ** 18,"not enough balance token for buy");
+       _amount = createMarketOrder(_isBuy,(_amount * _price)/10 ** 18,_price); 
+       _amount = (_amount/_price)*10 ** 18;
+        if(_amount<=0) return;
        // transfer balance Spot to Trade wallet 
        balancesSpot[msg.sender][tokenMain] -= (_amount * _price)/10 ** 18;
        balancesTrade[msg.sender][tokenMain] += (_amount * _price)/10 ** 18;
 
       }else{
           require(balancesSpot[msg.sender][tokenMain] >= _amount,"not enough balance token for sell");
+          _amount  = createMarketOrder(_isBuy,_amount,_price);
+           if(_amount<=0) return;
           // transfer balance Spot to Trade wallet 
           balancesSpot[msg.sender][tokenMain] -= _amount;
           balancesTrade[msg.sender][tokenMain] += _amount;
@@ -336,38 +341,39 @@ contract PairNewOrder is Wallet{
     function createMarketOrder(uint8 _isBuy,uint256 amount,uint256 _price) public returns(uint256) {
         uint256 totalFilled = 0;
         (address tokenMain,address tokenSeconry) = _isBuy == 0 ? (token1,token0) : (token0,token1);
-        _isBuy = _isBuy==0? 1 : 0; // toggle isBuy
+        uint8 isBuy = _isBuy==0? 1 : 0; // toggle isBuy
         require(balancesSpot[msg.sender][tokenMain] >= amount, "not enough balance token for MarketOrder");
-        require( listSize[_isBuy]>0,"No Limit Order");
+        if (listSize[isBuy]<=0) return amount;
         // Market Sell token0
         // sell token0 buy token1
 
 
-            uint256 currentNodeID = linkedListsNode[_isBuy][GUARDHEAD].nextNodeID;
-            for (uint256 i = 0; i < listSize[_isBuy] && totalFilled < amount; i++) {
-                if(_isBuy==1){
-                  if(_price < linkedListsNode[_isBuy][currentNodeID].price){
+            uint256 currentNodeID = linkedListsNode[isBuy][GUARDHEAD].nextNodeID;
+            for (uint256 i = 0; i < listSize[isBuy] && totalFilled < amount; i++) {
+                 Order storage _order = linkedListsNode[isBuy][currentNodeID];
+                if(isBuy==1){ 
+                  if(_price < _order.price){
                     break;
                   }
                 }else{
-                  if(_price > linkedListsNode[_isBuy][currentNodeID].price){
+                  if(_price > _order.price){
                     break;
                   }
                 }
                 uint256 leftToFill = amount - totalFilled;
-                uint256 availableToFill = linkedListsNode[_isBuy][currentNodeID].amount -  linkedListsNode[_isBuy][currentNodeID].filled;
+                uint256 availableToFill = _order.amount -  _order.filled;
                 uint256 filled = 0;
                 uint256 cost ;
-                if(_isBuy==1){
-                    if( (availableToFill*linkedListsNode[_isBuy][currentNodeID].price)/10 ** 18 > leftToFill){
+                if(isBuy==1){
+                    if( (availableToFill*_order.price)/10 ** 18 > leftToFill){
                     filled = leftToFill; //Full Fill 
                     }
                     else{ 
-                        filled = (availableToFill*linkedListsNode[_isBuy][currentNodeID].price)/10 ** 18; // Fill as much as can Fill
+                        filled = (availableToFill*_order.price)/10 ** 18; // Fill as much as can Fill
                     }
                 
-                    orderMarket.push(OrderMarket(_isBuy, ((filled * 10 ** 18)/linkedListsNode[_isBuy][currentNodeID].price),linkedListsNode[_isBuy][currentNodeID].price,block.timestamp));
-                    emit MarketOrder(_isBuy, ((filled * 10 ** 18)/linkedListsNode[_isBuy][currentNodeID].price),linkedListsNode[_isBuy][currentNodeID].price);
+                    orderMarket.push(OrderMarket(isBuy, ((filled * 10 ** 18)/_order.price),_order.price,block.timestamp));
+                    emit MarketOrder(isBuy, ((filled * 10 ** 18)/_order.price),_order.price);
                 }else{
                     if(availableToFill > leftToFill){
                         filled = leftToFill; //Full Fill 
@@ -375,18 +381,18 @@ contract PairNewOrder is Wallet{
                     else{ 
                         filled = availableToFill; // Fill as much as can Fill
                     }
-                    orderMarket.push(OrderMarket(_isBuy, filled,linkedListsNode[_isBuy][currentNodeID].price,block.timestamp));
-                    emit MarketOrder(_isBuy, filled,linkedListsNode[_isBuy][currentNodeID].price);
+                    orderMarket.push(OrderMarket(isBuy, filled,_order.price,block.timestamp));
+                    emit MarketOrder(isBuy, filled,_order.price);
                   }
 
                 totalFilled = totalFilled + filled;
 
-                if(_isBuy==1){
-                  linkedListsNode[_isBuy][currentNodeID].filled += (filled* 10 ** 18)/linkedListsNode[_isBuy][currentNodeID].price;
-                  cost = (filled* 10 ** 18)/linkedListsNode[_isBuy][currentNodeID].price; // amount token0
+                if(isBuy==1){
+                  _order.filled += (filled* 10 ** 18)/_order.price;
+                  cost = (filled* 10 ** 18)/_order.price; // amount token0
                 }else{
-                  linkedListsNode[_isBuy][currentNodeID].filled += filled;
-                  cost = (filled * linkedListsNode[_isBuy][currentNodeID].price)/10 ** 18;
+                  _order.filled += filled;
+                  cost = (filled * _order.price)/10 ** 18;
               
                 }
 
@@ -394,19 +400,19 @@ contract PairNewOrder is Wallet{
 
                 // sell
                 balancesSpot[msg.sender][tokenMain] -= filled;
-                balancesSpot[linkedListsNode[_isBuy][currentNodeID].trader][tokenMain] += filled;
+                balancesSpot[_order.trader][tokenMain] += filled;
                 
           
                 // recive after sell
                 balancesSpot[msg.sender][tokenSeconry] += cost;
-                balancesTrade[linkedListsNode[_isBuy][currentNodeID].trader][tokenSeconry] -= cost;
+                balancesTrade[_order.trader][tokenSeconry] -= cost;
 
 
                  // update latest price
-                price = linkedListsNode[_isBuy][currentNodeID].price ;
+                price = _order.price ;
 
 
-                currentNodeID =linkedListsNode[_isBuy][currentNodeID].nextNodeID;
+                currentNodeID =_order.nextNodeID;
 
                 
         }
@@ -414,16 +420,16 @@ contract PairNewOrder is Wallet{
 
     
         //Remove 100% filled orders from the orderbook
-        while(listSize[_isBuy] > 0 && linkedListsNode[_isBuy][linkedListsNode[_isBuy][GUARDHEAD].nextNodeID].filled == linkedListsNode[_isBuy][linkedListsNode[_isBuy][GUARDHEAD].nextNodeID].amount ){
+        while(listSize[isBuy] > 0 && linkedListsNode[isBuy][linkedListsNode[isBuy][GUARDHEAD].nextNodeID].filled == linkedListsNode[isBuy][linkedListsNode[isBuy][GUARDHEAD].nextNodeID].amount ){
         //Remove the top element in the orders
-             removeOrderNoUpdateBalances(_isBuy,linkedListsNode[_isBuy][GUARDHEAD].nextNodeID,0);
+             removeOrderNoUpdateBalances(isBuy,linkedListsNode[isBuy][GUARDHEAD].nextNodeID,0);
         }
 
         // There is this section to query data directly through the blockchain, 
         // no backend required, just used for testing purposes. 
         // not a good way
-        orderHistory[msg.sender].push(OrderHistory("MarketOrder",_isBuy,amount,0,msg.sender,block.timestamp));
-        emit SumMarketOrder( _isBuy, amount,msg.sender);
+        orderHistory[msg.sender].push(OrderHistory("MarketOrder",isBuy,amount,0,msg.sender,block.timestamp));
+        emit SumMarketOrder( isBuy, amount,msg.sender);
         
         return amount-totalFilled;
 
@@ -444,4 +450,3 @@ contract PairNewOrder is Wallet{
 
 
  
-
