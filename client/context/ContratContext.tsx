@@ -34,6 +34,7 @@ interface IContract {
   sendTxDeposit: (amount: number | string, addressToken: string) => Promise<void>
   sendTxWithdraw: (amount: number | string, addressToken: string) => Promise<void>
   tradingViewList: TypeTradingView[]
+  loadHistoryByAddress: () => Promise<void>
 }
 
 export const ContractContext = createContext<IContract>({
@@ -42,12 +43,12 @@ export const ContractContext = createContext<IContract>({
   loadOrderBook: async () => {},
   orderBookSell: [],
   orderBookBuy: [],
-  priceToken: "",
+  priceToken: '',
   sendTxMarketOrder: async () => {},
-  balancesSpotToken0: "",
-  balancesTradeToken0: "",
-  balancesSpotToken1: "",
-  balancesTradeToken1: "",
+  balancesSpotToken0: '',
+  balancesTradeToken0: '',
+  balancesSpotToken1: '',
+  balancesTradeToken1: '',
   sendTxLimitOrder: async () => {},
   isLoadingOrderBookByAddress: false,
   orderBookByAddress: [],
@@ -58,8 +59,9 @@ export const ContractContext = createContext<IContract>({
   historyOrderEvent: [],
   // sumMarketEvent: [],
   sendTxDeposit: async () => {},
-  sendTxWithdraw:async () => {},
-  tradingViewList:[]
+  sendTxWithdraw: async () => {},
+  tradingViewList: [],
+  loadHistoryByAddress: async () => {},
 })
 
 
@@ -208,7 +210,7 @@ export const ContractProvider = ({ children }: ChildrenProps) => {
     try {
       const contract = getPairOrderContract()
       const amount = toWei(_amount)
-      const transactionHash = await contract.createMarketOrder(side, amount)
+      const transactionHash = await contract.createMarketOrder(side, amount,0)
       console.log(transactionHash.hash)
       await transactionHash.wait()
       loadOrderBook()
@@ -427,23 +429,44 @@ export const ContractProvider = ({ children }: ChildrenProps) => {
       if (address == undefined) {
         address = (await window.ethereum.request({ method: 'eth_accounts' }))[0]
       }
-      const dataOrderBookByAddress = await contract.getOrderBookByAddress(
-        address
-      )
+      const [dataOrderSell, dataOrderBuy] = await Promise.all([
+        await contract.getOrderBook(1),
+        await contract.getOrderBook(0),
+      ])
 
-      dataOrderBookByAddress.map((order) => {
-        const structOrder: Order = {
-          id: order.id.toNumber(),
-          addressTrader: order.trader.toString(),
-          BuyOrSell: order.isBuy,
-          createdDate: order.createdDate.toString(),
-          addressToken: order.token.toString(),
-          amount: toEtherandFixFloatingPoint(order.amount),
-          price: toEtherandFixFloatingPoint(order.price),
-          filled: toEtherandFixFloatingPoint(order.filled),
+      dataOrderBuy.map((order) => {
+        if(order.trader == address){
+          const structOrder: Order = {
+            id: order.id.toNumber(),
+            addressTrader: order.trader,
+            BuyOrSell: order.isBuy,
+            createdDate: order.createdDate.toString(),
+            addressToken: order.token.toString(),
+            amount: toEtherandFixFloatingPoint(order.amount),
+            price: toEtherandFixFloatingPoint(order.price),
+            filled: toEtherandFixFloatingPoint(order.filled),
+          }
+            setOrderBookByAddress((prev) => [...prev, structOrder])
         }
-        setOrderBookByAddress((prev) => [...prev, structOrder])
       })
+
+      dataOrderSell.map((order) => {
+       if(order.trader == address){
+          const structOrder: Order = {
+            id: order.id.toNumber(),
+            addressTrader: order.trader,
+            BuyOrSell: order.isBuy,
+            createdDate: order.createdDate.toString(),
+            addressToken: order.token.toString(),
+            amount: toEtherandFixFloatingPoint(order.amount),
+            price: toEtherandFixFloatingPoint(order.price),
+            filled: toEtherandFixFloatingPoint(order.filled),
+          }
+            setOrderBookByAddress((prev) => [...prev, structOrder])
+        }
+      })
+
+
 
       setIsLoadingOrderBookByAddress(false)
     } catch (error) {
@@ -716,6 +739,7 @@ export const ContractProvider = ({ children }: ChildrenProps) => {
         sendTxDeposit,
         sendTxWithdraw,
         tradingViewList,
+        loadHistoryByAddress,
       }}
     >
       {!initialLoading && children}
