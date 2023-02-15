@@ -16,13 +16,15 @@ import artifact from '../../artifacts/contracts/PairOrder.sol/PairNewOrder.json'
 import {PairNewOrder,PairNewOrder__factory,Token0,Token0__factory,Token1,Token1__factory} from '../../typechain-types'
 import {ContractContext} from '../context/ContratContext'
 import UpdateModal from '../components/Modal'
-import Header from '../components/Header'
+import HeaderData from '../components/HeaderData'
 import OrderBook from '../components/OrderBook'
 import PanelCommand from '../components/PanelCommand'
 import TradingviewGraph from '../components/TradingviewGraph'
 import History from '../components/History'
 import HistoryMarket from '../components/HistoryMarket'
 import { GetMarketOrder } from '../utils/GetMarketOrder'
+import Header from '../components/Header'
+import Footer from '../components/Footer'
   
     
 // interface Props {
@@ -53,13 +55,8 @@ const Home = () => {
   return (
     mounted && (
       <div>
-        <ConnectButton
-          label="connect web3"
-          accountStatus={'full'}
-          chainStatus={'full'}
-        />
-
         <Header />
+        <HeaderData />
         <section className="flex h-screen flex-col flex-1 ">
           <div className="flex flex-row h-4/6">
             <div className="w-2/12 min-w-fit ">
@@ -81,9 +78,8 @@ const Home = () => {
             <History />
           </div>
         </section>
-
         {/* {address && <p>My address is {address}</p>} */}
-
+        <Footer/>
         {showUpdateModal && (
           <UpdateModal
             id={idUpdate}
