@@ -7,11 +7,11 @@ function HeaderData({}: Props) {
     const { priceToken } = useContext(ContractContext)
 
   return (
-    <div className="flex flex-1 items-center border-y-2 border-gray-600   bg-black/40 px-8 py-5  space-x-10">
-      <h1 className="border-r-2 pr-10 text-xl border-gray-600   font-light flex  items-center">
+    <div className="text-sm font-light flex flex-1 items-center    px-8 py-3  space-x-10">
+      <h1 className="font-bold border-r-2 pr-10 border-gray-600   flex  items-center">
         BTC/USD
       </h1>
-      <div className="text-xl font-light flex flex-col pr-10  ">
+      <div className="font-semibold flex flex-col pr-10  ">
         <p>{priceToken ? priceToken : 'wait Price ...'}</p>
       </div>
       <div className=" flex flex-col pr-10 border-r-[1px] border-gray-600 ">
