@@ -1,5 +1,7 @@
 import React, { useContext, useState } from 'react'
 import { ContractContext } from '../context/ContratContext'
+import { PlusCircleIcon } from '@heroicons/react/24/solid'
+import router from 'next/router'
 
 type Props = {}
 
@@ -64,10 +66,23 @@ const {
 
       <div className="mt-2 flex-row flex space-x-10 justify-center  ">
         <div className="space-y-4  w-1/2 ">
-          <span className="text-xl text-gray-400">Balances <span className='text-white'>{balancesSpotToken1}</span></span>
+          <div className="flex flex-row space-x-5   ">
+            <span className="text-xl text-gray-400">Balances</span>
+            <span className="text-xl text-white flex flex-row">
+              {balancesSpotToken1}
+            </span>
+            <div className=" flex  items-center ">
+              <PlusCircleIcon
+                onClick={() => router.push('/deposit')}
+                className="h-6 w-6   hover:text-yellow-400 cursor-pointer"
+              />
+            </div>
+          </div>
           {selectlimitMarket === LimitMarketStatus.Limit && (
             <div className="InputOrder">
-              <span className="flex items-center pl-2 pr-5 text-gray-400">Price</span>
+              <span className="flex items-center pl-2 pr-5 text-gray-400">
+                Price
+              </span>
               <input
                 type="number"
                 onKeyPress={(event) => {
@@ -85,7 +100,9 @@ const {
           )}
 
           <div className="InputOrder">
-            <span className="flex items-center pl-2 pr-5 text-gray-400">Amount</span>
+            <span className="flex items-center pl-2 pr-5 text-gray-400">
+              Amount
+            </span>
             <input
               type="number"
               onKeyPress={(event) => {
@@ -112,7 +129,7 @@ const {
                   Number(inputBuyPriceTokenLimitOrder)
                 ).toFixed(4)}
               </div>
-              <span className="flex items-center  pr-5">BTC</span>
+              <span className="flex items-center  pr-5">USDT</span>
             </div>
           )}
 
@@ -135,10 +152,24 @@ const {
         </div>
 
         <div className="space-y-4  w-1/2">
-        <span className="text-xl text-gray-400">Balances <span className='text-white'>{balancesSpotToken0}</span></span>
+          <div className="flex flex-row space-x-5   ">
+            <span className="text-xl text-gray-400">Balances</span>
+            <span className="text-xl text-white flex flex-row">
+              {balancesSpotToken0}
+            </span>
+            <div className=" flex  items-center ">
+              <PlusCircleIcon
+                onClick={() => router.push('/deposit')}
+                className="h-6 w-6   hover:text-yellow-400 cursor-pointer"
+              />
+            </div>
+          </div>
+
           {selectlimitMarket === LimitMarketStatus.Limit && (
             <div className="InputOrder">
-              <span className="flex items-center pl-2 pr-5 text-gray-400">Price</span>
+              <span className="flex items-center pl-2 pr-5 text-gray-400">
+                Price
+              </span>
               <input
                 type="number"
                 required
@@ -157,7 +188,9 @@ const {
           )}
 
           <div className="InputOrder">
-            <span className="flex items-center pl-2 pr-5 text-gray-400">Amount</span>
+            <span className="flex items-center pl-2 pr-5 text-gray-400">
+              Amount
+            </span>
             <input
               type="number"
               required
@@ -183,7 +216,7 @@ const {
                   Number(inputSellPriceTokenLimitOrder)
                 ).toFixed(4)}
               </div>
-              <span className="flex items-center  pr-5">BTC</span>
+              <span className="flex items-center  pr-5">USDT</span>
             </div>
           )}
 
