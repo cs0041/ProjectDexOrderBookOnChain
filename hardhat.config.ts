@@ -24,7 +24,7 @@ const config: HardhatUserConfig = {
     },
   },
   gasReporter: {
-    enabled: true,
+    enabled: false,
     outputFile: 'gas-report.txt',
     noColors: true,
     currency: 'USD',

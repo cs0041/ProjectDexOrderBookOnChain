@@ -22,7 +22,7 @@ function OrderBook({}: Props) {
   const [statusShowOrderBook, setStatusShowOrderBook] = useState<ShowOrderBookStatus>(ShowOrderBookStatus.BS)
 
   return (
-    <div className="bg-black/20 flex flex-col flex-1 h-full">
+    <div className=" flex flex-col flex-1 h-full">
       <header className="flex justify-between   p-5 h-[10%] items-center">
         <div className="flex space-x-5 ">
           <button
@@ -74,7 +74,7 @@ function OrderBook({}: Props) {
             <div className="grid grid-cols-3 gap-x-3">
               <div className="text-right ">{item.price}</div>
               <div className="text-right ">
-                {Number(item.amount) - Number(item.filled)}
+                {(Number(item.amount) - Number(item.filled)).toFixed(6)}
               </div>
               <div className="text-right ">
                 {(Number(item.amount) - Number(item.filled)) *
@@ -86,7 +86,7 @@ function OrderBook({}: Props) {
       )}
 
       {statusShowOrderBook === ShowOrderBookStatus.BS && (
-        <div className="w-full h-[4%] text-3xl border-y-2 my-5 border-gray-500" />
+        <div className="w-full h-[4%] text-3xl border-y-[1px] border-gray-600  my-5 " />
       )}
 
       {statusShowOrderBook === ShowOrderBookStatus.S ? null : (
@@ -95,10 +95,9 @@ function OrderBook({}: Props) {
             <div className="grid grid-cols-3 gap-x-3">
               <div className="text-right">{item.price}</div>
               <div className="text-right ">
-                {Number(item.amount) - Number(item.filled)}
+                {(Number(item.amount) - Number(item.filled)).toFixed(6)}
               </div>
               <div className="text-right ">
-
                 {(Number(item.amount) - Number(item.filled)) *
                   Number(item.price)}
               </div>

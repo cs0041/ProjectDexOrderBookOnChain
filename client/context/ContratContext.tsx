@@ -10,6 +10,7 @@ const initBlockTime = 31949670
 
 import { ContractPairOrderAddress,ContractToken0Address,ContractToken1Address } from '../utils/Address'
 import { convertToOHLC } from '../utils/CovertCandle'
+import { toEtherandFixFloatingPoint, toWei } from '../utils/UnitInEther'
 interface IContract {
   loadingOrderSell: boolean
   loadingOrderBuy: boolean
@@ -131,17 +132,6 @@ export const ContractProvider = ({ children }: ChildrenProps) => {
 
   // tradingView
   const [tradingViewList, setTradingViewList] = useState<TypeTradingView[]>([])
-
-  // helper
-  // const toString = (bytes32) => ethers.utils.parseBytes32String(bytes32)
-  const toWei = (ether: string | number) =>
-    ethers.utils.parseEther(String(ether))
-  const toEther = (wei: string | number | ethers.BigNumber) =>
-    ethers.utils.formatEther(wei)
-  const toFixUnits = (amount: number, decimal: string) =>
-    ethers.utils.formatUnits(amount, decimal)
-  const toEtherandFixFloatingPoint = (amount: ethers.BigNumber) =>
-    Number(ethers.utils.formatEther(amount)).toFixed(6)
 
   useEffect(() => {
     if (!window.ethereum) return console.log('Please install metamask')

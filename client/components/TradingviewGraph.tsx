@@ -40,7 +40,9 @@ export const ChartComponent = () => {
                     axisPressedMouseMove: true
                 },
                 layout: {
-                    background: '#253248',
+                    background: {
+                      color: '#1c1c28'
+                    },
                     textColor: 'rgba(255, 255, 255, 0.9)',
                 },
                 grid: {
@@ -59,7 +61,7 @@ export const ChartComponent = () => {
                     borderColor: '#485c7b',
                 },
                 width: chartContainerRef.current.clientWidth,
-                height: 650,
+                height: 700,
                 timeScale: {
                     timeVisible: true,
                     secondVisible: false,
@@ -96,8 +98,11 @@ const TradingviewGraph = () => {
 
 
   return (
-    <div className="h-full py-12">
+    <div className="h-full ">
+      
+
       <ChartComponent/>
+
     </div>
   )
 }

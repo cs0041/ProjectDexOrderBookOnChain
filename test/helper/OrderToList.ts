@@ -1,5 +1,4 @@
 import {PairNewOrder} from '../../typechain-types'
-
 export function orderToList(listOrder: PairNewOrder.OrderStructOutput[])  {
   
   let resultPrice = []

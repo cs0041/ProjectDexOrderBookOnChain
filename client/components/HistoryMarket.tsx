@@ -27,7 +27,7 @@ function HistoryMarket() {
   const toEtherandFixFloatingPoint = (amount: ethers.BigNumber) => Number(ethers.utils.formatEther(amount)).toFixed(6)
 
   return (
-    <div className="h-full  ml-10 py-3">
+    <div className="h-full p-5">
       <h1 className="text-xl text-yellow-400 font-bold">Market Trades</h1>
       <div className="grid grid-cols-3 py-5">
         <div>Time</div>

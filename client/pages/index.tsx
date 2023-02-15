@@ -54,19 +54,23 @@ const Home = () => {
 
   return (
     mounted && (
-      <div>
-        <Header />
-        <HeaderData />
-        <section className="flex h-screen flex-col flex-1 ">
-          <div className="flex flex-row h-4/6">
-            <div className="w-2/12 min-w-fit ">
+      <div className=" relative">
+
+          <Header />
+
+        <div className="border-b-[1px] border-gray-600 ">
+          <HeaderData />
+        </div>
+        <section className="  min-h-[82vh] ">
+          <div className="flex flex-row ">
+            <div className=" w-2/12 min-h-[82vh]  min-w-fit ">
               <OrderBook />
             </div>
-            <div className="w-10/12 border-x-2 border-gray-600 ">
-              <div className=" h-[65%]">
+            <div className="w-10/12 border-x-[1px] border-gray-600 ">
+              <div className=" min-h-[50vh] border-b-[1px] border-gray-600 ">
                 <TradingviewGraph />
               </div>
-              <div className=" h-[35%] ">
+              <div className=" min-h-[30vh]  ">
                 <PanelCommand />
               </div>
             </div>
@@ -74,12 +78,14 @@ const Home = () => {
               <HistoryMarket />
             </div>
           </div>
-          <div className="h-2/6 border-gray-600 border-t-2 max-h-fit">
-            <History />
-          </div>
         </section>
+        <div className="h-[30vh]  border-gray-600 border-t-[1px]">
+          <History />
+        </div>
         {/* {address && <p>My address is {address}</p>} */}
-        <Footer/>
+        <div className=" sticky inset-0 ">
+          <Footer />
+        </div>
         {showUpdateModal && (
           <UpdateModal
             id={idUpdate}

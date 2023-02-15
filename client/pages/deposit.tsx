@@ -1,4 +1,5 @@
 import React, { useContext, useState } from 'react'
+import Header from '../components/Header'
 import { ContractContext } from '../context/ContratContext'
 import {ContractPairOrderAddress,ContractToken0Address,ContractToken1Address} from '../utils//Address'
 
@@ -19,6 +20,8 @@ function deposit({}: Props) {
       sendTxWithdraw
     } = useContext(ContractContext)
   return (
+    <>
+     <Header/>
     <div className="flex flex-col w-full p-20 space-y-10">
       <div className="flex flex-row justify-center space-x-10">
         <div className="bg-gray-700 w-fit p-10 rounded-lg flex flex-col border-2 border-gray-300">
@@ -173,6 +176,7 @@ function deposit({}: Props) {
         </div>
       </div>
     </div>
+    </>
   )
 }
 

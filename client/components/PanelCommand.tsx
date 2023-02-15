@@ -30,7 +30,7 @@ const {
   const [inputSellPriceTokenLimitOrder, setInputSellPriceTokenLimitOrder] = useState<string>()
   const [inputSellAmountTokenLimitOrder, setInputSellAmountTokenLimitOrder] = useState<string>()
   return (
-    <div className="h-full  p-5  bg-black/30">
+    <div className="min-h-[30vh] h-full  p-5  ">
       <div className="space-x-5">
         <button
           onClick={() => setSelectlimitMarket(LimitMarketStatus.Limit)}
