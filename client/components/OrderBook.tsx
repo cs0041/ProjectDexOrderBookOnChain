@@ -1,5 +1,7 @@
 import React, { useContext, useEffect, useState } from 'react'
 import { ContractContext } from '../context/ContratContext'
+import { ArrowPathIcon } from '@heroicons/react/24/outline'
+
 type Props = {}
 
 enum ShowOrderBookStatus {
@@ -21,7 +23,7 @@ function OrderBook({}: Props) {
 
   return (
     <div className="bg-black/20 flex flex-col flex-1 h-full">
-      <header className="flex justify-between   p-5 h-[10%]">
+      <header className="flex justify-between   p-5 h-[10%] items-center">
         <div className="flex space-x-5 ">
           <button
             onClick={() => setStatusShowOrderBook(ShowOrderBookStatus.BS)}
@@ -51,7 +53,13 @@ function OrderBook({}: Props) {
           </button>
         </div>
 
-        <span className="text-2xl">100</span>
+        <ArrowPathIcon
+          onClick={() => {
+            loadOrderBook()
+          }}
+          className="h-6 w-6   hover:text-yellow-400 cursor-pointer"
+        />
+        {/* <span className="text-2xl">100</span> */}
       </header>
 
       <div className="text-sm grid grid-cols-3  gap-x-3 pr-5  pb-5 ">
@@ -65,8 +73,13 @@ function OrderBook({}: Props) {
           {orderBookSell.map((item) => (
             <div className="grid grid-cols-3 gap-x-3">
               <div className="text-right ">{item.price}</div>
-              <div className="text-right "> {Number(item.amount) - Number(item.filled)}</div>
-              <div className="text-right "> {(Number(item.amount) - Number(item.filled)) * Number(item.price)}</div>
+              <div className="text-right ">
+                {Number(item.amount) - Number(item.filled)}
+              </div>
+              <div className="text-right ">
+                {(Number(item.amount) - Number(item.filled)) *
+                  Number(item.price)}
+              </div>
             </div>
           ))}
         </div>
@@ -81,22 +94,18 @@ function OrderBook({}: Props) {
           {orderBookBuy.map((item) => (
             <div className="grid grid-cols-3 gap-x-3">
               <div className="text-right">{item.price}</div>
-              <div className="text-right "> {Number(item.amount) - Number(item.filled)}</div>
-              <div className="text-right "> {(Number(item.amount) - Number(item.filled)) * Number(item.price)}</div>
+              <div className="text-right ">
+                {Number(item.amount) - Number(item.filled)}
+              </div>
+              <div className="text-right ">
+
+                {(Number(item.amount) - Number(item.filled)) *
+                  Number(item.price)}
+              </div>
             </div>
           ))}
         </div>
       )}
-
-      <button
-        className="text-black rounded-lg bg-red-500 p-2 px-8 mb-5"
-        onClick={() => {
-          loadOrderBook()
-          console.log(statusShowOrderBook)
-        }}
-      >
-        GetDataOrder
-      </button>
     </div>
   )
 }
