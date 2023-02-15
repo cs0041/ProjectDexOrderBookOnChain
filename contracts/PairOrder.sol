@@ -161,53 +161,53 @@ contract PairNewOrder is Wallet{
 
     
   }
-  function getOrderBookByAddress(address _trader) external view returns(Order[] memory) {
+  // function getOrderBookByAddress(address _trader) external view returns(Order[] memory) {
 
-        uint256 allLengthOrderBookByAddress;
-        uint256 currentNodeID;
-
-
-        currentNodeID = linkedListsNode[0][GUARDHEAD].nextNodeID;
-        for(uint256 i = 0; i < listSize[0]; ++i) {
-          if(linkedListsNode[0][currentNodeID].trader == _trader){
-            allLengthOrderBookByAddress++;
-          }
-          currentNodeID = linkedListsNode[0][currentNodeID].nextNodeID;
-        }
-
-        currentNodeID = linkedListsNode[1][GUARDHEAD].nextNodeID;
-        for(uint256 i = 0; i < listSize[1]; ++i) {
-          if(linkedListsNode[1][currentNodeID].trader == _trader){
-            allLengthOrderBookByAddress++;
-          }
-          currentNodeID = linkedListsNode[1][currentNodeID].nextNodeID;
-        }
+  //       uint256 allLengthOrderBookByAddress;
+  //       uint256 currentNodeID;
 
 
-        Order[] memory dataList = new Order[](allLengthOrderBookByAddress);
-        uint index = 0;
+  //       currentNodeID = linkedListsNode[0][GUARDHEAD].nextNodeID;
+  //       for(uint256 i = 0; i < listSize[0]; ++i) {
+  //         if(linkedListsNode[0][currentNodeID].trader == _trader){
+  //           allLengthOrderBookByAddress++;
+  //         }
+  //         currentNodeID = linkedListsNode[0][currentNodeID].nextNodeID;
+  //       }
 
-       currentNodeID = linkedListsNode[0][GUARDHEAD].nextNodeID;
-        for(uint i = 0; i < listSize[0]; ++i) {
-          if(linkedListsNode[0][currentNodeID].trader == _trader){
-            dataList[index] = linkedListsNode[0][currentNodeID];
-            index++;
-          }
-          currentNodeID = linkedListsNode[0][currentNodeID].nextNodeID;
-        }
+  //       currentNodeID = linkedListsNode[1][GUARDHEAD].nextNodeID;
+  //       for(uint256 i = 0; i < listSize[1]; ++i) {
+  //         if(linkedListsNode[1][currentNodeID].trader == _trader){
+  //           allLengthOrderBookByAddress++;
+  //         }
+  //         currentNodeID = linkedListsNode[1][currentNodeID].nextNodeID;
+  //       }
 
-        currentNodeID = linkedListsNode[1][GUARDHEAD].nextNodeID;
-        for(uint i = 0; i < listSize[1] ; ++i) {
-          if(linkedListsNode[1][currentNodeID].trader == _trader){
-            dataList[index] = linkedListsNode[1][currentNodeID];
-            index++;
-          }
-          currentNodeID = linkedListsNode[1][currentNodeID].nextNodeID;
-        }
-        return dataList;
+
+  //       Order[] memory dataList = new Order[](allLengthOrderBookByAddress);
+  //       uint index = 0;
+
+  //      currentNodeID = linkedListsNode[0][GUARDHEAD].nextNodeID;
+  //       for(uint i = 0; i < listSize[0]; ++i) {
+  //         if(linkedListsNode[0][currentNodeID].trader == _trader){
+  //           dataList[index] = linkedListsNode[0][currentNodeID];
+  //           index++;
+  //         }
+  //         currentNodeID = linkedListsNode[0][currentNodeID].nextNodeID;
+  //       }
+
+  //       currentNodeID = linkedListsNode[1][GUARDHEAD].nextNodeID;
+  //       for(uint i = 0; i < listSize[1] ; ++i) {
+  //         if(linkedListsNode[1][currentNodeID].trader == _trader){
+  //           dataList[index] = linkedListsNode[1][currentNodeID];
+  //           index++;
+  //         }
+  //         currentNodeID = linkedListsNode[1][currentNodeID].nextNodeID;
+  //       }
+  //       return dataList;
     
     
-  }
+  // }
 
 
 
@@ -432,9 +432,10 @@ contract PairNewOrder is Wallet{
         // There is this section to query data directly through the blockchain, 
         // no backend required, just used for testing purposes. 
         // not a good way
-        orderHistory[msg.sender].push(OrderHistory("MarketOrder",isBuy,amount,0,msg.sender,block.timestamp));
-        emit SumMarketOrder( isBuy, amount,msg.sender);
-        
+        if(totalFilled != 0){
+          orderHistory[msg.sender].push(OrderHistory("MarketOrder",isBuy,amount,0,msg.sender,block.timestamp));
+          emit SumMarketOrder( isBuy, amount,msg.sender);
+        }
         return amount-totalFilled;
 
       }
