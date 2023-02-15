@@ -59,8 +59,7 @@ contract PairNewOrder is Wallet{
     uint256 date;
   }
   uint256 public price;
-
-
+ 
 
   constructor(address _tokne0 , address _token1) Wallet(_tokne0,_token1)  {
     nodeID[0] =1;
@@ -79,15 +78,15 @@ contract PairNewOrder is Wallet{
 
 
       address tokenMain = _isBuy==0 ? token1 : token0;   
-       
+      uint8 decimals = IERC20(tokenMain).decimals();
       if(_isBuy==0){
-       require(balancesSpot[msg.sender][tokenMain] >= (_amount * _price)/10 ** 18,"not enough balance token for buy");
-       _amount = createMarketOrder(_isBuy,(_amount * _price)/10 ** 18,_price); 
-       _amount = (_amount/_price)*10 ** 18;
+       require(balancesSpot[msg.sender][tokenMain] >= (_amount * _price)/10 ** decimals,"not enough balance token for buy");
+       _amount = createMarketOrder(_isBuy,(_amount * _price)/10 ** decimals,_price); 
+       _amount = (_amount/_price)*10 ** decimals;
         if(_amount<=0) return;
        // transfer balance Spot to Trade wallet 
-       balancesSpot[msg.sender][tokenMain] -= (_amount * _price)/10 ** 18;
-       balancesTrade[msg.sender][tokenMain] += (_amount * _price)/10 ** 18;
+       balancesSpot[msg.sender][tokenMain] -= (_amount * _price)/10 ** decimals;
+       balancesTrade[msg.sender][tokenMain] += (_amount * _price)/10 ** decimals;
 
       }else{
           require(balancesSpot[msg.sender][tokenMain] >= _amount,"not enough balance token for sell");
@@ -221,10 +220,12 @@ contract PairNewOrder is Wallet{
      uint256 _amount =  linkedListsNode[_isBuy][index].amount;
      uint256 _price =  linkedListsNode[_isBuy][index].price;
      uint256 _filled =   linkedListsNode[_isBuy][index].filled;
+
+      uint8 decimals = IERC20(token).decimals();
      if(_isBuy==0) {
         // transfer balance Trade to Spot wallet 
-        balancesSpot[msg.sender][token] += ( (_amount-_filled) * _price)/10 ** 18;
-        balancesTrade[msg.sender][token] -= ( (_amount-_filled) * _price)/10 ** 18;
+        balancesSpot[msg.sender][token] += ( (_amount-_filled) * _price)/10 ** decimals;
+        balancesTrade[msg.sender][token] -= ( (_amount-_filled) * _price)/10 ** decimals;
       } else  {
         // transfer balance Trade to Spot wallet 
         balancesSpot[msg.sender][token]  += (_amount-_filled) ;
@@ -290,18 +291,19 @@ contract PairNewOrder is Wallet{
         address token =  linkedListsNode[_isBuy][index].token;
         uint256 _amount =  linkedListsNode[_isBuy][index].amount;
         uint256 _price =  linkedListsNode[_isBuy][index].price;
+        uint8 decimals = IERC20(token).decimals();
         linkedListsNode[_isBuy][index].price = newPriceOrder;
         linkedListsNode[_isBuy][index].amount = newAmount;
-
+        
           // transfer balance Trade to Spot wallet 
           if(_isBuy==0) {
           bool isMoreThan = (newPriceOrder*newAmount) > ( _amount * _price);
           if(isMoreThan){
-            uint256 diff = ((newPriceOrder*newAmount)-( _amount * _price))/10 ** 18;
+            uint256 diff = ((newPriceOrder*newAmount)-( _amount * _price))/10 ** decimals;
             balancesSpot[msg.sender][token] -= diff;
             balancesTrade[msg.sender][token] += diff;
           }else{
-            uint256 diff = (( _amount * _price)-(newPriceOrder*newAmount))/10 ** 18;
+            uint256 diff = (( _amount * _price)-(newPriceOrder*newAmount))/10 ** decimals;
             balancesSpot[msg.sender][token] += diff;
             balancesTrade[msg.sender][token] -= diff;
           }
@@ -347,7 +349,7 @@ contract PairNewOrder is Wallet{
         // Market Sell token0
         // sell token0 buy token1
 
-
+        uint8 decimals = IERC20(tokenMain).decimals();
             uint256 currentNodeID = linkedListsNode[isBuy][GUARDHEAD].nextNodeID;
             for (uint256 i = 0; i < listSize[isBuy] && totalFilled < amount; i++) {
                  Order storage _order = linkedListsNode[isBuy][currentNodeID];
@@ -367,15 +369,15 @@ contract PairNewOrder is Wallet{
                 uint256 filled = 0;
                 uint256 cost ;
                 if(isBuy==1){
-                    if( (availableToFill*_order.price)/10 ** 18 > leftToFill){
+                    if( (availableToFill*_order.price)/10 ** decimals > leftToFill){
                     filled = leftToFill; //Full Fill 
                     }
                     else{ 
-                        filled = (availableToFill*_order.price)/10 ** 18; // Fill as much as can Fill
+                        filled = (availableToFill*_order.price)/10 ** decimals; // Fill as much as can Fill
                     }
                 
-                    orderMarket.push(OrderMarket(isBuy, ((filled * 10 ** 18)/_order.price),_order.price,block.timestamp));
-                    emit MarketOrder(isBuy, ((filled * 10 ** 18)/_order.price),_order.price);
+                    orderMarket.push(OrderMarket(isBuy, ((filled * 10 ** decimals)/_order.price),_order.price,block.timestamp));
+                    emit MarketOrder(isBuy, ((filled * 10 ** decimals)/_order.price),_order.price);
                 }else{
                     if(availableToFill > leftToFill){
                         filled = leftToFill; //Full Fill 
@@ -390,11 +392,11 @@ contract PairNewOrder is Wallet{
                 totalFilled = totalFilled + filled;
 
                 if(isBuy==1){
-                  _order.filled += (filled* 10 ** 18)/_order.price;
-                  cost = (filled* 10 ** 18)/_order.price; // amount token0
+                  _order.filled += (filled* 10 ** decimals)/_order.price;
+                  cost = (filled* 10 ** decimals)/_order.price; // amount token0
                 }else{
                   _order.filled += filled;
-                  cost = (filled * _order.price)/10 ** 18;
+                  cost = (filled * _order.price)/10 ** decimals;
               
                 }
 
