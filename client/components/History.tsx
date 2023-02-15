@@ -2,7 +2,7 @@ import React, { useContext, useEffect, useState } from 'react'
 import { ContractContext } from '../context/ContratContext'
 import UpdateModal from '../components/Modal'
 import { useAccount } from 'wagmi'
-import { AdjustmentsHorizontalIcon } from '@heroicons/react/24/outline'
+import { AdjustmentsHorizontalIcon, ArrowPathIcon } from '@heroicons/react/24/outline'
 import { TrashIcon } from '@heroicons/react/24/outline'
 import { ethers } from 'ethers'
 import { ConvertDateTime } from '../utils/DateTime'
@@ -22,6 +22,7 @@ const History = (props: Props) => {
     orderBookByAddress,
     sendTxCancelOrder,
     loadOrderBookByAddress,
+    loadHistoryByAddress,
     historyOrderEvent,
   } = useContext(ContractContext)
   // helper
@@ -39,7 +40,7 @@ const History = (props: Props) => {
   )
   return (
     <div className="p-5  h-full ">
-      <div className="space-x-5 mb-5">
+      <div className="flex flex-row items-center space-x-5 mb-5">
         <button
           onClick={() => setSelectShowOrder(ShowOrderStatus.OpenOrder)}
           className={`${
@@ -58,18 +59,17 @@ const History = (props: Props) => {
           Order History
         </button>
 
-        <button
+        <ArrowPathIcon
           onClick={() => {
             if (address) {
+              loadHistoryByAddress()
               loadOrderBookByAddress(address)
             } else {
               console.log('No address')
             }
           }}
-          className=" text-white rounded bg-purple-500 p-3 font-semibold"
-        >
-          Get Order By Address
-        </button>
+          className="h-6 w-6   hover:text-yellow-400 cursor-pointer"
+        />
       </div>
 
       {selectShowOrder === ShowOrderStatus.OpenOrder ? (
@@ -96,7 +96,7 @@ const History = (props: Props) => {
                   className={`${
                     item.BuyOrSell === 0 ? 'text-green-500' : 'text-red-500'
                   }  `}
-                 >
+                >
                   {item.BuyOrSell === 0 ? 'Buy' : 'Sell'}
                 </div>
                 <div className="flex flex-row">
@@ -150,7 +150,7 @@ const History = (props: Props) => {
                 <div>{item.Type}</div>
                 <div
                   className={`${
-                    item.Type === 'Market'
+                    item.Type === 'MarketOrder'
                       ? item.isBuy === 1
                         ? 'text-green-500'
                         : 'text-red-500'
@@ -159,7 +159,7 @@ const History = (props: Props) => {
                       : 'text-red-500'
                   } `}
                 >
-                  {item.Type === 'Market'
+                  {item.Type === 'MarketOrder'
                     ? item.isBuy === 0
                       ? 'Sell'
                       : 'Buy'
@@ -168,7 +168,6 @@ const History = (props: Props) => {
                     : 'Sell'}
                 </div>
                 <div>
-                  
                   {Number(toEtherandFixFloatingPoint(item.price)) === 0
                     ? 'Market'
                     : toEtherandFixFloatingPoint(item.price)}
