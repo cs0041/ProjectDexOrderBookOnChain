@@ -6,6 +6,7 @@ import { AdjustmentsHorizontalIcon, ArrowPathIcon } from '@heroicons/react/24/ou
 import { TrashIcon } from '@heroicons/react/24/outline'
 import { ethers } from 'ethers'
 import { ConvertDateTime } from '../utils/DateTime'
+import { toEtherandFixFloatingPoint } from '../utils/UnitInEther'
 
 type Props = {}
 
@@ -25,9 +26,6 @@ const History = (props: Props) => {
     loadHistoryByAddress,
     historyOrderEvent,
   } = useContext(ContractContext)
-  // helper
-  const toEther = (wei: string | number | ethers.BigNumber) => ethers.utils.formatEther(wei)
-  const toEtherandFixFloatingPoint = (amount: ethers.BigNumber) => Number(ethers.utils.formatEther(amount)).toFixed(6)
 
 
   // for update modal
@@ -66,12 +64,8 @@ const History = (props: Props) => {
 
         <ArrowPathIcon
           onClick={() => {
-            if (address) {
               loadHistoryByAddress()
-              loadOrderBookByAddress(address)
-            } else {
-              console.log('No address')
-            }
+              loadOrderBookByAddress()
           }}
           className="IconHover"
         />

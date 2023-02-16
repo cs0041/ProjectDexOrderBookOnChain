@@ -34,17 +34,23 @@ const {
       <div className="space-x-5">
         <button
           onClick={() => setSelectlimitMarket(LimitMarketStatus.Limit)}
-          className={`${
-            selectlimitMarket === LimitMarketStatus.Limit && 'text-yellow-300'
-          } HeadSelectTypeOrder`}
+          className={`
+          ${
+            selectlimitMarket === LimitMarketStatus.Limit
+              ? 'Buttonselect !py-2'
+              : 'ButtonHover  !py-2'
+          } `}
         >
           Limit Order
         </button>
         <button
           onClick={() => setSelectlimitMarket(LimitMarketStatus.Market)}
-          className={`${
-            selectlimitMarket === LimitMarketStatus.Market && 'text-yellow-300'
-          } HeadSelectTypeOrder`}
+          className={`
+          ${
+            selectlimitMarket === LimitMarketStatus.Market
+              ? 'Buttonselect !py-2'
+              : 'ButtonHover  !py-2'
+          } `}
         >
           Market Order
         </button>
@@ -74,7 +80,7 @@ const {
             <div className=" flex  items-center ">
               <PlusCircleIcon
                 onClick={() => router.push('/deposit')}
-                className="h-6 w-6   hover:text-yellow-400 cursor-pointer"
+                className=" IconHover"
               />
             </div>
           </div>
@@ -145,7 +151,7 @@ const {
                 sendTxMarketOrder(0, inputBuyAmountTokenLimitOrder!)
               }
             }}
-            className=" w-full text-white rounded bg-green-500 py-3 font-semibold"
+            className=" w-full text-white rounded bg-green-500 py-3 font-semibold hover:opacity-70"
           >
             Buy BTC
           </button>
@@ -160,7 +166,7 @@ const {
             <div className=" flex  items-center ">
               <PlusCircleIcon
                 onClick={() => router.push('/deposit')}
-                className="h-6 w-6   hover:text-yellow-400 cursor-pointer"
+                className=" IconHover"
               />
             </div>
           </div>
@@ -232,7 +238,7 @@ const {
                 sendTxMarketOrder(1, inputSellAmountTokenLimitOrder!)
               }
             }}
-            className="w-full text-white rounded bg-red-500 py-3 font-semibold"
+            className="w-full text-white rounded bg-red-500 py-3 font-semibold hover:opacity-70"
           >
             Sell BTC
           </button>

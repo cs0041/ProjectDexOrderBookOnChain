@@ -4,6 +4,7 @@ import React, { useContext, useEffect } from 'react'
 import { useAccount } from 'wagmi'
 import { ContractContext } from '../context/ContratContext'
 import { ConvertDateTime } from '../utils/DateTime'
+import { toEtherandFixFloatingPoint } from '../utils/UnitInEther'
 
 // interface Props {
 //   order: EventMarketOrder[]
@@ -23,12 +24,11 @@ function HistoryMarket() {
   //     loadOrderBookByAddress(address!)
   // }, [marketEvent])
 
-  //helper
-  const toEtherandFixFloatingPoint = (amount: ethers.BigNumber) => Number(ethers.utils.formatEther(amount)).toFixed(6)
 
   return (
     <div className="h-full p-5">
-      <h1 className="text-xl text-yellow-400 font-bold">Market Trades</h1>
+      {/* text-white font-semibold text-base transition-all py-1 px-4 rounded-lg bg-black cursor-pointer */}
+      <span className=" text-base text-white font-semibold  py-2 px-4 rounded-lg   bg-black ">Market Trades</span>
       <div className="grid grid-cols-3 py-5">
         <div>Time</div>
         <div>Price(USDT)</div>

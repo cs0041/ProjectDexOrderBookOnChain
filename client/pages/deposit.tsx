@@ -16,13 +16,15 @@ function deposit({}: Props) {
       balancesSpotToken1,
       balancesTradeToken0,
       balancesTradeToken1,
+      balancesERC20Token0,
+      balancesERC20Token1,
       sendTxDeposit,
       sendTxWithdraw
     } = useContext(ContractContext)
   return (
     <>
-     <Header/>
-    <div className="flex flex-col w-full p-20 space-y-10">
+
+    <div className="flex flex-col w-full h-[92vh] p-20 space-y-10 ">
       <div className="flex flex-row justify-center space-x-10">
         <div className="bg-gray-700 w-fit p-10 rounded-lg flex flex-col border-2 border-gray-300">
           <h1 className="text-3xl text-center font-bold mb-10">Deposit</h1>
@@ -30,6 +32,7 @@ function deposit({}: Props) {
             <div className="  bg-black/50 p-10   rounded-md">
               <div className="space-y-4">
                 <h1 className="text-center text-xl font-bold">Deposit BTC</h1>
+                <span className=" text-xl font-light">Avbl {balancesERC20Token0}</span>
                 <div className="bg-gray-600 flex flex-row text-xl">
                   <span className="flex items-center pl-2 pr-5">Amount</span>
                   <input
@@ -50,7 +53,7 @@ function deposit({}: Props) {
                   onClick={() => {
                     sendTxDeposit(amountInputDepositToken0!,ContractToken0Address)
                   }}
-                  className="w-full text-white rounded bg-green-500 py-3 font-semibold"
+                  className="w-full text-white rounded bg-green-500 py-3 font-semibold hover:opacity-70"
                 >
                   Deposit BTC
                 </button>
@@ -59,6 +62,7 @@ function deposit({}: Props) {
             <div className="  bg-black/50 p-10 rounded-md">
               <div className="space-y-4">
                 <h1 className="text-center text-xl font-bold">Deposit USDT</h1>
+                    <span className=" text-xl font-light">Avbl {balancesERC20Token1}</span>
                 <div className="bg-gray-600 flex flex-row text-xl">
                   <span className="flex items-center pl-2 pr-5">Amount</span>
                   <input
@@ -79,7 +83,7 @@ function deposit({}: Props) {
                   onClick={() => {
                      sendTxDeposit(amountInputDepositToken1!,ContractToken1Address)
                   }}
-                  className="w-full text-white rounded bg-green-500 py-3 font-semibold"
+                  className="w-full text-white rounded bg-green-500 py-3 font-semibold hover:opacity-70"
                 >
                   Deposit USDT
                 </button>
@@ -115,7 +119,7 @@ function deposit({}: Props) {
                   onClick={() => {
                      sendTxWithdraw(amountInputWithdrawToken0!,ContractToken0Address)
                   }}
-                  className="w-full text-white rounded bg-red-500 py-3 font-semibold"
+                  className="w-full text-white rounded bg-red-500 py-3 font-semibold hover:opacity-70"
                 >
                   Withdraw BTC
                 </button>
@@ -145,7 +149,7 @@ function deposit({}: Props) {
                   onClick={() => {
                        sendTxWithdraw(amountInputWithdrawToken1!,ContractToken1Address)
                   }}
-                  className="w-full text-white rounded bg-red-500 py-3 font-semibold"
+                  className="w-full text-white rounded bg-red-500 py-3 font-semibold hover:opacity-70"
                 >
                   Withdraw USDT
                 </button>

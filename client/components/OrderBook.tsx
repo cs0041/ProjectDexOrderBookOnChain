@@ -57,7 +57,7 @@ function OrderBook({}: Props) {
           onClick={() => {
             loadOrderBook()
           }}
-          className="h-6 w-6   hover:text-yellow-400 cursor-pointer"
+          className="IconHover"
         />
         {/* <span className="text-2xl">100</span> */}
       </header>
@@ -77,8 +77,7 @@ function OrderBook({}: Props) {
                 {(Number(item.amount) - Number(item.filled)).toFixed(6)}
               </div>
               <div className="text-right ">
-                {(Number(item.amount) - Number(item.filled)) *
-                  Number(item.price)}
+                {((Number(item.amount) - Number(item.filled)) * Number(item.price)).toFixed(6)}
               </div>
             </div>
           ))}
@@ -98,8 +97,7 @@ function OrderBook({}: Props) {
                 {(Number(item.amount) - Number(item.filled)).toFixed(6)}
               </div>
               <div className="text-right ">
-                {(Number(item.amount) - Number(item.filled)) *
-                  Number(item.price)}
+                {((Number(item.amount) - Number(item.filled)) *Number(item.price)).toFixed(6)}
               </div>
             </div>
           ))}

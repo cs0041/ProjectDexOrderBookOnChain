@@ -41,7 +41,7 @@ export const ChartComponent = () => {
                 },
                 layout: {
                     background: {
-                      color: '#1c1c28'
+                      color: '#101018'
                     },
                     textColor: 'rgba(255, 255, 255, 0.9)',
                 },
