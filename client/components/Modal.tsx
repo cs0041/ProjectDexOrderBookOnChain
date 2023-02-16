@@ -26,55 +26,52 @@ function Modal({onClose,side,id}: Props) {
     <MuiModal
       open={showModal}
       onClose={handleCLose}
-      className="flxex m-auto w-1/5 h-1/4   justify-center items-center
-   rounded-md scrollbar-hide  bg-black shadow-2xl shadow-orange-500 border-[1px] border-white p-10"
+      className="flxex m-auto w-1/5 h-1/5   justify-center items-center
+   rounded-md scrollbar-hide  bg-[#1c1c28]  border-[1px] border-gray-600 p-10"
     >
-      <div className='space-y-4'>
-                     <div className="bg-gray-900 flex flex-row text-xl">
+      <div className="space-y-4">
+        <div className="bg-gray-900 flex flex-row text-xl">
+          <span className="flex items-center pl-2 pr-5">Price</span>
+          <input
+            type="number"
+            onKeyPress={(event) => {
+              if (!/^[0-9]*[.,]?[0-9]*$/.test(event.key)) {
+                event.preventDefault()
+              }
+            }}
+            onChange={(e) => {
+              setPriceInput(e.target.value)
+            }}
+            className="  w-full py-2 pr-2 text-right  bg-transparent outline-none  text-white "
+          />
+          <span className="flex items-center  pr-5">USDT</span>
+        </div>
 
-              <span className="flex items-center pl-2 pr-5">Price</span>
-              <input
-                type="number"
-                onKeyPress={(event) => {
-                  if (!/^[0-9]*[.,]?[0-9]*$/.test(event.key)) {
-                    event.preventDefault()
-                  }
-                }}
-                onChange={(e) => {
-                  setPriceInput(e.target.value)
-                }}
-                className="  w-full py-2 pr-2 text-right  bg-transparent outline-none  text-white"
-              />
-              <span className="flex items-center  pr-5">USDT</span>
-            </div>
-
-            <div className="bg-gray-900 flex flex-row text-xl">
-              <span className="flex items-center pl-2 pr-5">Amount</span>
-              <input
-                type="number"
-                onKeyPress={(event) => {
-                  if (!/^[0-9]*[.,]?[0-9]*$/.test(event.key)) {
-                    event.preventDefault()
-                  }
-                }}
-                onChange={(e) => {
-                  setAmountInput(e.target.value)
-                }}
-                className="  w-full py-2 pr-2 text-right  bg-transparent outline-none  text-white"
-              />
-              <span className="flex items-center  pr-5">BTC</span>
-            </div>
-            <button
-              onClick={() => {
-                 sendTxUpdateOrder(side,id,amountInput!,priceInput!)
-              }}
-              className="w-full text-white rounded bg-green-500 py-3 font-semibold"
-            >
-              Update order
-            </button>
-      
+        <div className="bg-gray-900 flex flex-row text-xl">
+          <span className="flex items-center pl-2 pr-5">Amount</span>
+          <input
+            type="number"
+            onKeyPress={(event) => {
+              if (!/^[0-9]*[.,]?[0-9]*$/.test(event.key)) {
+                event.preventDefault()
+              }
+            }}
+            onChange={(e) => {
+              setAmountInput(e.target.value)
+            }}
+            className="  w-full py-2 pr-2 text-right  bg-transparent outline-none  text-white"
+          />
+          <span className="flex items-center  pr-5">BTC</span>
+        </div>
+        <button
+          onClick={() => {
+            sendTxUpdateOrder(side, id, amountInput!, priceInput!)
+          }}
+          className="w-full text-white rounded bg-green-500 py-3 font-semibold"
+        >
+          Update order
+        </button>
       </div>
-
     </MuiModal>
   )
 }
