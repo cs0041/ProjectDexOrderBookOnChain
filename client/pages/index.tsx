@@ -25,6 +25,7 @@ import HistoryMarket from '../components/HistoryMarket'
 import { GetMarketOrder } from '../utils/GetMarketOrder'
 import Header from '../components/Header'
 import Footer from '../components/Footer'
+import NotificationModal from '../components/NotificationModal'
   
     
 // interface Props {
@@ -51,13 +52,21 @@ const Home = () => {
   const { data: signer } = useSigner({
     chainId: polygonMumbai.id,
   })
+    const { notification, txNotification, setNotification } =useContext(ContractContext)
+
+  useEffect(() => {
+    const timeout = setTimeout(() => {
+      console.log('notification close')
+      setNotification(false)
+    }, 5000)
+
+    return () => clearTimeout(timeout)
+  }, [notification])
+
 
   return (
     mounted && (
       <div className=" relative">
-
-          <Header />
-
         <div className="border-b-[1px] border-gray-600 ">
           <HeaderData />
         </div>
@@ -83,14 +92,18 @@ const Home = () => {
           <History />
         </div>
         {/* {address && <p>My address is {address}</p>} */}
-        <div className=" sticky inset-0 ">
-          <Footer />
-        </div>
+
         {showUpdateModal && (
           <UpdateModal
             id={idUpdate}
             side={sideBuyOrSell}
             onClose={() => setShowUpdateModal(false)}
+          />
+        )}
+        {notification && (
+          <NotificationModal
+            onClose={() => setNotification(false)}
+            txNotification={txNotification}
           />
         )}
       </div>
