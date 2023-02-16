@@ -1,10 +1,13 @@
 import { ConnectButton } from '@rainbow-me/rainbowkit'
 import Link from 'next/link'
-import React from 'react'
+import React, { useContext } from 'react'
 import { useRouter } from 'next/router'
+import Loader from './Loader'
+import { ContractContext } from '../context/ContratContext'
 type Props = {}
 
 function Header({}: Props) {
+  const {  txNotification,isLoadingTxNavBar } = useContext(ContractContext)
    const {pathname} = useRouter()
     return (
       <div className="border-b-[1px] border-gray-600  sticky inset-0 z-10 ">
@@ -80,15 +83,17 @@ function Header({}: Props) {
           </form>
 
           <div className="flex flex-row items-center space-x-2">
-            <div className="px-5 space-x-3 py-2 flex justify-center items-center text-black font-bold bg-white rounded-xl">
-              <h1>Status :</h1>
-              <h1>
-                <div className="flex justify-center items-center  ">
-                  <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-red-700" />
-                </div>
-               
-              </h1>
-            </div>
+            {isLoadingTxNavBar && (
+              <div 
+               onClick={() => {
+                window.open(`https://mumbai.polygonscan.com/tx/${txNotification}`)
+              }}
+              className="transition duration-150 ease-in-out cursor-pointer hover:scale-105 px-5 space-x-3 py-2 flex justify-center items-center text-black font-bold bg-white rounded-xl">
+                <h1>Pending </h1>
+                {/* <span className={`loader`}></span> */}
+                <Loader />
+              </div>
+            )}
 
             <ConnectButton
               label="connect web3"
