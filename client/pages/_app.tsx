@@ -10,9 +10,13 @@ import {
   ConnectButton,
   getDefaultWallets,
   RainbowKitProvider,
+  darkTheme,
+  lightTheme,
 } from '@rainbow-me/rainbowkit'
 import { Chain } from 'wagmi/chains'
 import { ContractProvider } from '../context/ContratContext'
+import Header from '../components/Header'
+import Footer from '../components/Footer'
 
 
 
@@ -57,8 +61,18 @@ function MyApp({ Component, pageProps }: AppProps) {
   return (
     <ContractProvider>
       <WagmiConfig client={wagmiClient}>
-        <RainbowKitProvider chains={chains}>
+        <RainbowKitProvider
+          coolMode
+          chains={chains}
+          theme={lightTheme({
+            accentColorForeground: 'black',
+            overlayBlur: 'large',
+            accentColor: 'white',
+          })}
+        >
+          <Header />
           <Component {...pageProps} />
+          <Footer />
         </RainbowKitProvider>
       </WagmiConfig>
     </ContractProvider>
