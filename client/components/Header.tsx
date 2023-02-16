@@ -1,16 +1,46 @@
 import { ConnectButton } from '@rainbow-me/rainbowkit'
 import Link from 'next/link'
 import React from 'react'
-
+import { useRouter } from 'next/router'
 type Props = {}
 
 function Header({}: Props) {
+   const {pathname} = useRouter()
     return (
       <div className="border-b-[1px] border-gray-600  sticky inset-0 z-10 ">
-        <div className="flex flex-row text-sm font-semibold items-center justify-between px-10  bg-[#1c1c28] py-3 space-x-10">
-          <h1 className="">Trust Less Protocol</h1>
+        <div className="flex flex-row text-base font-semibold items-center justify-between px-10  bg-[#1c1c28] py-3 space-x-10">
+          <div className="flex flex-row items-center space-x-2">
+            <h1 className="mr-20">Trust Less</h1>
+            <Link href="/">
+              <h1
+                className={`${
+                  pathname === '/' ? 'Buttonselect' : 'ButtonHover'
+                } `}
+              >
+                Trade
+              </h1>
+            </Link>
+            <Link href="/deposit">
+              <h1
+                className={`${
+                  pathname === '/deposit' ? 'Buttonselect' : 'ButtonHover'
+                } `}
+              >
+                Deposit/Withdraw
+              </h1>
+            </Link>
+            <Link href="/faucet">
+              <h1
+                className={`${
+                  pathname === '/faucet' ? 'Buttonselect' : 'ButtonHover'
+                } `}
+              >
+                Faucet
+              </h1>
+            </Link>
+          </div>
 
-          <form className="flex items-center w-1/3">
+          <form className="flex items-center w-1/5">
             <input
               type="text"
               // onKeyPress={(event) => {
@@ -19,8 +49,8 @@ function Header({}: Props) {
               //   }
               // }}
               onChange={(e) => {}}
-              className="outline-none pl-5 font-bold bg-[#13131b] hover:border-[1px] hover:border-gray-600  focus:border-[1px] focus:border-gray-600 text-white text-sm rounded-lg block w-full p-1.5  "
-              placeholder="Search"
+              className="outline-none pl-5 font-bold bg-[#13131b] border-[1px] border-[#1c1c28] hover:border-gray-600  focus:border-[1px] focus:border-gray-600 text-white text-sm rounded-lg block w-full p-1.5  "
+              placeholder="Address"
               required
             />
 
@@ -50,21 +80,16 @@ function Header({}: Props) {
           </form>
 
           <div className="flex flex-row items-center space-x-2">
-            <Link href="/">
-              <h1 className="text-base transition-all text-[#6f6e84]  hover:text-white py-1 px-4 rounded-lg hover:bg-[#454258] cursor-pointer ">
-                Trade
+            <div className="px-5 space-x-3 py-2 flex justify-center items-center text-black font-bold bg-white rounded-xl">
+              <h1>Status :</h1>
+              <h1>
+                <div className="flex justify-center items-center  ">
+                  <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-red-700" />
+                </div>
+               
               </h1>
-            </Link>
-            <Link href="/deposit">
-              <h1 className="text-base transition-all text-[#6f6e84]  hover:text-white py-1 px-4 rounded-lg hover:bg-[#454258] cursor-pointer ">
-                Deposit
-              </h1>
-            </Link>
-            <Link href="/deposit">
-              <h1 className="text-base transition-all text-[#6f6e84]  hover:text-white py-1 px-4 rounded-lg hover:bg-[#454258] cursor-pointer ">
-                Withdraw
-              </h1>
-            </Link>
+            </div>
+
             <ConnectButton
               label="connect web3"
               accountStatus={'full'}
