@@ -2,13 +2,14 @@ import React, {createContext, useEffect, useState } from 'react'
 import { ethers } from 'ethers'
 import artifactPairNewOrder from '../../artifacts/contracts/PairOrder.sol/PairNewOrder.json'
 import artifactToken from '../../artifacts/contracts/Token0.sol/Token0.json'
-import {PairNewOrder,PairNewOrder__factory,Token0,Token0__factory,Token1,Token1__factory} from '../../typechain-types'
+import artifactFaucet from '../../artifacts/contracts/Faucet.sol/Faucet.json'
+import {PairNewOrder,PairNewOrder__factory,Token0,Token0__factory,Token1,Token1__factory,Faucet,Faucet__factory} from '../../typechain-types'
 // const ContractPairOrderAddress = '0x9fE46736679d2D9a65F0992F2272dE9f3c7fa6e0'
 // const ContractToken0Address = '0x5FbDB2315678afecb367f032d93F642f64180aa3'
 // const ContractToken1Address = '0xe7f1725E7734CE288F8367e1Bb143E90bb3F0512'
 const initBlockTime = 31949670
 
-import { ContractPairOrderAddress,ContractToken0Address,ContractToken1Address } from '../utils/Address'
+import { ContractPairOrderAddress,ContractToken0Address,ContractToken1Address,ContractFaucet } from '../utils/Address'
 import { convertToOHLC } from '../utils/CovertCandle'
 import { toEtherandFixFloatingPoint, toWei } from '../utils/UnitInEther'
 interface IContract {
@@ -23,10 +24,12 @@ interface IContract {
   balancesTradeToken0: string
   balancesSpotToken1: string
   balancesTradeToken1: string
+  balancesERC20Token0:string
+  balancesERC20Token1:string
   sendTxLimitOrder : (side: number, amount: number | string, price: number | string) => Promise<void>
   isLoadingOrderBookByAddress:boolean
   orderBookByAddress:Order[]
-  loadOrderBookByAddress: (address: string) => Promise<void>
+  loadOrderBookByAddress: () => Promise<void>
   sendTxCancelOrder: (side: number, id: number | string) => Promise<void>
   sendTxUpdateOrder: (side: number, id: number, newAmount: number | string, newPriceOrder: number | string) => Promise<void>
   marketEvent: PairNewOrder.OrderMarketStructOutput[]
@@ -36,6 +39,13 @@ interface IContract {
   sendTxWithdraw: (amount: number | string, addressToken: string) => Promise<void>
   tradingViewList: TypeTradingView[]
   loadHistoryByAddress: () => Promise<void>
+  timeUnLockFaucet:number
+  sendTxFaucet: () => Promise<void>
+  isLoadingTx:boolean
+  notification:boolean
+  setNotification: (notification: boolean) => void;
+  txNotification:string
+  isLoadingTxNavBar:boolean
 }
 
 export const ContractContext = createContext<IContract>({
@@ -50,6 +60,8 @@ export const ContractContext = createContext<IContract>({
   balancesTradeToken0: '',
   balancesSpotToken1: '',
   balancesTradeToken1: '',
+  balancesERC20Token0: '',
+  balancesERC20Token1: '',
   sendTxLimitOrder: async () => {},
   isLoadingOrderBookByAddress: false,
   orderBookByAddress: [],
@@ -63,6 +75,13 @@ export const ContractContext = createContext<IContract>({
   sendTxWithdraw: async () => {},
   tradingViewList: [],
   loadHistoryByAddress: async () => {},
+  timeUnLockFaucet: 0,
+  sendTxFaucet: async () => {},
+  isLoadingTx: false,
+  notification: false,
+  setNotification: () => {},
+  txNotification: '',
+  isLoadingTxNavBar: false,
 })
 
 
@@ -91,6 +110,18 @@ const getTokenContract = (tokenAddress : string) => {
   return tokenContract
 }
 
+const getFaucetContract = () => {
+  const provider = new ethers.providers.Web3Provider(window.ethereum as any)
+  const signer = provider.getSigner()
+  const faucetContract = new ethers.Contract(
+    ContractFaucet,
+    artifactFaucet.abi,
+    signer
+  ) as Faucet
+
+  return faucetContract
+}
+
 interface ChildrenProps {
   children: React.ReactNode
 }
@@ -116,23 +147,42 @@ export const ContractProvider = ({ children }: ChildrenProps) => {
   const [balancesSpotToken1, setBalancesSpotToken1] = useState<string>('')
   const [balancesTradeToken1, setBalancesTradeToken1] = useState<string>('')
 
+  const [balancesERC20Token0, setBalancesERC20Token0] = useState<string>('')
+  const [balancesERC20Token1, setBalancesERC20Token1] = useState<string>('')
+
   // order by address
   const [orderBookByAddress, setOrderBookByAddress] = useState<Order[]>([])
   const [isLoadingOrderBookByAddress, setIsLoadingOrderBookByAddress] =
     useState(true)
 
   // Market order
-  const [marketEvent, setMarketEvent] = useState< PairNewOrder.OrderMarketStructOutput[]>([])
+  const [marketEvent, setMarketEvent] = useState<
+    PairNewOrder.OrderMarketStructOutput[]
+  >([])
 
   // Sum Market order
   const [sumMarketEvent, setSumMarketEvent] = useState<EventMarketOrder[]>([])
 
   // History order
-  const [historyOrderEvent, setHistoryOrderEvent] = useState<PairNewOrder.OrderHistoryStructOutput[]>([])
+  const [historyOrderEvent, setHistoryOrderEvent] = useState<
+    PairNewOrder.OrderHistoryStructOutput[]
+  >([])
 
   // tradingView
   const [tradingViewList, setTradingViewList] = useState<TypeTradingView[]>([])
 
+  // Time Faucet
+  const [timeUnLockFaucet, setTimeUnLockFaucet] = useState<number>(0)
+
+  // Loading Tx
+  const [isLoadingTx, setIsLoadingTx] = useState(false)
+
+  //Notification
+  const [notification, setNotification] = useState(false)
+  const [txNotification, setTxNotification] = useState('')
+
+  //Navbar loading
+  const [isLoadingTxNavBar, setIsLoadingTxNavBar] = useState(false)
   useEffect(() => {
     if (!window.ethereum) return console.log('Please install metamask')
     loadOrderBook()
@@ -146,6 +196,7 @@ export const ContractProvider = ({ children }: ChildrenProps) => {
     addlistenerMarketEvents()
     // MarketQueryEvents()
     // QueryHisoryEvents()
+    loadTimeFaucet()
 
     setInitialLoading(false)
   }, [])
@@ -156,28 +207,31 @@ export const ContractProvider = ({ children }: ChildrenProps) => {
   ) => {
     if (!window.ethereum) return console.log('Please install metamask')
     try {
+      setIsLoadingTx(true)
       const amount = toWei(_amount)
       const contract = getPairOrderContract()
       const token = getTokenContract(addressToken)
-      const address = (
-        await window.ethereum.request({ method: 'eth_accounts' })
-      )[0]
+      const address = ( await window.ethereum.request({ method: 'eth_accounts' }) )[0]
       // const amountApprove = (await token.allowance(address,ContractPairOrderAddress)).toNumber()
-      const transactionHashApprove = await token.approve(
-        ContractPairOrderAddress,
-        amount
-      )
+      const transactionHashApprove = await token.approve(ContractPairOrderAddress,amount )
       await transactionHashApprove.wait()
       // if (amountApprove< amount.to){
       //     const transactionHashApprove = await token.approve(ContractPairOrderAddress,amount)
       // }
       const transactionHash = await contract.deposit(amount, addressToken)
       console.log(transactionHash.hash)
+      setTxNotification(transactionHash.hash)
+      setIsLoadingTxNavBar(true)
       await transactionHash.wait()
+      setIsLoadingTxNavBar(false)
+      setNotification(true)
+      loadBalances()
+      setIsLoadingTx(false)
     } catch (error) {
       console.log(error)
+      setIsLoadingTx(false)
+      setIsLoadingTxNavBar(false)
     }
-    loadBalances()
   }
   const sendTxWithdraw = async (
     _amount: number | string,
@@ -185,33 +239,48 @@ export const ContractProvider = ({ children }: ChildrenProps) => {
   ) => {
     if (!window.ethereum) return console.log('Please install metamask')
     try {
+      setIsLoadingTx(true)
       const amount = toWei(_amount)
       const contract = getPairOrderContract()
       const transactionHash = await contract.withdraw(amount, addressToken)
       console.log(transactionHash.hash)
+      setTxNotification(transactionHash.hash)
+      setIsLoadingTxNavBar(true)
       await transactionHash.wait()
+      setIsLoadingTxNavBar(false)
+      setNotification(true)
+      loadBalances()
+      setIsLoadingTx(false)
     } catch (error) {
       console.log(error)
+      setIsLoadingTx(false)
+      setIsLoadingTxNavBar(false)
     }
-    loadBalances()
   }
   const sendTxMarketOrder = async (side: number, _amount: number | string) => {
     if (!window.ethereum) return console.log('Please install metamask')
     try {
+      setIsLoadingTx(true)
       const contract = getPairOrderContract()
       const amount = toWei(_amount)
-      const transactionHash = await contract.createMarketOrder(side, amount,0)
+      const transactionHash = await contract.createMarketOrder(side, amount, 0)
       console.log(transactionHash.hash)
+      setTxNotification(transactionHash.hash)
+      setIsLoadingTxNavBar(true)
       await transactionHash.wait()
+      setIsLoadingTxNavBar(false)
+      setNotification(true)
       loadOrderBook()
       loadPriceToken()
       loadBalances()
       loadHistoryByAddress()
       loadHistoryMarketOrder()
+      setIsLoadingTx(false)
     } catch (error) {
       console.log(error)
+      setIsLoadingTx(false)
+      setIsLoadingTxNavBar(false)
     }
-
   }
 
   const sendTxLimitOrder = async (
@@ -221,6 +290,7 @@ export const ContractProvider = ({ children }: ChildrenProps) => {
   ) => {
     if (!window.ethereum) return console.log('Please install metamask')
     try {
+      setIsLoadingTx(true)
       const amount = toWei(_amount)
       const price = toWei(_price)
       const contract = getPairOrderContract()
@@ -232,15 +302,21 @@ export const ContractProvider = ({ children }: ChildrenProps) => {
         prevNodeID
       )
       console.log(transactionHash.hash)
+      setTxNotification(transactionHash.hash)
+      setIsLoadingTxNavBar(true)
       await transactionHash.wait()
+      setIsLoadingTxNavBar(false)
+      setNotification(true)
       loadOrderBook()
       loadBalances()
       loadOrderBookByAddress()
       loadHistoryByAddress()
+      setIsLoadingTx(false)
     } catch (error) {
       console.log(error)
+      setIsLoadingTx(false)
+      setIsLoadingTxNavBar(false)
     }
-
   }
 
   const sendTxUpdateOrder = async (
@@ -253,6 +329,7 @@ export const ContractProvider = ({ children }: ChildrenProps) => {
 
     if (!window.ethereum) return console.log('Please install metamask')
     try {
+      setIsLoadingTx(true)
       const newAmount = toWei(_newAmount)
       const newPriceOrder = toWei(_newPriceOrder)
       console.log('side', side)
@@ -278,33 +355,79 @@ export const ContractProvider = ({ children }: ChildrenProps) => {
       // await pairorderbook.connect(owner).updateOrder(isBuy, index, newPrice,newAmount,prevIndexAdd,prevIndexRemove)
 
       console.log(transactionHash.hash)
+      setTxNotification(transactionHash.hash)
+      setIsLoadingTxNavBar(true)
       await transactionHash.wait()
+      setIsLoadingTxNavBar(false)
+      setNotification(true)
       loadOrderBook()
       loadBalances()
       loadOrderBookByAddress()
       loadHistoryByAddress()
+      setIsLoadingTx(false)
     } catch (error) {
       console.log(error)
+      setIsLoadingTx(false)
+      setIsLoadingTxNavBar(false)
     }
-
   }
 
   const sendTxCancelOrder = async (side: number, id: number | string) => {
     if (!window.ethereum) return console.log('Please install metamask')
     try {
+      setIsLoadingTx(true)
       const contract = getPairOrderContract()
       const prevNodeID = await contract._findPrevOrder(side, id)
       const transactionHash = await contract.removeOrder(side, id, prevNodeID)
       console.log(transactionHash.hash)
+      setTxNotification(transactionHash.hash)
+      setIsLoadingTxNavBar(true)
       await transactionHash.wait()
+      setIsLoadingTxNavBar(false)
+      setNotification(true)
       loadOrderBook()
       loadOrderBookByAddress()
       loadBalances()
       loadHistoryByAddress()
+      setIsLoadingTx(false)
+    } catch (error) {
+      console.log(error)
+      setIsLoadingTx(false)
+      setIsLoadingTxNavBar(false)
+    }
+  }
+
+  const sendTxFaucet = async () => {
+    if (!window.ethereum) return console.log('Please install metamask')
+    try {
+      setIsLoadingTx(true)
+      const contract = getFaucetContract()
+      const transactionHash = await contract.getFaucet()
+      console.log(transactionHash.hash)
+      setTxNotification(transactionHash.hash)
+      setIsLoadingTxNavBar(true)
+      await transactionHash.wait()
+      setIsLoadingTxNavBar(false)
+      setNotification(true)
+      loadBalances()
+      setIsLoadingTx(false)
+    } catch (error) {
+      console.log(error)
+      setIsLoadingTx(false)
+      setIsLoadingTxNavBar(false)
+    }
+  }
+
+  const loadTimeFaucet = async () => {
+    try {
+      if (!window.ethereum) return console.log('Please install metamask')
+      const accounts = await window.ethereum.request({ method: 'eth_accounts' })
+      const contract = getFaucetContract()
+      const time = await contract.timeFaucet(accounts[0])
+      setTimeUnLockFaucet(time.toNumber())
     } catch (error) {
       console.log(error)
     }
-
   }
 
   const loadPriceToken = async () => {
@@ -324,28 +447,39 @@ export const ContractProvider = ({ children }: ChildrenProps) => {
     if (!window.ethereum) return console.log('Please install metamask')
     try {
       const contract = getPairOrderContract()
+      const token0 = getTokenContract(ContractToken0Address)
+      const token1 = getTokenContract(ContractToken1Address)
 
       const accounts = await window.ethereum.request({ method: 'eth_accounts' })
 
-      const [dataBalancesSpotToken0, dataBalancesTradeToken0] =
-        await Promise.all([
-          await contract.balancesSpot(accounts[0], ContractToken0Address),
-          await contract.balancesTrade(accounts[0], ContractToken0Address),
-        ])
+      const [
+        dataBalancesSpotToken0,
+        dataBalancesTradeToken0,
+        dataBalancesSpotToken1,
+        dataBalancesTradeToken1,
+        dataBalancesERC20Token0,
+        dataBalancesERC20Token1,
+      ] = await Promise.all([
+        await contract.balancesSpot(accounts[0], ContractToken0Address),
+        await contract.balancesTrade(accounts[0], ContractToken0Address),
+        await contract.balancesSpot(accounts[0], ContractToken1Address),
+        await contract.balancesTrade(accounts[0], ContractToken1Address),
+        await token0.balanceOf(accounts[0]),
+        await token1.balanceOf(accounts[0]),
+      ])
       setBalancesSpotToken0(toEtherandFixFloatingPoint(dataBalancesSpotToken0))
       setBalancesTradeToken0(
         toEtherandFixFloatingPoint(dataBalancesTradeToken0)
       )
-
-      const [dataBalancesSpotToken1, dataBalancesTradeToken1] =
-        await Promise.all([
-          await contract.balancesSpot(accounts[0], ContractToken1Address),
-          await contract.balancesTrade(accounts[0], ContractToken1Address),
-        ])
-
       setBalancesSpotToken1(toEtherandFixFloatingPoint(dataBalancesSpotToken1))
       setBalancesTradeToken1(
         toEtherandFixFloatingPoint(dataBalancesTradeToken1)
+      )
+      setBalancesERC20Token0(
+        toEtherandFixFloatingPoint(dataBalancesERC20Token0)
+      )
+      setBalancesERC20Token1(
+        toEtherandFixFloatingPoint(dataBalancesERC20Token1)
       )
     } catch (error) {
       console.log(error)
@@ -407,25 +541,25 @@ export const ContractProvider = ({ children }: ChildrenProps) => {
     }
   }
 
-  const loadOrderBookByAddress = async (address?: string) => {
+  const loadOrderBookByAddress = async () => {
     if (!window.ethereum) return console.log('Please install metamask')
 
-    setIsLoadingOrderBookByAddress(true)
     try {
+      setIsLoadingOrderBookByAddress(true)
       setOrderBookByAddress([])
 
       const contract = getPairOrderContract()
 
-      if (address == undefined) {
-        address = (await window.ethereum.request({ method: 'eth_accounts' }))[0]
-      }
+      const address = (
+        await window.ethereum.request({ method: 'eth_accounts' })
+      )[0]
       const [dataOrderSell, dataOrderBuy] = await Promise.all([
         await contract.getOrderBook(1),
         await contract.getOrderBook(0),
       ])
 
       dataOrderBuy.map((order) => {
-        if(order.trader == address){
+        if (order.trader.toLocaleLowerCase() === address) {
           const structOrder: Order = {
             id: order.id.toNumber(),
             addressTrader: order.trader,
@@ -436,12 +570,12 @@ export const ContractProvider = ({ children }: ChildrenProps) => {
             price: toEtherandFixFloatingPoint(order.price),
             filled: toEtherandFixFloatingPoint(order.filled),
           }
-            setOrderBookByAddress((prev) => [...prev, structOrder])
+          setOrderBookByAddress((prev) => [...prev, structOrder])
         }
       })
 
       dataOrderSell.map((order) => {
-       if(order.trader == address){
+        if (order.trader.toLocaleLowerCase() == address) {
           const structOrder: Order = {
             id: order.id.toNumber(),
             addressTrader: order.trader,
@@ -452,11 +586,9 @@ export const ContractProvider = ({ children }: ChildrenProps) => {
             price: toEtherandFixFloatingPoint(order.price),
             filled: toEtherandFixFloatingPoint(order.filled),
           }
-            setOrderBookByAddress((prev) => [...prev, structOrder])
+          setOrderBookByAddress((prev) => [...prev, structOrder])
         }
       })
-
-
 
       setIsLoadingOrderBookByAddress(false)
     } catch (error) {
@@ -491,17 +623,17 @@ export const ContractProvider = ({ children }: ChildrenProps) => {
       setMarketEvent(covertData.reverse())
 
       let temp: TypesTradingViewOriginal[] = []
-      data.map((item)=>{
-         const data: TypesTradingViewOriginal = {
-           price: Number(ethers.utils.formatEther(item.price)),
-           time: item.date.toNumber(),
-           //  close: Number(ethers.utils.formatEther(item.price)),
-           //  high: Number(ethers.utils.formatEther(item.price)),
-           //  low: Number(ethers.utils.formatEther(item.price)),
-           //  open: 50,
-           //  time: item.date.toNumber(),
-         }
-         temp.push(data)
+      data.map((item) => {
+        const data: TypesTradingViewOriginal = {
+          price: Number(ethers.utils.formatEther(item.price)),
+          time: item.date.toNumber(),
+          //  close: Number(ethers.utils.formatEther(item.price)),
+          //  high: Number(ethers.utils.formatEther(item.price)),
+          //  low: Number(ethers.utils.formatEther(item.price)),
+          //  open: 50,
+          //  time: item.date.toNumber(),
+        }
+        temp.push(data)
         // setTradingViewList((prev) => [...prev,data])
       })
       setTradingViewList(convertToOHLC(temp))
@@ -512,29 +644,30 @@ export const ContractProvider = ({ children }: ChildrenProps) => {
     }
   }
 
-  const addlistenerMarketEvents = async() => {
+  const addlistenerMarketEvents = async () => {
     if (!window.ethereum) return console.log('Please install metamask')
-     try {
-        const provider = new ethers.providers.Web3Provider(window.ethereum as any )
-        const contract = new ethers.Contract(ContractPairOrderAddress, artifactPairNewOrder.abi, provider) as PairNewOrder
-        
-        contract.on('MarketOrder', async () => {
-          loadHistoryMarketOrder()
-          loadOrderBook() 
-        })
-        contract.on('CreateLimitOrder', async () => {
-             loadOrderBook()
-        })
-        contract.on('UpdateOrder', async () => {
-             loadOrderBook()
-        })
-        contract.on('RemoveOrder', async () => {
-             loadOrderBook()
-        })
+    try {
+      const provider = new ethers.providers.Web3Provider(window.ethereum as any)
+      const contract = new ethers.Contract(
+        ContractPairOrderAddress,
+        artifactPairNewOrder.abi,
+        provider
+      ) as PairNewOrder
 
-      } catch (error) {
-
-      }
+      contract.on('MarketOrder', async () => {
+        loadHistoryMarketOrder()
+        loadOrderBook()
+      })
+      contract.on('CreateLimitOrder', async () => {
+        loadOrderBook()
+      })
+      contract.on('UpdateOrder', async () => {
+        loadOrderBook()
+      })
+      contract.on('RemoveOrder', async () => {
+        loadOrderBook()
+      })
+    } catch (error) {}
   }
 
   /////////////////////////////////////////////////////////////////////
@@ -717,6 +850,8 @@ export const ContractProvider = ({ children }: ChildrenProps) => {
         balancesTradeToken0,
         balancesSpotToken1,
         balancesTradeToken1,
+        balancesERC20Token0,
+        balancesERC20Token1,
         sendTxLimitOrder,
         isLoadingOrderBookByAddress,
         orderBookByAddress,
@@ -730,6 +865,14 @@ export const ContractProvider = ({ children }: ChildrenProps) => {
         sendTxWithdraw,
         tradingViewList,
         loadHistoryByAddress,
+        timeUnLockFaucet,
+        sendTxFaucet,
+        isLoadingTx,
+
+        notification,
+        setNotification,
+        txNotification,
+        isLoadingTxNavBar,
       }}
     >
       {!initialLoading && children}
