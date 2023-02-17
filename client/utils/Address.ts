@@ -6,9 +6,9 @@
 
 
 
-// export const ContractPairOrderAddress = '0xc9a026b645Ed2d142603d10F14691AC3A9E58DFc'
+// export const ContractPairOrderAddress = '0xD12eBbe6e934296F2b2ed309c505D10b51ACc077'
 
-export const ContractPairOrderAddress = '0x0F3F4B1C9e48eB794D0922545793932e8eF9998c'
+export const ContractPairOrderAddress = '0xe149bfba0656636301cfd1382d72744a2610d57e'
 
 export const ContractToken0Address = '0x91DB63f4ABc6E441Da7cA5765b9d7Fe2A666B75F'
 

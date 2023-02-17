@@ -70,16 +70,16 @@ const Home = () => {
         <div className="border-b-[1px] border-gray-600 ">
           <HeaderData />
         </div>
-        <section className="  min-h-[82vh] ">
+        <section className="  h-[82vh] ">
           <div className="flex flex-row ">
-            <div className=" w-2/12 min-h-[82vh]  min-w-fit ">
+            <div className=" w-2/12 h-[82vh]  min-w-fit ">
               <OrderBook />
             </div>
             <div className="w-10/12 border-x-[1px] border-gray-600 ">
-              <div className=" min-h-[50vh] border-b-[1px] border-gray-600 ">
+              <div className=" h-[50vh] border-b-[1px] border-gray-600 ">
                 <TradingviewGraph />
               </div>
-              <div className=" min-h-[30vh]  ">
+              <div className=" h-[30vh]  ">
                 <PanelCommand />
               </div>
             </div>
@@ -91,6 +91,9 @@ const Home = () => {
         <div className="h-[30vh]  border-gray-600 border-t-[1px]">
           <History />
         </div>
+        <div  className="h-[5vh] " >
+
+        </div>
         {/* {address && <p>My address is {address}</p>} */}
 
         {showUpdateModal && (
@@ -100,12 +103,14 @@ const Home = () => {
             onClose={() => setShowUpdateModal(false)}
           />
         )}
-        {notification && (
-          <NotificationModal
-            onClose={() => setNotification(false)}
-            txNotification={txNotification}
-          />
-        )}
+
+          {notification && (
+            <NotificationModal
+              onClose={() => setNotification(false)}
+              txNotification={txNotification}
+            />
+          )}
+
       </div>
     )
   )

@@ -61,7 +61,7 @@ export const ChartComponent = () => {
                     borderColor: '#485c7b',
                 },
                 width: chartContainerRef.current.clientWidth,
-                height: 700,
+                height: 654,
                 timeScale: {
                     timeVisible: true,
                     secondVisible: false,
@@ -98,7 +98,7 @@ const TradingviewGraph = () => {
 
 
   return (
-    <div className="h-full ">
+    <div className="h-full  ">
       
 
       <ChartComponent/>

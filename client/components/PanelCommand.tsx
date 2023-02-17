@@ -30,7 +30,7 @@ const {
   const [inputSellPriceTokenLimitOrder, setInputSellPriceTokenLimitOrder] = useState<string>()
   const [inputSellAmountTokenLimitOrder, setInputSellAmountTokenLimitOrder] = useState<string>()
   return (
-    <div className="min-h-[30vh] h-full  p-5  ">
+    <div className="h-[30vh]   p-5  ">
       <div className="space-x-5">
         <button
           onClick={() => setSelectlimitMarket(LimitMarketStatus.Limit)}
@@ -56,26 +56,13 @@ const {
         </button>
       </div>
 
-      {/* 
-      <div className="flex flex-row space-x-10 text-6xl">
-        <div>
-          <h1>Balances Spot</h1>
-          <p>{`Token0 : ${balancesSpotToken0}`}</p>
-          <p>{`Token1 : ${balancesSpotToken1}`}</p>
-        </div>
-        <div>
-          <h1>Balances Trade</h1>
-          <p>{`Token0 : ${balancesTradeToken0}`}</p>
-          <p>{`Token1 : ${balancesTradeToken1}`}</p>
-        </div>
-      </div> */}
 
       <div className="mt-2 flex-row flex space-x-10 justify-center  ">
         <div className="space-y-4  w-1/2 ">
           <div className="flex flex-row space-x-5   ">
             <span className="text-xl text-gray-400">Balances</span>
             <span className="text-xl text-white flex flex-row">
-              {balancesSpotToken1}
+              {balancesSpotToken1} USDT
             </span>
             <div className=" flex  items-center ">
               <PlusCircleIcon
@@ -161,7 +148,7 @@ const {
           <div className="flex flex-row space-x-5   ">
             <span className="text-xl text-gray-400">Balances</span>
             <span className="text-xl text-white flex flex-row">
-              {balancesSpotToken0}
+              {balancesSpotToken0} BTC
             </span>
             <div className=" flex  items-center ">
               <PlusCircleIcon
