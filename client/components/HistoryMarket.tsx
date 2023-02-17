@@ -3,7 +3,7 @@ import { ethers } from 'ethers'
 import React, { useContext, useEffect } from 'react'
 import { useAccount } from 'wagmi'
 import { ContractContext } from '../context/ContratContext'
-import { ConvertDateTime } from '../utils/DateTime'
+import { ConvertSmallDateTime } from '../utils/DateTime'
 import { toEtherandFixFloatingPoint } from '../utils/UnitInEther'
 
 // interface Props {
@@ -28,7 +28,9 @@ function HistoryMarket() {
   return (
     <div className="h-full p-5">
       {/* text-white font-semibold text-base transition-all py-1 px-4 rounded-lg bg-black cursor-pointer */}
-      <span className=" text-base text-white font-semibold  py-2 px-4 rounded-lg   bg-black ">Market Trades</span>
+      <span className=" text-base text-white font-semibold  py-2 px-4 rounded-lg   bg-black ">
+        Market Trades
+      </span>
       <div className="grid grid-cols-3 py-5">
         <div>Time</div>
         <div>Price(USDT)</div>
@@ -37,7 +39,7 @@ function HistoryMarket() {
       <div className="overflow-y-auto max-h-full pb-10 ">
         {marketEvent.map((item, index) => (
           <div className=" grid grid-cols-3 text-base  py-2 ">
-            <div>{ConvertDateTime(item.date.toNumber())}</div>
+            <div>{ConvertSmallDateTime(item.date.toNumber())}</div>
             <div
               className={` ${
                 item.isBuy === 0 ? 'text-red-500' : 'text-green-500'

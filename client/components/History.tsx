@@ -5,7 +5,7 @@ import { useAccount } from 'wagmi'
 import { AdjustmentsHorizontalIcon, ArrowPathIcon } from '@heroicons/react/24/outline'
 import { TrashIcon } from '@heroicons/react/24/outline'
 import { ethers } from 'ethers'
-import { ConvertDateTime } from '../utils/DateTime'
+import { ConvertFullDateTime } from '../utils/DateTime'
 import { toEtherandFixFloatingPoint } from '../utils/UnitInEther'
 
 type Props = {}
@@ -37,7 +37,7 @@ const History = (props: Props) => {
     ShowOrderStatus.OpenOrder
   )
   return (
-    <div className="p-5  h-full  ">
+    <div className="p-5  h-full ">
       <div className=" flex flex-row items-center space-x-5 mb-5">
         <button
           onClick={() => setSelectShowOrder(ShowOrderStatus.OpenOrder)}
@@ -64,14 +64,14 @@ const History = (props: Props) => {
 
         <ArrowPathIcon
           onClick={() => {
-              loadHistoryByAddress()
-              loadOrderBookByAddress()
+            loadHistoryByAddress()
+            loadOrderBookByAddress()
           }}
           className="IconHover"
         />
       </div>
 
-      <div className="overflow-y-auto h-full">
+      <div className="h-full  myscroll">
         {selectShowOrder === ShowOrderStatus.OpenOrder ? (
           <>
             <div className=" text-xl grid grid-cols-9  border-b-2 border-gray-700 p-3 ">
@@ -88,8 +88,8 @@ const History = (props: Props) => {
 
             <div className="max-h-full ">
               {orderBookByAddress.map((item) => (
-                <div className=" grid grid-cols-9 text-xl border-b-2 border-gray-700  p-3">
-                  <div>{ConvertDateTime(Number(item.createdDate))}</div>
+                <div className=" grid grid-cols-9 text-xl border-b-2 border-gray-700  p-3 ">
+                  <div>{ConvertFullDateTime(Number(item.createdDate))}</div>
                   <div> BTC/USDT</div>
                   <div>Limit</div>
                   <div
@@ -145,7 +145,7 @@ const History = (props: Props) => {
             <div className=" max-h-full ">
               {historyOrderEvent.map((item) => (
                 <div className=" grid grid-cols-6 text-xl border-b-2 border-gray-700  p-3">
-                  <div>{ConvertDateTime(item.date.toNumber())}</div>
+                  <div>{ConvertFullDateTime(item.date.toNumber())}</div>
                   <div> BTC/USDT</div>
                   <div>{item.Type}</div>
                   <div
