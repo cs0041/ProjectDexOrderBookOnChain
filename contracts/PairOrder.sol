@@ -82,8 +82,10 @@ contract PairNewOrder is Wallet{
       if(_isBuy==0){
        require(balancesSpot[msg.sender][tokenMain] >= (_amount * _price)/10 ** decimals,"not enough balance token for buy");
        _amount = createMarketOrder(_isBuy,(_amount * _price)/10 ** decimals,_price); 
-       _amount = (_amount/_price)*10 ** decimals;
-        if(_amount<=0) return;
+       _amount = (_amount *10 ** decimals)/_price;
+        if(_amount<=0) {
+          return;
+        }
        // transfer balance Spot to Trade wallet 
        balancesSpot[msg.sender][tokenMain] -= (_amount * _price)/10 ** decimals;
        balancesTrade[msg.sender][tokenMain] += (_amount * _price)/10 ** decimals;
@@ -353,7 +355,8 @@ contract PairNewOrder is Wallet{
             uint256 currentNodeID = linkedListsNode[isBuy][GUARDHEAD].nextNodeID;
             for (uint256 i = 0; i < listSize[isBuy] && totalFilled < amount; i++) {
                  Order storage _order = linkedListsNode[isBuy][currentNodeID];
-                 if(_price!=0){
+                 
+                 if(_price>0){
                     if(isBuy==1){ 
                       if(_price < _order.price){
                         break;
@@ -420,7 +423,7 @@ contract PairNewOrder is Wallet{
 
                 
         }
-        
+  
 
     
         //Remove 100% filled orders from the orderbook
@@ -436,6 +439,8 @@ contract PairNewOrder is Wallet{
           orderHistory[msg.sender].push(OrderHistory("MarketOrder",isBuy,amount,0,msg.sender,block.timestamp));
           emit SumMarketOrder( isBuy, amount,msg.sender);
         }
+
+       
         return amount-totalFilled;
 
       }
