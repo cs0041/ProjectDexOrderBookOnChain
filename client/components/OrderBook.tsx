@@ -1,6 +1,7 @@
 import React, { useContext, useEffect, useState } from 'react'
 import { ContractContext } from '../context/ContratContext'
 import { ArrowPathIcon } from '@heroicons/react/24/outline'
+import { FloatingPoint } from '../utils/UnitInEther'
 
 type Props = {}
 
@@ -69,15 +70,22 @@ function OrderBook({}: Props) {
       </div>
 
       {statusShowOrderBook === ShowOrderBookStatus.B ? null : (
-        <div className="h-[44%] text-red-500   pr-5 text-base overflow-y-auto ">
+        <div className={` 
+        ${statusShowOrderBook === ShowOrderBookStatus.S ? "h-[84%]" : "h-[44%]"} 
+        text-red-500   pr-5 text-base myscroll `}>
           {orderBookSell.map((item) => (
             <div className="grid grid-cols-3 gap-x-3">
               <div className="text-right ">{item.price}</div>
               <div className="text-right ">
-                {(Number(item.amount) - Number(item.filled)).toFixed(6)}
+                {(Number(item.amount) - Number(item.filled)).toFixed(
+                  FloatingPoint
+                )}
               </div>
               <div className="text-right ">
-                {((Number(item.amount) - Number(item.filled)) * Number(item.price)).toFixed(6)}
+                {(
+                  (Number(item.amount) - Number(item.filled)) *
+                  Number(item.price)
+                ).toFixed(FloatingPoint)}
               </div>
             </div>
           ))}
@@ -88,21 +96,31 @@ function OrderBook({}: Props) {
         <div className="w-full h-[4%] text-3xl border-y-[1px] border-gray-600  my-5 " />
       )}
 
+
+
       {statusShowOrderBook === ShowOrderBookStatus.S ? null : (
-        <div className="h-[44%]  text-green-500  pr-5 text-base overflow-y-auto">
+        <div className={`
+          ${statusShowOrderBook === ShowOrderBookStatus.B ? "h-[84%]" : "h-[44%]"}  
+        text-green-500  pr-5 text-base myscroll`}>
           {orderBookBuy.map((item) => (
             <div className="grid grid-cols-3 gap-x-3">
               <div className="text-right">{item.price}</div>
               <div className="text-right ">
-                {(Number(item.amount) - Number(item.filled)).toFixed(6)}
+                {(Number(item.amount) - Number(item.filled)).toFixed(
+                  FloatingPoint
+                )}
               </div>
               <div className="text-right ">
-                {((Number(item.amount) - Number(item.filled)) *Number(item.price)).toFixed(6)}
+                {(
+                  (Number(item.amount) - Number(item.filled)) *
+                  Number(item.price)
+                ).toFixed(FloatingPoint)}
               </div>
             </div>
           ))}
         </div>
       )}
+      <br />
     </div>
   )
 }
