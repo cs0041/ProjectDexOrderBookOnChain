@@ -11,7 +11,7 @@ const initBlockTime = 31949670
 
 import { ContractPairOrderAddress,ContractToken0Address,ContractToken1Address,ContractFaucet } from '../utils/Address'
 import { convertToOHLC } from '../utils/CovertCandle'
-import { toEtherandFixFloatingPoint, toWei } from '../utils/UnitInEther'
+import { toEtherandFixFloatingPoint, toWei,toEther } from '../utils/UnitInEther'
 interface IContract {
   loadingOrderSell: boolean
   loadingOrderBuy: boolean
@@ -212,12 +212,11 @@ export const ContractProvider = ({ children }: ChildrenProps) => {
       const contract = getPairOrderContract()
       const token = getTokenContract(addressToken)
       const address = ( await window.ethereum.request({ method: 'eth_accounts' }) )[0]
-      // const amountApprove = (await token.allowance(address,ContractPairOrderAddress)).toNumber()
-      const transactionHashApprove = await token.approve(ContractPairOrderAddress,amount )
-      await transactionHashApprove.wait()
-      // if (amountApprove< amount.to){
-      //     const transactionHashApprove = await token.approve(ContractPairOrderAddress,amount)
-      // }
+      const amountApprove = Number(toEther(await token.allowance(address,ContractPairOrderAddress)))
+      if(amountApprove<Number(_amount)){
+        const transactionHashApprove = await token.approve(ContractPairOrderAddress,ethers.constants.MaxUint256)
+        await transactionHashApprove.wait()
+      }
       const transactionHash = await contract.deposit(amount, addressToken)
       console.log(transactionHash.hash)
       setTxNotification(transactionHash.hash)
@@ -227,8 +226,13 @@ export const ContractProvider = ({ children }: ChildrenProps) => {
       setNotification(true)
       loadBalances()
       setIsLoadingTx(false)
-    } catch (error) {
-      console.log(error)
+    } catch (error:any) {
+        try {
+         alert(error.error.data.message)
+      } catch (e) {
+  
+          alert("MetaMask Tx Signature: User denied transaction signature.")
+      }
       setIsLoadingTx(false)
       setIsLoadingTxNavBar(false)
     }
@@ -251,8 +255,12 @@ export const ContractProvider = ({ children }: ChildrenProps) => {
       setNotification(true)
       loadBalances()
       setIsLoadingTx(false)
-    } catch (error) {
-      console.log(error)
+    } catch (error:any) {
+        try {
+          alert(error.error.data.message)
+        } catch (e) {
+          alert('MetaMask Tx Signature: User denied transaction signature.')
+        }
       setIsLoadingTx(false)
       setIsLoadingTxNavBar(false)
     }
@@ -270,14 +278,18 @@ export const ContractProvider = ({ children }: ChildrenProps) => {
       await transactionHash.wait()
       setIsLoadingTxNavBar(false)
       setNotification(true)
-      loadOrderBook()
+      // loadOrderBook()
       loadPriceToken()
       loadBalances()
       loadHistoryByAddress()
       loadHistoryMarketOrder()
       setIsLoadingTx(false)
-    } catch (error) {
-      console.log(error)
+    } catch (error:any) {
+        try {
+          alert(error.error.data.message)
+        } catch (e) {
+          alert('MetaMask Tx Signature: User denied transaction signature.')
+        }
       setIsLoadingTx(false)
       setIsLoadingTxNavBar(false)
     }
@@ -301,19 +313,23 @@ export const ContractProvider = ({ children }: ChildrenProps) => {
         price,
         prevNodeID
       )
-      console.log(transactionHash.hash)
       setTxNotification(transactionHash.hash)
       setIsLoadingTxNavBar(true)
       await transactionHash.wait()
       setIsLoadingTxNavBar(false)
       setNotification(true)
-      loadOrderBook()
+      // loadOrderBook()
       loadBalances()
       loadOrderBookByAddress()
       loadHistoryByAddress()
       setIsLoadingTx(false)
-    } catch (error) {
-      console.log(error)
+    } catch (error: any) {
+      try {
+         alert(error.error.data.message)
+      } catch (e) {
+  
+          alert("MetaMask Tx Signature: User denied transaction signature.")
+      }
       setIsLoadingTx(false)
       setIsLoadingTxNavBar(false)
     }
@@ -360,13 +376,17 @@ export const ContractProvider = ({ children }: ChildrenProps) => {
       await transactionHash.wait()
       setIsLoadingTxNavBar(false)
       setNotification(true)
-      loadOrderBook()
+      // loadOrderBook()
       loadBalances()
       loadOrderBookByAddress()
       loadHistoryByAddress()
       setIsLoadingTx(false)
-    } catch (error) {
-      console.log(error)
+    } catch (error:any) {
+        try {
+          alert(error.error.data.message)
+        } catch (e) {
+          alert('MetaMask Tx Signature: User denied transaction signature.')
+        }
       setIsLoadingTx(false)
       setIsLoadingTxNavBar(false)
     }
@@ -385,13 +405,17 @@ export const ContractProvider = ({ children }: ChildrenProps) => {
       await transactionHash.wait()
       setIsLoadingTxNavBar(false)
       setNotification(true)
-      loadOrderBook()
+      // loadOrderBook()
       loadOrderBookByAddress()
       loadBalances()
       loadHistoryByAddress()
       setIsLoadingTx(false)
-    } catch (error) {
-      console.log(error)
+    } catch (error:any) {
+        try {
+          alert(error.error.data.message)
+        } catch (e) {
+          alert('MetaMask Tx Signature: User denied transaction signature.')
+        }
       setIsLoadingTx(false)
       setIsLoadingTxNavBar(false)
     }
@@ -411,8 +435,12 @@ export const ContractProvider = ({ children }: ChildrenProps) => {
       setNotification(true)
       loadBalances()
       setIsLoadingTx(false)
-    } catch (error) {
-      console.log(error)
+    } catch (error : any) {
+       try {
+         alert(error.error.data.message)
+       } catch (e) {
+         alert('MetaMask Tx Signature: User denied transaction signature.')
+       }
       setIsLoadingTx(false)
       setIsLoadingTxNavBar(false)
     }
@@ -513,7 +541,10 @@ export const ContractProvider = ({ children }: ChildrenProps) => {
           price: toEtherandFixFloatingPoint(order.price),
           filled: toEtherandFixFloatingPoint(order.filled),
         }
-        setOrderBookBuy((prev) => [...prev, structOrder])
+        setOrderBookBuy((prev) => [
+          ...prev,
+          structOrder,
+        ])
       })
 
       dataOrderSell.map((order) => {
@@ -527,7 +558,10 @@ export const ContractProvider = ({ children }: ChildrenProps) => {
           price: toEtherandFixFloatingPoint(order.price),
           filled: toEtherandFixFloatingPoint(order.filled),
         }
-        setOrderBookSell((prev) => [structOrder, ...prev])
+        setOrderBookSell((prev) => [
+          structOrder,
+          ...prev,
+        ])
       })
 
       setLoadingOrderBuy(false)
