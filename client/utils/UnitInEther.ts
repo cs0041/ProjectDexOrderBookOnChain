@@ -9,4 +9,6 @@ export const toEther = (wei: string | number | ethers.BigNumber) =>
 export const toFixUnits = (amount: number, decimal: string) =>
   ethers.utils.formatUnits(amount, decimal)
  export const toEtherandFixFloatingPoint = (amount: ethers.BigNumber) =>
-  Number(ethers.utils.formatEther(amount)).toFixed(6)
+  Number(ethers.utils.formatEther(amount)).toFixed(4)
+
+  export const FloatingPoint = 4
