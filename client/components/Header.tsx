@@ -17,10 +17,19 @@ function Header({}: Props) {
           <h1 className="text-2xl mr-10 font-bold text-transparent bg-clip-text bg-gradient-to-r from-purple-400 to-pink-600 animate-pulse">
             Trustless protocol
           </h1>
-          <Link href="/">
+          <Link href="/markets">
             <h1
               className={`${
-                pathname === '/' ? 'Buttonselect' : 'ButtonHover'
+                pathname === '/markets' ? 'Buttonselect' : 'ButtonHover'
+              } `}
+            >
+              Markets
+            </h1>
+          </Link>
+          <Link href="/trade">
+            <h1
+              className={`${
+                pathname === '/trade' ? 'Buttonselect' : 'ButtonHover'
               } `}
             >
               Trade
@@ -33,6 +42,15 @@ function Header({}: Props) {
               } `}
             >
               Deposit/Withdraw
+            </h1>
+          </Link>
+          <Link href="/createpair">
+            <h1
+              className={`${
+                pathname === '/createpair' ? 'Buttonselect' : 'ButtonHover'
+              } `}
+            >
+              CreatePair
             </h1>
           </Link>
           <Link href="/faucet">
