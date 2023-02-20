@@ -2,7 +2,10 @@ import React, { useContext, useEffect, useState } from 'react'
 import { ContractContext } from '../context/ContratContext'
 import UpdateModal from '../components/Modal'
 import { useAccount } from 'wagmi'
-import { AdjustmentsHorizontalIcon, ArrowPathIcon } from '@heroicons/react/24/outline'
+import {
+  AdjustmentsHorizontalIcon,
+  ArrowPathIcon,
+} from '@heroicons/react/24/outline'
 import { TrashIcon } from '@heroicons/react/24/outline'
 import { ethers } from 'ethers'
 import { ConvertFullDateTime } from '../utils/DateTime'
@@ -26,7 +29,6 @@ const History = (props: Props) => {
     loadHistoryByAddress,
     historyOrderEvent,
   } = useContext(ContractContext)
-
 
   // for update modal
   const [sideBuyOrSell, setSideBuyOrSell] = useState<number>(-1)

@@ -5,33 +5,37 @@ import router from 'next/router'
 
 type Props = {}
 
-
 enum LimitMarketStatus {
   Limit,
-  Market
+  Market,
 }
 
-
 function PanelCommand({}: Props) {
-const {
-  sendTxLimitOrder,
-  sendTxMarketOrder,
-  balancesSpotToken0,
-  balancesSpotToken1,
-  balancesTradeToken0,
-  balancesTradeToken1,
-} = useContext(ContractContext)
+  const {
+    sendTxLimitOrder,
+    sendTxMarketOrder,
+    balancesSpotToken0,
+    balancesSpotToken1,
+    balancesTradeToken0,
+    balancesTradeToken1,
+  } = useContext(ContractContext)
 
-  const [selectlimitMarket, setSelectlimitMarket] = useState<LimitMarketStatus>(LimitMarketStatus.Limit)
-    
-  const [inputBuyPriceTokenLimitOrder, setInputBuyPriceTokenLimitOrder] = useState<string>()
-  const [inputBuyAmountTokenLimitOrder, setInputBuyAmountTokenLimitOrder] = useState<string>()
+  const [selectlimitMarket, setSelectlimitMarket] = useState<LimitMarketStatus>(
+    LimitMarketStatus.Limit
+  )
 
-  const [inputSellPriceTokenLimitOrder, setInputSellPriceTokenLimitOrder] = useState<string>()
-  const [inputSellAmountTokenLimitOrder, setInputSellAmountTokenLimitOrder] = useState<string>()
+  const [inputBuyPriceTokenLimitOrder, setInputBuyPriceTokenLimitOrder] =
+    useState<string>()
+  const [inputBuyAmountTokenLimitOrder, setInputBuyAmountTokenLimitOrder] =
+    useState<string>()
+
+  const [inputSellPriceTokenLimitOrder, setInputSellPriceTokenLimitOrder] =
+    useState<string>()
+  const [inputSellAmountTokenLimitOrder, setInputSellAmountTokenLimitOrder] =
+    useState<string>()
   return (
-    <div className="h-[30vh]   p-5  ">
-      <div className="space-x-5">
+    <div className=" px-5  py-2">
+      <div className="space-x-5 h-1/6 ">
         <button
           onClick={() => setSelectlimitMarket(LimitMarketStatus.Limit)}
           className={`
@@ -56,12 +60,11 @@ const {
         </button>
       </div>
 
-
-      <div className="mt-2 flex-row flex space-x-10 justify-center  ">
-        <div className="space-y-4  w-1/2 ">
+      <div className="  mt-2 flex-row flex space-x-10 justify-center  ">
+        <div className="space-y-3  w-1/2 ">
           <div className="flex flex-row space-x-5   ">
-            <span className="text-xl text-gray-400">Balances</span>
-            <span className="text-xl text-white flex flex-row">
+            <span className="text-lg text-gray-400">Balances</span>
+            <span className="text-lg text-white flex flex-row">
               {balancesSpotToken1} USDT
             </span>
             <div className=" flex  items-center ">
@@ -114,7 +117,7 @@ const {
           </div>
 
           {selectlimitMarket === LimitMarketStatus.Limit && (
-            <div className="bg-gray-500 flex flex-row text-xl rounded-sm cursor-not-allowed">
+            <div className="bg-gray-500 flex flex-row text-base rounded-sm cursor-not-allowed">
               <span className="flex items-center pl-4 pr-5 ">Total</span>
               <div className="  w-full py-2 pr-2 text-right  ">
                 {(
@@ -138,16 +141,16 @@ const {
                 sendTxMarketOrder(0, inputBuyAmountTokenLimitOrder!)
               }
             }}
-            className=" w-full text-white rounded bg-green-500 py-3 font-semibold hover:opacity-70"
+            className=" w-full text-white rounded bg-green-500 py-2 font-semibold hover:opacity-70"
           >
             Buy BTC
           </button>
         </div>
 
-        <div className="space-y-4  w-1/2">
+        <div className="space-y-3  w-1/2">
           <div className="flex flex-row space-x-5   ">
-            <span className="text-xl text-gray-400">Balances</span>
-            <span className="text-xl text-white flex flex-row">
+            <span className="text-lg text-gray-400">Balances</span>
+            <span className="text-lg text-white flex flex-row">
               {balancesSpotToken0} BTC
             </span>
             <div className=" flex  items-center ">
@@ -174,7 +177,7 @@ const {
                 onChange={(e) => {
                   setInputSellPriceTokenLimitOrder(e.target.value)
                 }}
-                className=" w-full py-2 pr-2 text-right   bg-transparent outline-none text-xl text-white"
+                className=" w-full py-2 pr-2 text-right  bg-transparent outline-none  text-white"
               />
               <span className="flex items-center  pr-5">USDT</span>
             </div>
@@ -195,13 +198,13 @@ const {
               onChange={(e) => {
                 setInputSellAmountTokenLimitOrder(e.target.value)
               }}
-              className=" w-full py-2 pr-2 text-right   bg-transparent outline-none text-xl text-white"
+              className=" w-full py-2 pr-2 text-right  bg-transparent outline-none  "
             />
             <span className="flex items-center  pr-5">BTC</span>
           </div>
 
           {selectlimitMarket === LimitMarketStatus.Limit && (
-            <div className="bg-gray-500 flex flex-row text-xl  rounded-sm cursor-not-allowed">
+            <div className="bg-gray-500 flex flex-row text-base  rounded-sm cursor-not-allowed">
               <span className="flex items-center pl-4 pr-5 ">Total</span>
               <div className="  w-full py-2 pr-2 text-right  ">
                 {(
@@ -225,7 +228,7 @@ const {
                 sendTxMarketOrder(1, inputSellAmountTokenLimitOrder!)
               }
             }}
-            className="w-full text-white rounded bg-red-500 py-3 font-semibold hover:opacity-70"
+            className="w-full text-white rounded bg-red-500 py-2 font-semibold hover:opacity-70"
           >
             Sell BTC
           </button>

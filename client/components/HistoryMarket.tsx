@@ -11,7 +11,8 @@ import { toEtherandFixFloatingPoint } from '../utils/UnitInEther'
 // }
 
 function HistoryMarket() {
-  const { marketEvent,loadOrderBook,loadOrderBookByAddress }=  useContext(ContractContext)
+  const { marketEvent, loadOrderBook, loadOrderBookByAddress } =
+    useContext(ContractContext)
   const { address, isConnected } = useAccount()
   // useEffect(() => {
   //     const sorting = () => {
@@ -24,7 +25,6 @@ function HistoryMarket() {
   //     loadOrderBookByAddress(address!)
   // }, [marketEvent])
 
-
   return (
     <div className="h-full p-5">
       {/* text-white font-semibold text-base transition-all py-1 px-4 rounded-lg bg-black cursor-pointer */}
@@ -36,7 +36,7 @@ function HistoryMarket() {
         <div>Price(USDT)</div>
         <div>Amount(BTC)</div>
       </div>
-      <div className="overflow-y-auto max-h-full pb-10 ">
+      <div className="myscroll h-[92%] pb-10 ">
         {marketEvent.map((item, index) => (
           <div className=" grid grid-cols-3 text-base  py-2 ">
             <div>{ConvertSmallDateTime(item.date.toNumber())}</div>

@@ -5,17 +5,16 @@ import MuiModal from '@mui/material/Modal'
 interface Props {
   onClose: () => void
   side: number
-  id:number
+  id: number
 }
 
-function Modal({onClose,side,id}: Props) {
-    const { sendTxUpdateOrder } = useContext(ContractContext)
-
+function Modal({ onClose, side, id }: Props) {
+  const { sendTxUpdateOrder } = useContext(ContractContext)
 
   const [showModal, setShowModal] = useState(true)
 
-   const [amountInput, setAmountInput] = useState<string>()
-   const [priceInput, setPriceInput] = useState<string>()
+  const [amountInput, setAmountInput] = useState<string>()
+  const [priceInput, setPriceInput] = useState<string>()
 
   const handleCLose = () => {
     setShowModal(false)

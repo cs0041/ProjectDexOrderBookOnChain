@@ -6,9 +6,9 @@ import { FloatingPoint } from '../utils/UnitInEther'
 type Props = {}
 
 enum ShowOrderBookStatus {
-  BS = "BuySell",
-  S = "Sell",
-  B = "Buy"
+  BS = 'BuySell',
+  S = 'Sell',
+  B = 'Buy',
 }
 
 function OrderBook({}: Props) {
@@ -20,7 +20,8 @@ function OrderBook({}: Props) {
     orderBookSell,
   } = useContext(ContractContext)
 
-  const [statusShowOrderBook, setStatusShowOrderBook] = useState<ShowOrderBookStatus>(ShowOrderBookStatus.BS)
+  const [statusShowOrderBook, setStatusShowOrderBook] =
+    useState<ShowOrderBookStatus>(ShowOrderBookStatus.BS)
 
   return (
     <div className=" flex flex-col flex-1 h-full">
@@ -70,9 +71,13 @@ function OrderBook({}: Props) {
       </div>
 
       {statusShowOrderBook === ShowOrderBookStatus.B ? null : (
-        <div className={` 
-        ${statusShowOrderBook === ShowOrderBookStatus.S ? "h-[84%]" : "h-[44%]"} 
-        text-red-500   pr-5 text-base myscroll `}>
+        <div
+          className={` 
+        ${
+          statusShowOrderBook === ShowOrderBookStatus.S ? 'h-[84%]' : 'h-[44%]'
+        } 
+        text-red-500   pr-5 text-base myscroll `}
+        >
           {orderBookSell.map((item) => (
             <div className="grid grid-cols-3 gap-x-3">
               <div className="text-right ">{item.price}</div>
@@ -96,12 +101,16 @@ function OrderBook({}: Props) {
         <div className="w-full h-[4%] text-3xl border-y-[1px] border-gray-600  my-5 " />
       )}
 
-
-
       {statusShowOrderBook === ShowOrderBookStatus.S ? null : (
-        <div className={`
-          ${statusShowOrderBook === ShowOrderBookStatus.B ? "h-[84%]" : "h-[44%]"}  
-        text-green-500  pr-5 text-base myscroll`}>
+        <div
+          className={`
+          ${
+            statusShowOrderBook === ShowOrderBookStatus.B
+              ? 'h-[84%]'
+              : 'h-[44%]'
+          }  
+        text-green-500  pr-5 text-base myscroll`}
+        >
           {orderBookBuy.map((item) => (
             <div className="grid grid-cols-3 gap-x-3">
               <div className="text-right">{item.price}</div>
