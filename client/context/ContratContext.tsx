@@ -9,7 +9,8 @@ import {PairNewOrder,PairNewOrder__factory,Token0,Token0__factory,Token1,Token1_
 // const ContractToken1Address = '0xe7f1725E7734CE288F8367e1Bb143E90bb3F0512'
 const initBlockTime = 31949670
 
-import { ContractPairOrderAddress,ContractToken0Address,ContractToken1Address,ContractFaucet } from '../utils/Address'
+// import { ContractPairOrderAddress,ContractToken0Address,ContractToken1Address,ContractFaucet } from '../utils/Address'
+import { ContractFaucet } from '../utils/Address'
 import { convertToOHLC } from '../utils/CovertCandle'
 import { toEtherandFixFloatingPoint, toWei,toEther } from '../utils/UnitInEther'
 interface IContract {
@@ -24,28 +25,46 @@ interface IContract {
   balancesTradeToken0: string
   balancesSpotToken1: string
   balancesTradeToken1: string
-  balancesERC20Token0:string
-  balancesERC20Token1:string
-  sendTxLimitOrder : (side: number, amount: number | string, price: number | string) => Promise<void>
-  isLoadingOrderBookByAddress:boolean
-  orderBookByAddress:Order[]
+  balancesERC20Token0: string
+  balancesERC20Token1: string
+  sendTxLimitOrder: (
+    side: number,
+    amount: number | string,
+    price: number | string
+  ) => Promise<void>
+  isLoadingOrderBookByAddress: boolean
+  orderBookByAddress: Order[]
   loadOrderBookByAddress: () => Promise<void>
   sendTxCancelOrder: (side: number, id: number | string) => Promise<void>
-  sendTxUpdateOrder: (side: number, id: number, newAmount: number | string, newPriceOrder: number | string) => Promise<void>
+  sendTxUpdateOrder: (
+    side: number,
+    id: number,
+    newAmount: number | string,
+    newPriceOrder: number | string
+  ) => Promise<void>
   marketEvent: PairNewOrder.OrderMarketStructOutput[]
-  historyOrderEvent:PairNewOrder.OrderHistoryStructOutput[]
+  historyOrderEvent: PairNewOrder.OrderHistoryStructOutput[]
   // sumMarketEvent:EventMarketOrder[]
-  sendTxDeposit: (amount: number | string, addressToken: string) => Promise<void>
-  sendTxWithdraw: (amount: number | string, addressToken: string) => Promise<void>
+  sendTxDeposit: (
+    amount: number | string,
+    addressToken: string
+  ) => Promise<void>
+  sendTxWithdraw: (
+    amount: number | string,
+    addressToken: string
+  ) => Promise<void>
   tradingViewList: TypeTradingView[]
   loadHistoryByAddress: () => Promise<void>
-  timeUnLockFaucet:number
+  timeUnLockFaucet: number
   sendTxFaucet: () => Promise<void>
-  isLoadingTx:boolean
-  notification:boolean
-  setNotification: (notification: boolean) => void;
-  txNotification:string
-  isLoadingTxNavBar:boolean
+  isLoadingTx: boolean
+  notification: boolean
+  setNotification: (notification: boolean) => void
+  txNotification: string
+  isLoadingTxNavBar: boolean
+  setContractPairOrderAddress: (address: string) => void
+  setContractToken0Address: (address: string) => void
+  setContractToken1Address: (address: string) => void
 }
 
 export const ContractContext = createContext<IContract>({
@@ -82,6 +101,9 @@ export const ContractContext = createContext<IContract>({
   setNotification: () => {},
   txNotification: '',
   isLoadingTxNavBar: false,
+  setContractPairOrderAddress: () => {},
+  setContractToken0Address: () => {},
+  setContractToken1Address: () => {},
 })
 
 
@@ -91,36 +113,6 @@ export const ContractContext = createContext<IContract>({
 
 
 
-const getPairOrderContract = () => {
-  const provider = new ethers.providers.Web3Provider(window.ethereum as any )
-  const signer = provider.getSigner()
-  const pairordercontract = new ethers.Contract(
-    ContractPairOrderAddress,
-    artifactPairNewOrder.abi,
-    signer
-  ) as PairNewOrder
-
-  return pairordercontract
-}
-const getTokenContract = (tokenAddress : string) => {
-  const provider = new ethers.providers.Web3Provider(window.ethereum as any)
-  const signer = provider.getSigner()
-  const tokenContract = new ethers.Contract(tokenAddress, artifactToken.abi, signer) as Token0
-
-  return tokenContract
-}
-
-const getFaucetContract = () => {
-  const provider = new ethers.providers.Web3Provider(window.ethereum as any)
-  const signer = provider.getSigner()
-  const faucetContract = new ethers.Contract(
-    ContractFaucet,
-    artifactFaucet.abi,
-    signer
-  ) as Faucet
-
-  return faucetContract
-}
 
 interface ChildrenProps {
   children: React.ReactNode
@@ -129,9 +121,49 @@ interface ChildrenProps {
 
 export const ContractProvider = ({ children }: ChildrenProps) => {
 
-
-  
   const [initialLoading, setInitialLoading] = useState(true)
+
+  // contract address
+  const [ContractPairOrderAddress, setContractPairOrderAddress] = useState("")
+  const [ContractToken0Address, setContractToken0Address] = useState("")
+  const [ContractToken1Address, setContractToken1Address] = useState("")
+
+  const getPairOrderContract = () => {
+    const provider = new ethers.providers.Web3Provider(window.ethereum as any)
+    const signer = provider.getSigner()
+    const pairordercontract = new ethers.Contract(
+      ContractPairOrderAddress,
+      artifactPairNewOrder.abi,
+      signer
+    ) as PairNewOrder
+
+    return pairordercontract
+  }
+  const getTokenContract = (tokenAddress: string) => {
+    const provider = new ethers.providers.Web3Provider(window.ethereum as any)
+    const signer = provider.getSigner()
+    const tokenContract = new ethers.Contract(
+      tokenAddress,
+      artifactToken.abi,
+      signer
+    ) as Token0
+
+    return tokenContract
+  }
+
+  const getFaucetContract = () => {
+    const provider = new ethers.providers.Web3Provider(window.ethereum as any)
+    const signer = provider.getSigner()
+    const faucetContract = new ethers.Contract(
+      ContractFaucet,
+      artifactFaucet.abi,
+      signer
+    ) as Faucet
+
+    return faucetContract
+  }
+
+
 
   // order sell
   const [orderBookSell, setOrderBookSell] = useState<Order[]>([])
@@ -202,7 +234,7 @@ export const ContractProvider = ({ children }: ChildrenProps) => {
     loadTimeFaucet()
 
     setInitialLoading(false)
-  }, [])
+  }, [ContractPairOrderAddress])
 
   const sendTxDeposit = async (
     _amount: number | string,
@@ -926,6 +958,10 @@ export const ContractProvider = ({ children }: ChildrenProps) => {
         setNotification,
         txNotification,
         isLoadingTxNavBar,
+
+        setContractPairOrderAddress,
+        setContractToken0Address,
+        setContractToken1Address,
       }}
     >
       {!initialLoading && children}
