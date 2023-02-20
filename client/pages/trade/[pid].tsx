@@ -1,18 +1,18 @@
 import { useAccount, useSigner } from 'wagmi'
-import useIsMounted from '../hooks/useIsMounted'
+import useIsMounted from '../../hooks/useIsMounted'
 import { polygonMumbai } from 'wagmi/chains'
 // import { contractFaucetABI, contractFaucetAddress } from '../utils/FaucetABI'
 
 import { useContext, useEffect, useState } from 'react'
-import { ContractContext } from '../context/ContratContext'
-import UpdateModal from '../components/Modal'
-import HeaderData from '../components/HeaderData'
-import OrderBook from '../components/OrderBook'
-import PanelCommand from '../components/PanelCommand'
-import TradingviewGraph from '../components/TradingviewGraph'
-import History from '../components/History'
-import HistoryMarket from '../components/HistoryMarket'
-import NotificationModal from '../components/NotificationModal'
+import { ContractContext } from '../../context/ContratContext'
+import UpdateModal from '../../components/Modal'
+import HeaderData from '../../components/HeaderData'
+import OrderBook from '../../components/OrderBook'
+import PanelCommand from '../../components/PanelCommand'
+import TradingviewGraph from '../../components/TradingviewGraph'
+import History from '../../components/History'
+import HistoryMarket from '../../components/HistoryMarket'
+import NotificationModal from '../../components/NotificationModal'
 import { GetServerSideProps, NextPageContext } from 'next'
 import { ParsedUrlQuery } from 'querystring'
 
@@ -51,6 +51,7 @@ const Home = ({ query }: Props) => {
   } = useContext(ContractContext)
 
   useEffect(() => {
+    console.log('query', query)
     setContractPairOrderAddress(contractaddress as string)
     setContractToken0Address(addresstoken0 as string)
     setContractToken1Address(addresstoken1 as string)

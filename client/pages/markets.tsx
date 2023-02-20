@@ -32,7 +32,7 @@ const markets = (props: Props) => {
 // 'trade/'
 //               )
               router.push(
-                '/tradepair?contractaddress=0xe149bfba0656636301cfd1382d72744a2610d57e&addresstoken0=0x91DB63f4ABc6E441Da7cA5765b9d7Fe2A666B75F&addresstoken1=0x7052F109585F2851207dad06C2F5Ec7E26a1270B'
+                '/trade/tradepair?contractaddress=0xe149bfba0656636301cfd1382d72744a2610d57e&addresstoken0=0x91DB63f4ABc6E441Da7cA5765b9d7Fe2A666B75F&addresstoken1=0x7052F109585F2851207dad06C2F5Ec7E26a1270B'
               )
 
             }}
