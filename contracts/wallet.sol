@@ -29,8 +29,8 @@ interface IERC20 {
 
 contract Wallet is ReentrancyGuard {
 
-    address  token0; 
-    address  token1; 
+    address public token0; 
+    address public  token1; 
 
     constructor(address _token0,address _token1) {
         token0 = _token0;
