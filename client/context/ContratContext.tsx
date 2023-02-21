@@ -12,7 +12,7 @@ const initBlockTime = 31949670
 // import { ContractPairOrderAddress,ContractToken0Address,ContractToken1Address,ContractFaucet } from '../utils/Address'
 import { ContractFaucet } from '../utils/Address'
 import { convertToOHLC } from '../utils/CovertCandle'
-import { toEtherandFixFloatingPoint, toWei,toEther } from '../utils/UnitInEther'
+import { toEtherandFixFloatingPoint, toWei,toEther ,toEtherFloatingPoint} from '../utils/UnitInEther'
 interface IContract {
   loadingOrderSell: boolean
   loadingOrderBuy: boolean
@@ -65,6 +65,8 @@ interface IContract {
   setContractPairOrderAddress: (address: string) => void
   setContractToken0Address: (address: string) => void
   setContractToken1Address: (address: string) => void
+  symbolToken0: string
+  symbolToken1: string
 }
 
 export const ContractContext = createContext<IContract>({
@@ -104,6 +106,8 @@ export const ContractContext = createContext<IContract>({
   setContractPairOrderAddress: () => {},
   setContractToken0Address: () => {},
   setContractToken1Address: () => {},
+  symbolToken0: '',
+  symbolToken1: '',
 })
 
 
@@ -191,17 +195,13 @@ export const ContractProvider = ({ children }: ChildrenProps) => {
     useState(true)
 
   // Market order
-  const [marketEvent, setMarketEvent] = useState<
-    PairNewOrder.OrderMarketStructOutput[]
-  >([])
+  const [marketEvent, setMarketEvent] = useState< PairNewOrder.OrderMarketStructOutput[]>([])
 
   // Sum Market order
   const [sumMarketEvent, setSumMarketEvent] = useState<EventMarketOrder[]>([])
 
   // History order
-  const [historyOrderEvent, setHistoryOrderEvent] = useState<
-    PairNewOrder.OrderHistoryStructOutput[]
-  >([])
+  const [historyOrderEvent, setHistoryOrderEvent] = useState< PairNewOrder.OrderHistoryStructOutput[] >([])
 
   // tradingView
   const [tradingViewList, setTradingViewList] = useState<TypeTradingView[]>([])
@@ -218,12 +218,17 @@ export const ContractProvider = ({ children }: ChildrenProps) => {
 
   //Navbar loading
   const [isLoadingTxNavBar, setIsLoadingTxNavBar] = useState(false)
+
+  //Metadata token
+  const [symbolToken0, setSymbolToken0] = useState('')
+  const [symbolToken1, setSymbolToken1] = useState('')
   useEffect(() => {
     if (!window.ethereum) return console.log('Please install metamask')
     loadOrderBook()
     loadPriceToken()
     loadBalances()
     loadOrderBookByAddress()
+    loadMetaDataToken()
 
     loadHistoryByAddress()
     loadHistoryMarketOrder()
@@ -496,6 +501,28 @@ export const ContractProvider = ({ children }: ChildrenProps) => {
     }
   }
 
+  const loadMetaDataToken = async () => {
+    if (!window.ethereum) return console.log('Please install metamask')
+    try {
+      setSymbolToken0("")
+      setSymbolToken1("")
+      const token0 = getTokenContract(ContractToken0Address)
+      const token1 = getTokenContract(ContractToken1Address)
+      const [
+        dataMetaDataToken0,
+        dataMetaDataToken1,
+      ] = await Promise.all([
+        await token0.symbol(),
+        await token1.symbol(),
+      ])
+
+      setSymbolToken0(dataMetaDataToken0.toUpperCase())
+      setSymbolToken1(dataMetaDataToken1.toUpperCase())
+    } catch (error) {
+      console.log(error)
+    }
+  }
+
   const loadPriceToken = async () => {
     if (!window.ethereum) return console.log('Please install metamask')
     try {
@@ -533,19 +560,15 @@ export const ContractProvider = ({ children }: ChildrenProps) => {
         await token0.balanceOf(accounts[0]),
         await token1.balanceOf(accounts[0]),
       ])
-      setBalancesSpotToken0(toEtherandFixFloatingPoint(dataBalancesSpotToken0))
-      setBalancesTradeToken0(
-        toEtherandFixFloatingPoint(dataBalancesTradeToken0)
-      )
-      setBalancesSpotToken1(toEtherandFixFloatingPoint(dataBalancesSpotToken1))
-      setBalancesTradeToken1(
-        toEtherandFixFloatingPoint(dataBalancesTradeToken1)
-      )
+      setBalancesSpotToken0(toEtherFloatingPoint(dataBalancesSpotToken0,8))
+      setBalancesTradeToken0( toEtherFloatingPoint(dataBalancesTradeToken0,8))
+      setBalancesSpotToken1(toEtherFloatingPoint(dataBalancesSpotToken1,8))
+      setBalancesTradeToken1(toEtherFloatingPoint(dataBalancesTradeToken1,8) )
       setBalancesERC20Token0(
-        toEtherandFixFloatingPoint(dataBalancesERC20Token0)
+        toEtherFloatingPoint(dataBalancesERC20Token0,8)
       )
       setBalancesERC20Token1(
-        toEtherandFixFloatingPoint(dataBalancesERC20Token1)
+        toEtherFloatingPoint(dataBalancesERC20Token1,8)
       )
     } catch (error) {
       console.log(error)
@@ -728,7 +751,9 @@ export const ContractProvider = ({ children }: ChildrenProps) => {
 
       contract.on('MarketOrder', async () => {
         loadHistoryMarketOrder()
+        loadOrderBookByAddress()
         loadOrderBook()
+        loadPriceToken()
       })
       contract.on('CreateLimitOrder', async () => {
         loadOrderBook()
@@ -962,6 +987,9 @@ export const ContractProvider = ({ children }: ChildrenProps) => {
         setContractPairOrderAddress,
         setContractToken0Address,
         setContractToken1Address,
+
+        symbolToken0,
+        symbolToken1,
       }}
     >
       {!initialLoading && children}
