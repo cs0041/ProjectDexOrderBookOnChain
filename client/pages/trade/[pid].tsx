@@ -15,6 +15,7 @@ import HistoryMarket from '../../components/HistoryMarket'
 import NotificationModal from '../../components/NotificationModal'
 import { GetServerSideProps, NextPageContext } from 'next'
 import { ParsedUrlQuery } from 'querystring'
+import { useRouter } from 'next/router'
 
 interface Props {
   query: ParsedUrlQuery
@@ -27,7 +28,9 @@ interface Props {
 // }
 
 const Home = ({ query }: Props) => {
-  const { pid, contractaddress, addresstoken0, addresstoken1 } = query 
+  const router = useRouter()
+
+  const { pid, contractaddress, addresstoken0 ,  addresstoken1 } = query 
 
   // for update modal
   const [sideBuyOrSell, setSideBuyOrSell] = useState<number>(-1)
@@ -48,9 +51,18 @@ const Home = ({ query }: Props) => {
     setContractPairOrderAddress,
     setContractToken0Address,
     setContractToken1Address,
+    checkFactoryPair,
   } = useContext(ContractContext)
 
   useEffect(() => {
+    async function  check  ()  {
+         const isExistPair  = await checkFactoryPair(addresstoken0 as string, addresstoken1 as string)
+         console.log('checkFactoryPair', isExistPair)
+         if (isExistPair == '0x0000000000000000000000000000000000000000' ||  isExistPair == undefined)  {
+           router.push('/nopair')
+         }
+    }
+    check();
     console.log('query', query)
     setContractPairOrderAddress(contractaddress as string)
     setContractToken0Address(addresstoken0 as string)
