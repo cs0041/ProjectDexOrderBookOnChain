@@ -74,14 +74,14 @@ describe('PairNewOrder', async () => {
         pairorderbook
           .connect(owner)
           .createLimitOrder(isBuy, toWei(amount), toWei(price), prevNodeID)
-      ).to.be.revertedWith('amount must > 0')
+      ).to.be.revertedWith('Zero')
 
       prevNodeID = await pairorderbook._findIndex(toWei(price), isBuy)
       await expect(
         pairorderbook
           .connect(owner)
           .createLimitOrder(isBuy, toWei(amount), toWei(price), prevNodeID)
-      ).to.be.revertedWith('amount must > 0')
+      ).to.be.revertedWith('Zero')
     })
 
     it(' Should revert when Order Buy/Sell and input price = 0 ', async () => {
@@ -91,18 +91,18 @@ describe('PairNewOrder', async () => {
       let isSell = 1
 
       await expect(pairorderbook._findIndex(price, isBuy)).to.be.revertedWith(
-        'price must > 0'
+        'Zero'
       )
       await expect(
         pairorderbook.connect(owner).createLimitOrder(isBuy, amount, price, 1)
-      ).to.be.revertedWith('price must > 0')
+      ).to.be.revertedWith('Zero')
 
       await expect(pairorderbook._findIndex(price, isSell)).to.be.revertedWith(
-        'price must > 0'
+        'Zero'
       )
       await expect(
         pairorderbook.connect(owner).createLimitOrder(isSell, amount, price, 1)
-      ).to.be.revertedWith('price must > 0')
+      ).to.be.revertedWith('Zero')
     })
 
     it(' Should revert when create Order Buy/Sell and balancesSpot not sufficient ', async () => {
@@ -119,7 +119,7 @@ describe('PairNewOrder', async () => {
         pairorderbook
           .connect(owner)
           .createLimitOrder(isBuy, toWei(amount), toWei(price), prevNodeID)
-      ).to.be.revertedWith('not enough balance token for buy')
+      ).to.be.revertedWith('insufficient balance')
 
       amount = 1001
       price = 1
@@ -128,7 +128,7 @@ describe('PairNewOrder', async () => {
         pairorderbook
           .connect(owner)
           .createLimitOrder(isSell, toWei(amount), toWei(price), prevNodeID)
-      ).to.be.revertedWith('not enough balance token for sell')
+      ).to.be.revertedWith('insufficient balance')
     })
 
     it(' Should order when create 5 Order buy', async () => {
@@ -488,7 +488,7 @@ describe('PairNewOrder', async () => {
       ).to.be.revertedWith('_findPrevOrder not exist')
       await expect(
         pairorderbook.connect(owner).removeOrder(isBuy, index, 12)
-      ).to.be.revertedWith('you are not owner of this position order') // cause owner is address0
+      ).to.be.revertedWith('not owner this order') // cause owner is address0
     })
     it('Should revert when RemoveOrder and index-preindex are not contiguous', async () => {
       let prevIndex: BigNumber
@@ -499,7 +499,7 @@ describe('PairNewOrder', async () => {
       prevIndex = prevIndex.add(1) // add to make revertedWith("index is not pre")
       await expect(
         pairorderbook.connect(owner).removeOrder(isBuy, index, prevIndex)
-      ).to.be.revertedWith('index is not pre')
+      ).to.be.revertedWith('not prevIndex')
     })
 
     it('Should revert when RemoveOrder and not owner  position order', async () => {
@@ -510,7 +510,7 @@ describe('PairNewOrder', async () => {
       prevIndex = await pairorderbook._findPrevOrder(isBuy, index) // find index-preindex are contiguous
       await expect(
         pairorderbook.connect(addr1).removeOrder(isBuy, index, prevIndex)
-      ).to.be.revertedWith('you are not owner of this position order')
+      ).to.be.revertedWith('not owner this order')
     })
     it('Should revert when RemoveOrder and empty linked list', async () => {
       let prevIndex: BigNumber
@@ -738,7 +738,7 @@ describe('PairNewOrder', async () => {
             prevIndexAdd,
             prevIndexRemove
           )
-      ).to.be.revertedWith('updateOrder index not exist') // cause owner is address0
+      ).to.be.revertedWith('index not exist') // cause owner is address0
     })
     it('Should revert when UpdateOrder and index/prevIndexRemove/prevIndexAdd not exist', async () => {
       let isBuy = 0
@@ -786,7 +786,7 @@ describe('PairNewOrder', async () => {
             prevIndexAdd,
             prevIndexRemove
           )
-      ).to.be.revertedWith('index is not prevIndex')
+      ).to.be.revertedWith('not prevIndex')
     })
 
     it('Should revert when UpdateOrder and not owner  position order', async () => {
@@ -810,7 +810,7 @@ describe('PairNewOrder', async () => {
             prevIndexAdd,
             prevIndexRemove
           )
-      ).to.be.revertedWith('you are not owner of this position order') // cause we createLimitOrder before removeOrder
+      ).to.be.revertedWith('not owner this order') // cause we createLimitOrder before removeOrder
     })
 
     it('Should pass when UpdateOrder and index-preindex are contiguous and exist', async () => {
@@ -1037,14 +1037,14 @@ describe('PairNewOrder', async () => {
     it('Should revert when MarketOrder Sell and not enough balancesSpot token for sell', async () => {
       let isSell = 1
       await expect(
-        pairorderbook.createMarketOrder(isSell, initialSupply.add(toWei(1)),0)
-      ).to.be.revertedWith('not enough balance token for MarketOrder')
+        pairorderbook.createMarketOrder(isSell, initialSupply.add(toWei(1)), 0)
+      ).to.be.revertedWith('insufficient balance')
     })
     it('Should revert when MarketOrder Buy and not enough balancesSpot token for buy', async () => {
       let isBuy = 0
       await expect(
         pairorderbook.createMarketOrder(isBuy, initialSupply.add(toWei(1)), 0)
-      ).to.be.revertedWith('not enough balance token for MarketOrder')
+      ).to.be.revertedWith('insufficient balance')
     })
     it('Should pass and correct balances when MarketOrder Sell', async () => {
       let isSell = 1
