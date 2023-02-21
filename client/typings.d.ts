@@ -52,4 +52,5 @@ interface TypeListPairOrder {
   symbolToken0: string
   symbolToken1: string
   price: string
+  totalSuplly:string
 }
