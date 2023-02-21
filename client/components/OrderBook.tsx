@@ -69,7 +69,7 @@ function OrderBook({}: Props) {
       <div className="text-sm grid grid-cols-3  gap-x-3 pr-5  pb-5 ">
         <div className="text-right">Price({symbolToken1})</div>
         <div className="text-right">Amount({symbolToken0})</div>
-        <div className="text-right">Total</div>
+        <div className="text-right">Total({symbolToken1})</div>
       </div>
 
       {statusShowOrderBook === ShowOrderBookStatus.B ? null : (

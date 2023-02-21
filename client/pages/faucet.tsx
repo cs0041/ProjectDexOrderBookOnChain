@@ -72,7 +72,7 @@ function faucet({}: Props) {
             </div>
           </div>
           <p className="text-gray-400 text-sm  mt-5  ">
-            This faucet transfers TestToken (BTC, USDT)
+            This faucet transfers TestToken (BTC, USDT, PAS, THB)
           </p>
           <p className="text-gray-400 text-sm  ">
             on Matic Mumbai testnets for use in Trust Less Protocal
@@ -91,6 +91,12 @@ function faucet({}: Props) {
             </button>
             <button className=" max-w-[120px] Buttonselect !bg-slate-700     !cursor-default">
               1000 USDT
+            </button>
+            <button className=" max-w-[120px] Buttonselect !bg-slate-700     !cursor-default">
+              100 PAS
+            </button>
+            <button className=" max-w-[120px] Buttonselect !bg-slate-700     !cursor-default">
+              30000 THB
             </button>
           </div>
 
