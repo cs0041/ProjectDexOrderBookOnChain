@@ -20,6 +20,9 @@ function PanelCommand({}: Props) {
     balancesTradeToken1,
     symbolToken0,
     symbolToken1,
+    ContractPairOrderAddress,
+    ContractToken0Address,
+    ContractToken1Address,
   } = useContext(ContractContext)
 
   const [selectlimitMarket, setSelectlimitMarket] = useState<LimitMarketStatus>(
@@ -71,7 +74,11 @@ function PanelCommand({}: Props) {
             </span>
             <div className=" flex  items-center ">
               <PlusCircleIcon
-                onClick={() => router.push('/deposit')}
+                onClick={() =>
+                  router.push(
+                    `/deposit/depositpair?contractaddress=${ContractPairOrderAddress}&addresstoken0=${ContractToken0Address}&addresstoken1=${ContractToken1Address}`
+                  )
+                }
                 className=" IconHover"
               />
             </div>
@@ -159,7 +166,11 @@ function PanelCommand({}: Props) {
             </span>
             <div className=" flex  items-center ">
               <PlusCircleIcon
-                onClick={() => router.push('/deposit')}
+                onClick={() =>
+                  router.push(
+                    `/deposit/depositpair?contractaddress=${ContractPairOrderAddress}&addresstoken0=${ContractToken0Address}&addresstoken1=${ContractToken1Address}`
+                  )
+                }
                 className=" IconHover"
               />
             </div>
