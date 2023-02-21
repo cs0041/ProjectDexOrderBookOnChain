@@ -1,16 +1,14 @@
 import React, {createContext, useEffect, useState } from 'react'
 import { ethers } from 'ethers'
-import artifactPairNewOrder from '../../artifacts/contracts/PairOrder.sol/PairNewOrder.json'
+import artifactPairNewOrder from '../../artifacts/contracts/FactoryPair.sol/PairNewOrder.json'
 import artifactToken from '../../artifacts/contracts/Token0.sol/Token0.json'
 import artifactFaucet from '../../artifacts/contracts/Faucet.sol/Faucet.json'
-import {PairNewOrder,PairNewOrder__factory,Token0,Token0__factory,Token1,Token1__factory,Faucet,Faucet__factory} from '../../typechain-types'
-// const ContractPairOrderAddress = '0x9fE46736679d2D9a65F0992F2272dE9f3c7fa6e0'
-// const ContractToken0Address = '0x5FbDB2315678afecb367f032d93F642f64180aa3'
-// const ContractToken1Address = '0xe7f1725E7734CE288F8367e1Bb143E90bb3F0512'
+import artifactoryPairt from '../../artifacts/contracts/FactoryPair.sol/FactoryPair.json'
+import {PairNewOrder,PairNewOrder__factory,Token0,Token0__factory,Token1,Token1__factory,Faucet,Faucet__factory,FactoryPair,FactoryPair__factory} from '../../typechain-types'
 const initBlockTime = 31949670
 
-// import { ContractPairOrderAddress,ContractToken0Address,ContractToken1Address,ContractFaucet } from '../utils/Address'
-import { ContractFaucet } from '../utils/Address'
+
+import { ContractFaucet, ContractFactoryPair } from '../utils/Address'
 import { convertToOHLC } from '../utils/CovertCandle'
 import { toEtherandFixFloatingPoint, toWei,toEther ,toEtherFloatingPoint} from '../utils/UnitInEther'
 interface IContract {
@@ -67,6 +65,9 @@ interface IContract {
   setContractToken1Address: (address: string) => void
   symbolToken0: string
   symbolToken1: string
+  checkFactoryPair: (addressToken0: string, addressToken1: string) => Promise<string | void>
+  sendTxCreatePair: (addressToken0: string, addressToken1: string) => Promise<void>
+  listPairOrder: TypeListPairOrder[]
 }
 
 export const ContractContext = createContext<IContract>({
@@ -108,6 +109,9 @@ export const ContractContext = createContext<IContract>({
   setContractToken1Address: () => {},
   symbolToken0: '',
   symbolToken1: '',
+  checkFactoryPair: async () => {},
+  sendTxCreatePair: async () => {},
+  listPairOrder:[],
 })
 
 
@@ -132,6 +136,17 @@ export const ContractProvider = ({ children }: ChildrenProps) => {
   const [ContractToken0Address, setContractToken0Address] = useState("")
   const [ContractToken1Address, setContractToken1Address] = useState("")
 
+  const getPairOrderContractDynamic = (address:string) => {
+    const provider = new ethers.providers.Web3Provider(window.ethereum as any)
+    const signer = provider.getSigner()
+    const pairordercontract = new ethers.Contract(
+      address,
+      artifactPairNewOrder.abi,
+      signer
+    ) as PairNewOrder
+
+    return pairordercontract
+  }
   const getPairOrderContract = () => {
     const provider = new ethers.providers.Web3Provider(window.ethereum as any)
     const signer = provider.getSigner()
@@ -165,6 +180,17 @@ export const ContractProvider = ({ children }: ChildrenProps) => {
     ) as Faucet
 
     return faucetContract
+  }
+  const getFactoryPairContract = () => {
+    const provider = new ethers.providers.Web3Provider(window.ethereum as any)
+    const signer = provider.getSigner()
+    const factoryPairContract = new ethers.Contract(
+      ContractFactoryPair,
+      artifactoryPairt.abi,
+      signer
+    ) as FactoryPair
+
+    return factoryPairContract
   }
 
 
@@ -222,8 +248,14 @@ export const ContractProvider = ({ children }: ChildrenProps) => {
   //Metadata token
   const [symbolToken0, setSymbolToken0] = useState('')
   const [symbolToken1, setSymbolToken1] = useState('')
+
+  // Data List PairOrder 
+  const [listPairOrder, setListPairOrder] = useState<TypeListPairOrder[]>([])
+
+
   useEffect(() => {
     if (!window.ethereum) return console.log('Please install metamask')
+    loadListFactoryPairAddress()
     loadOrderBook()
     loadPriceToken()
     loadBalances()
@@ -485,6 +517,98 @@ export const ContractProvider = ({ children }: ChildrenProps) => {
         }
       setIsLoadingTx(false)
       setIsLoadingTxNavBar(false)
+    }
+  }
+
+  const sendTxCreatePair = async (addressToken0: string, addressToken1: string) => {
+    if (!window.ethereum) return console.log('Please install metamask')
+    try {
+      const contract = getFactoryPairContract()
+      const transactionHash = await contract.createPair(addressToken0,addressToken1)
+      console.log(transactionHash.hash)
+      setIsLoadingTxNavBar(true)
+      await transactionHash.wait()
+      loadListFactoryPairAddress()
+      setIsLoadingTxNavBar(false)
+    } catch (error: any) {
+      try {
+        alert(error.error.data.message)
+      } catch (e) {
+        alert(error)
+      }
+      setIsLoadingTxNavBar(false)
+    }
+  }
+
+
+
+
+  const checkFactoryPair = async (addressToken0: string,addressToken1  :string) => {
+    try {
+      if (!window.ethereum) return console.log('Please install metamask')
+      const contract = getFactoryPairContract() 
+      const result = await contract.getPair(addressToken0, addressToken1)
+      return result;
+      // const time = await contract.timeFaucet(accounts[0])
+      // setTimeUnLockFaucet(time.toNumber())
+    } catch (error) {
+      console.log(error)
+    }
+  }
+
+  const loadListFactoryPairAddress = async () => {
+    try {
+      if (!window.ethereum) return console.log('Please install metamask')
+      setListPairOrder([])
+      const contractFactoryPair = getFactoryPairContract()
+      const length = (await contractFactoryPair.allPairsLength()).toNumber()
+      const Fixlength = 10
+      let listFactoryPairAddress = []
+      for (let i = 0; i < length && i < Fixlength; i++) {
+         listFactoryPairAddress.push(await contractFactoryPair.allPairs(i))
+      }
+      listFactoryPairAddress.map(async (address)=>{
+        const contractPairOrder = getPairOrderContractDynamic(address)
+        const 
+        [
+          dataAddressToken0,
+          dataAddressToken1,
+          dataPrice,
+        ] = await Promise.all([
+          await contractPairOrder.token0(),
+          await contractPairOrder.token1(),
+          await contractPairOrder.price()
+        ])
+
+        const token0 = getTokenContract(dataAddressToken0)
+        const token1 = getTokenContract(dataAddressToken1)
+        const 
+        [
+          dataMetaDataToken0,
+          dataMetaDataToken1,
+        ] = await Promise.all([
+          await token0.symbol(),
+          await token1.symbol(),
+        ])
+
+         const struct: TypeListPairOrder = {
+           addressContractPair: address,
+           addressToken0: dataAddressToken0,
+           addressToken1: dataAddressToken1,
+           symbolToken0: dataMetaDataToken0.toUpperCase(),
+           symbolToken1: dataMetaDataToken1.toUpperCase(),
+           price: toEtherandFixFloatingPoint(dataPrice),
+         }
+        setListPairOrder((prev) => [
+          ...prev,
+          struct,
+        ])
+
+      })
+
+
+    } catch (error) {
+      console.log(error)
     }
   }
 
@@ -990,6 +1114,10 @@ export const ContractProvider = ({ children }: ChildrenProps) => {
 
         symbolToken0,
         symbolToken1,
+
+        checkFactoryPair,
+        sendTxCreatePair,
+        listPairOrder,
       }}
     >
       {!initialLoading && children}
