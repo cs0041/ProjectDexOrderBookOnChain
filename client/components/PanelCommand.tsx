@@ -18,6 +18,8 @@ function PanelCommand({}: Props) {
     balancesSpotToken1,
     balancesTradeToken0,
     balancesTradeToken1,
+    symbolToken0,
+    symbolToken1,
   } = useContext(ContractContext)
 
   const [selectlimitMarket, setSelectlimitMarket] = useState<LimitMarketStatus>(
@@ -65,7 +67,7 @@ function PanelCommand({}: Props) {
           <div className="flex flex-row space-x-5   ">
             <span className="text-lg text-gray-400">Balances</span>
             <span className="text-lg text-white flex flex-row">
-              {balancesSpotToken1} USDT
+              {balancesSpotToken1} {symbolToken1}
             </span>
             <div className=" flex  items-center ">
               <PlusCircleIcon
@@ -91,7 +93,7 @@ function PanelCommand({}: Props) {
                 }}
                 className="  w-full py-2 pr-2 text-right  bg-transparent outline-none  text-white"
               />
-              <span className="flex items-center  pr-5">USDT</span>
+              <span className="flex items-center  pr-5">{symbolToken1}</span>
             </div>
           )}
 
@@ -112,7 +114,9 @@ function PanelCommand({}: Props) {
               className="  w-full py-2 pr-2 text-right  bg-transparent outline-none  "
             />
             <span className="flex items-center  pr-5">
-              {selectlimitMarket === LimitMarketStatus.Limit ? 'BTC' : 'USDT'}
+              {selectlimitMarket === LimitMarketStatus.Limit
+                ? `${symbolToken0}`
+                : `${symbolToken1}`}
             </span>
           </div>
 
@@ -125,7 +129,7 @@ function PanelCommand({}: Props) {
                   Number(inputBuyPriceTokenLimitOrder)
                 ).toFixed(4)}
               </div>
-              <span className="flex items-center  pr-5">USDT</span>
+              <span className="flex items-center  pr-5">{symbolToken1}</span>
             </div>
           )}
 
@@ -143,7 +147,7 @@ function PanelCommand({}: Props) {
             }}
             className=" w-full text-white rounded bg-green-500 py-2 font-semibold hover:opacity-70"
           >
-            Buy BTC
+            Buy {symbolToken0}
           </button>
         </div>
 
@@ -151,7 +155,7 @@ function PanelCommand({}: Props) {
           <div className="flex flex-row space-x-5   ">
             <span className="text-lg text-gray-400">Balances</span>
             <span className="text-lg text-white flex flex-row">
-              {balancesSpotToken0} BTC
+              {balancesSpotToken0} {symbolToken0}
             </span>
             <div className=" flex  items-center ">
               <PlusCircleIcon
@@ -179,7 +183,7 @@ function PanelCommand({}: Props) {
                 }}
                 className=" w-full py-2 pr-2 text-right  bg-transparent outline-none  text-white"
               />
-              <span className="flex items-center  pr-5">USDT</span>
+              <span className="flex items-center  pr-5">{symbolToken1}</span>
             </div>
           )}
 
@@ -200,7 +204,7 @@ function PanelCommand({}: Props) {
               }}
               className=" w-full py-2 pr-2 text-right  bg-transparent outline-none  "
             />
-            <span className="flex items-center  pr-5">BTC</span>
+            <span className="flex items-center  pr-5">{symbolToken0}</span>
           </div>
 
           {selectlimitMarket === LimitMarketStatus.Limit && (
@@ -212,7 +216,7 @@ function PanelCommand({}: Props) {
                   Number(inputSellPriceTokenLimitOrder)
                 ).toFixed(4)}
               </div>
-              <span className="flex items-center  pr-5">USDT</span>
+              <span className="flex items-center  pr-5">{symbolToken1}</span>
             </div>
           )}
 
@@ -230,7 +234,7 @@ function PanelCommand({}: Props) {
             }}
             className="w-full text-white rounded bg-red-500 py-2 font-semibold hover:opacity-70"
           >
-            Sell BTC
+            Sell {symbolToken0}
           </button>
         </div>
       </div>

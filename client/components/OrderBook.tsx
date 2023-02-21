@@ -18,6 +18,8 @@ function OrderBook({}: Props) {
     loadingOrderSell,
     orderBookBuy,
     orderBookSell,
+    symbolToken0,
+    symbolToken1,
   } = useContext(ContractContext)
 
   const [statusShowOrderBook, setStatusShowOrderBook] =
@@ -65,8 +67,8 @@ function OrderBook({}: Props) {
       </header>
 
       <div className="text-sm grid grid-cols-3  gap-x-3 pr-5  pb-5 ">
-        <div className="text-right">Price(USDT)</div>
-        <div className="text-right">Amount(BTC)</div>
+        <div className="text-right">Price({symbolToken1})</div>
+        <div className="text-right">Amount({symbolToken0})</div>
         <div className="text-right">Total</div>
       </div>
 
@@ -79,7 +81,7 @@ function OrderBook({}: Props) {
         text-red-500   pr-5 text-base myscroll `}
         >
           {orderBookSell.map((item) => (
-            <div className="grid grid-cols-3 gap-x-3">
+            <div className="grid grid-cols-3 gap-x-3 text-sm ">
               <div className="text-right ">{item.price}</div>
               <div className="text-right ">
                 {(Number(item.amount) - Number(item.filled)).toFixed(
@@ -112,7 +114,7 @@ function OrderBook({}: Props) {
         text-green-500  pr-5 text-base myscroll`}
         >
           {orderBookBuy.map((item) => (
-            <div className="grid grid-cols-3 gap-x-3">
+            <div className="grid grid-cols-3 gap-x-3 text-sm ">
               <div className="text-right">{item.price}</div>
               <div className="text-right ">
                 {(Number(item.amount) - Number(item.filled)).toFixed(

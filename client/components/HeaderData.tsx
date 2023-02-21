@@ -4,7 +4,7 @@ import { ContractContext } from '../context/ContratContext'
 type Props = {}
 
 function HeaderData({}: Props) {
-  const { priceToken } = useContext(ContractContext)
+  const { priceToken, symbolToken0, symbolToken1 } = useContext(ContractContext)
 
   return (
     <div className="text-sm font-light flex flex-1 items-center    px-8 py-3  space-x-10">
@@ -23,7 +23,9 @@ function HeaderData({}: Props) {
           />
         </svg>
 
-        <h1>BTC - USD</h1>
+        <h1>
+          {symbolToken0} - {symbolToken1}
+        </h1>
       </h1>
       <div className=" flex flex-col pr-10 text-xl  ">
         <p>{priceToken ? priceToken : 'wait Price ...'}</p>
@@ -41,11 +43,11 @@ function HeaderData({}: Props) {
         <span>-412 -2.64%</span>
       </div>
       <div className=" flex flex-col  pr-10 border-r-[1px] border-gray-600  ">
-        <span>24h Volume(BTC)</span>
+        <span>24h Volume({symbolToken0})</span>
         <span>312.32</span>
       </div>
       <div className=" flex flex-col  ">
-        <span>24h Volume(USDT)</span>
+        <span>24h Volume({symbolToken1})</span>
         <span>871242.42</span>
       </div>
     </div>

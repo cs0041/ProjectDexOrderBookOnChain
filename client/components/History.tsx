@@ -28,6 +28,8 @@ const History = (props: Props) => {
     loadOrderBookByAddress,
     loadHistoryByAddress,
     historyOrderEvent,
+    symbolToken0,
+    symbolToken1,
   } = useContext(ContractContext)
 
   // for update modal
@@ -76,23 +78,23 @@ const History = (props: Props) => {
       <div className="h-full  myscroll">
         {selectShowOrder === ShowOrderStatus.OpenOrder ? (
           <>
-            <div className=" text-xl grid grid-cols-9  border-b-2 border-gray-700 p-3 ">
+            <div className=" text-lg grid grid-cols-9  border-b-2 border-gray-700 p-3 ">
               <div>Date</div>
               <div>Pair</div>
               <div>Type</div>
               <div>Side</div>
-              <div>Price</div>
-              <div>Amount</div>
-              <div>Filled</div>
-              <div>Total</div>
+              <div>Price ({symbolToken1})</div>
+              <div>Amount ({symbolToken0})</div>
+              <div>Filled ({symbolToken0})</div>
+              <div>Total ({symbolToken1})</div>
               <div>Cancel Order</div>
             </div>
 
             <div className="max-h-full ">
               {orderBookByAddress.map((item) => (
-                <div className=" grid grid-cols-9 text-xl border-b-2 border-gray-700  p-3 ">
+                <div className=" grid grid-cols-9 text-lg border-b-2 border-gray-700  p-3 ">
                   <div>{ConvertFullDateTime(Number(item.createdDate))}</div>
-                  <div> BTC/USDT</div>
+                  <div> {symbolToken0} - {symbolToken1}</div>
                   <div>Limit</div>
                   <div
                     className={`${
@@ -135,20 +137,20 @@ const History = (props: Props) => {
           </>
         ) : (
           <>
-            <div className=" text-xl grid grid-cols-6  border-b-2 border-gray-700 p-3   ">
+            <div className=" text-lg grid grid-cols-6  border-b-2 border-gray-700 p-3   ">
               <div>Date</div>
               <div>Pair</div>
               <div>Type</div>
               <div>Side</div>
-              <div>Price</div>
-              <div>Amount</div>
+              <div>Price({symbolToken1})</div>
+              <div>Amount({symbolToken0})</div>
             </div>
 
             <div className=" max-h-full ">
               {historyOrderEvent.map((item) => (
-                <div className=" grid grid-cols-6 text-xl border-b-2 border-gray-700  p-3">
+                <div className=" grid grid-cols-6 text-lg border-b-2 border-gray-700  p-3">
                   <div>{ConvertFullDateTime(item.date.toNumber())}</div>
-                  <div> BTC/USDT</div>
+                  <div>  {symbolToken0} - {symbolToken1}</div>
                   <div>{item.Type}</div>
                   <div
                     className={`${

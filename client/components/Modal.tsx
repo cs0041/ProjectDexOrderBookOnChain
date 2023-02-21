@@ -9,7 +9,7 @@ interface Props {
 }
 
 function Modal({ onClose, side, id }: Props) {
-  const { sendTxUpdateOrder } = useContext(ContractContext)
+  const { sendTxUpdateOrder, symbolToken0,symbolToken1 } = useContext(ContractContext)
 
   const [showModal, setShowModal] = useState(true)
 
@@ -25,11 +25,11 @@ function Modal({ onClose, side, id }: Props) {
     <MuiModal
       open={showModal}
       onClose={handleCLose}
-      className="flxex m-auto w-1/5 h-1/5   justify-center items-center
-   rounded-md scrollbar-hide  bg-[#1c1c28]  border-[1px] border-gray-600 p-10"
+      className="flxex m-auto max-w-[30vh] max-h-[20vh]  min-w-[400px] min-h-[250px]   justify-center items-center
+   rounded-md scrollbar-hide  bg-[#1c1c28]  border-[1px] border-gray-600 p-10 outline-none"
     >
       <div className="space-y-4">
-        <div className="bg-gray-900 flex flex-row text-xl">
+        <div className="InputOrder">
           <span className="flex items-center pl-2 pr-5">Price</span>
           <input
             type="number"
@@ -43,10 +43,10 @@ function Modal({ onClose, side, id }: Props) {
             }}
             className="  w-full py-2 pr-2 text-right  bg-transparent outline-none  text-white "
           />
-          <span className="flex items-center  pr-5">USDT</span>
+          <span className="flex items-center  pr-5">{symbolToken1}</span>
         </div>
 
-        <div className="bg-gray-900 flex flex-row text-xl">
+        <div className="InputOrder">
           <span className="flex items-center pl-2 pr-5">Amount</span>
           <input
             type="number"
@@ -60,13 +60,13 @@ function Modal({ onClose, side, id }: Props) {
             }}
             className="  w-full py-2 pr-2 text-right  bg-transparent outline-none  text-white"
           />
-          <span className="flex items-center  pr-5">BTC</span>
+          <span className="flex items-center  pr-5">{symbolToken0}</span>
         </div>
         <button
           onClick={() => {
             sendTxUpdateOrder(side, id, amountInput!, priceInput!)
           }}
-          className="w-full text-white rounded bg-green-500 py-3 font-semibold"
+          className="w-full text-white rounded bg-green-500 py-3 font-semibold  hover:opacity-70"
         >
           Update order
         </button>
