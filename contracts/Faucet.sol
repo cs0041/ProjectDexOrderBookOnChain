@@ -4,6 +4,8 @@ pragma solidity ^0.8.0;
 contract Faucet{
     IERC20 public  token0;
     IERC20 public  token1;
+    IERC20 public  token2;
+    IERC20 public  token3;
 
     address public owner;
     mapping(address => uint256) public timeFaucet;
@@ -11,15 +13,21 @@ contract Faucet{
     uint256 public lockhourPeriods;
     uint256 public amount0;
     uint256 public amount1;
+    uint256 public amount2;
+    uint256 public amount3;
     bool public isOpen;
 
-    constructor(address _token0, address _token1,uint256 _amount0,uint256 _amount1,uint256 _lockhourPeriods) {
+    constructor(address _token0, address _token1,address _token2,address _token3,uint256 _amount0,uint256 _amount1,uint256 _amount2,uint256 _amount3,uint256 _lockhourPeriods) {
         token0 = IERC20(_token0);
         token1 = IERC20(_token1);
+        token2 = IERC20(_token2);
+        token3 = IERC20(_token3);
         owner = msg.sender;
         lockhourPeriods = _lockhourPeriods;
         amount0 = _amount0 ;
         amount1 = _amount1 ;
+        amount2 = _amount2 ;
+        amount3 = _amount3 ;
         isOpen =  true;
     }
 
@@ -33,16 +41,20 @@ contract Faucet{
        lockhourPeriods = _newlockhourPeriods;
     }
 
-    function changeAmountToken(uint256 _amount0,uint256 _amount1) external onlyOwner {
+    function changeAmountToken(uint256 _amount0,uint256 _amount1,uint256 _amount2,uint256 _amount3) external onlyOwner {
        require(isOpen,"it Close");
        amount0 = _amount0 ;
        amount1 = _amount1 ; 
+       amount2 = _amount2 ; 
+       amount3 = _amount3 ; 
     }
 
-    function changeToken(address _token0,address _token1) external onlyOwner {
+    function changeToken(address _token0,address _token1,address _token2,address _token3) external onlyOwner {
        require(isOpen,"it Close");
        token0 = IERC20(_token0);
        token1 = IERC20(_token1);
+       token2 = IERC20(_token2);
+       token3 = IERC20(_token3);
     }
 
 
@@ -50,10 +62,10 @@ contract Faucet{
         isOpen = !isOpen;
     }
 
-    function withdrawToken(address _token0,address _token1) external onlyOwner {
+    function withdrawToken(address _token) external onlyOwner {
         require(isOpen,"it Close");
-        IERC20(_token0).transfer(owner, IERC20(_token0).balanceOf(address(this)));
-        IERC20(_token1).transfer(owner, IERC20(_token1).balanceOf(address(this)));
+        IERC20(_token).transfer(owner, IERC20(_token).balanceOf(address(this)));
+  
     }
 
     function getFaucet() external  {
@@ -65,6 +77,8 @@ contract Faucet{
        timeFaucet[msg.sender] = block.timestamp + (60*60*lockhourPeriods );
        token0.transfer(msg.sender, amount0);
        token1.transfer(msg.sender, amount1);
+       token2.transfer(msg.sender, amount2);
+       token3.transfer(msg.sender, amount3);
     }
 
 
