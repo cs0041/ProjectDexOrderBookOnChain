@@ -1,32 +1,70 @@
-import React, { useContext, useState } from 'react'
-import { ContractContext } from '../context/ContratContext'
+import { NextPageContext } from 'next'
+import { ParsedUrlQuery } from 'querystring'
+import React, { useContext, useEffect, useState } from 'react'
+import { ContractContext } from '../../context/ContratContext'
 import {
   ContractPairOrderAddress,
   ContractToken0Address,
   ContractToken1Address,
-} from '../utils//Address'
+} from '../../utils/Address'
+import { useRouter } from 'next/router'
+interface Props {
+  query: ParsedUrlQuery
+}
 
-type Props = {}
 
-function deposit({}: Props) {
-  const [amountInputDepositToken0, setAmountInputDepositToken0] =
-    useState<string>()
-  const [amountInputDepositToken1, setAmountInputDepositToken1] =
-    useState<string>()
-  const [amountInputWithdrawToken0, setAmountInputWithdrawToken0] =
-    useState<string>()
-  const [amountInputWithdrawToken1, setAmountInputWithdrawToken1] =
-    useState<string>()
-  const {
-    balancesSpotToken0,
-    balancesSpotToken1,
-    balancesTradeToken0,
-    balancesTradeToken1,
-    balancesERC20Token0,
-    balancesERC20Token1,
-    sendTxDeposit,
-    sendTxWithdraw,
-  } = useContext(ContractContext)
+function deposit({ query }: Props) {
+    const {
+      setContractPairOrderAddress,
+      setContractToken0Address,
+      setContractToken1Address,
+      symbolToken0,
+      symbolToken1,
+      checkFactoryPair,
+    } = useContext(ContractContext)
+    const router = useRouter()
+    const { pid, contractaddress, addresstoken0, addresstoken1 } = query 
+
+    useEffect(() => {
+        async function check() {
+          const isExistPair = await checkFactoryPair(
+            addresstoken0 as string,
+            addresstoken1 as string
+          )
+          console.log('checkFactoryPair', isExistPair)
+          if (
+            isExistPair == '0x0000000000000000000000000000000000000000' ||
+            isExistPair == undefined
+          ) {
+            router.push('/nopair')
+          }
+        }
+        check()
+        console.log('query', query)
+        setContractPairOrderAddress(contractaddress as string)
+        setContractToken0Address(addresstoken0 as string)
+        setContractToken1Address(addresstoken1 as string)
+    }, [])
+    
+    
+    const [amountInputDepositToken0, setAmountInputDepositToken0] =
+        useState<string>()
+    const [amountInputDepositToken1, setAmountInputDepositToken1] =
+        useState<string>()
+    const [amountInputWithdrawToken0, setAmountInputWithdrawToken0] =
+        useState<string>()
+    const [amountInputWithdrawToken1, setAmountInputWithdrawToken1] =
+        useState<string>()
+    const {
+        balancesSpotToken0,
+        balancesSpotToken1,
+        balancesTradeToken0,
+        balancesTradeToken1,
+        balancesERC20Token0,
+        balancesERC20Token1,
+        sendTxDeposit,
+        sendTxWithdraw,
+    } = useContext(ContractContext)
   return (
     <>
       <div className="flex flex-col w-full h-[92vh] p-10 space-y-10 ">
@@ -37,10 +75,10 @@ function deposit({}: Props) {
               <div className="  bg-black/30 p-10   rounded-md">
                 <div className="space-y-4">
                   <h1 className="text-center text-base font-bold mb-5">
-                    Deposit BTC
+                    Deposit {symbolToken0}
                   </h1>
                   <span className=" text-base font-light">
-                    Avbl {balancesERC20Token0}
+                    Avbl {balancesERC20Token0} {symbolToken0}
                   </span>
                   <div className="InputOrder">
                     <span className="flex items-center pl-2 pr-5">Amount</span>
@@ -56,7 +94,9 @@ function deposit({}: Props) {
                       }}
                       className="  w-full py-2 pr-2 text-right    bg-transparent outline-none  text-white"
                     />
-                    <span className="flex items-center  pr-5">BTC</span>
+                    <span className="flex items-center  pr-5">
+                      {symbolToken0}
+                    </span>
                   </div>
                   <button
                     onClick={() => {
@@ -67,17 +107,17 @@ function deposit({}: Props) {
                     }}
                     className="w-full text-white rounded bg-green-500 py-3 font-semibold hover:opacity-70"
                   >
-                    Deposit BTC
+                    Deposit {symbolToken0}
                   </button>
                 </div>
               </div>
               <div className="  bg-black/30 p-10 rounded-md">
                 <div className="space-y-4">
                   <h1 className="text-center text-base font-bold mb-5">
-                    Deposit USDT
+                    Deposit {symbolToken1}
                   </h1>
                   <span className=" text-base font-light">
-                    Avbl {balancesERC20Token1}
+                    Avbl {balancesERC20Token1} {symbolToken1}
                   </span>
                   <div className="InputOrder">
                     <span className="flex items-center pl-2 pr-5">Amount</span>
@@ -93,7 +133,9 @@ function deposit({}: Props) {
                       }}
                       className="  w-full py-2 pr-2 text-right  bg-transparent outline-none  text-white"
                     />
-                    <span className="flex items-center  pr-5">USDT</span>
+                    <span className="flex items-center  pr-5">
+                      {symbolToken1}
+                    </span>
                   </div>
                   <button
                     onClick={() => {
@@ -104,7 +146,7 @@ function deposit({}: Props) {
                     }}
                     className="w-full text-white rounded bg-green-500 py-3 font-semibold hover:opacity-70"
                   >
-                    Deposit USDT
+                    Deposit {symbolToken1}
                   </button>
                 </div>
               </div>
@@ -117,10 +159,10 @@ function deposit({}: Props) {
               <div className="  bg-black/30 p-10   rounded-md">
                 <div className="space-y-4">
                   <h1 className="text-center text-base font-bold mb-5">
-                    Withdraw BTC
+                    Withdraw {symbolToken0}
                   </h1>
                   <span className=" text-base font-light">
-                    Avbl {balancesSpotToken0}
+                    Avbl {balancesSpotToken0} {symbolToken0}
                   </span>
                   <div className="InputOrder">
                     <span className="flex items-center pl-2 pr-5">Amount</span>
@@ -136,7 +178,9 @@ function deposit({}: Props) {
                       }}
                       className="  w-full py-2 pr-2 text-right  bg-transparent outline-none  text-white"
                     />
-                    <span className="flex items-center  pr-5">BTC</span>
+                    <span className="flex items-center  pr-5">
+                      {symbolToken0}
+                    </span>
                   </div>
                   <button
                     onClick={() => {
@@ -147,17 +191,17 @@ function deposit({}: Props) {
                     }}
                     className="w-full text-white rounded bg-red-500 py-3 font-semibold hover:opacity-70"
                   >
-                    Withdraw BTC
+                    Withdraw {symbolToken0}
                   </button>
                 </div>
               </div>
               <div className="  bg-black/30 p-10 rounded-md">
                 <div className="space-y-4">
                   <h1 className="text-center text-basae font-bold mb-5">
-                    Withdraw USDT
+                    Withdraw {symbolToken1}
                   </h1>
                   <span className=" text-base font-light">
-                    Avbl {balancesSpotToken1}
+                    Avbl {balancesSpotToken1} {symbolToken1}
                   </span>
                   <div className="InputOrder">
                     <span className="flex items-center pl-2 pr-5">Amount</span>
@@ -173,7 +217,9 @@ function deposit({}: Props) {
                       }}
                       className="  w-full py-2 pr-2 text-right  bg-transparent outline-none  text-white"
                     />
-                    <span className="flex items-center  pr-5">USDT</span>
+                    <span className="flex items-center  pr-5">
+                      {symbolToken1}
+                    </span>
                   </div>
                   <button
                     onClick={() => {
@@ -184,7 +230,7 @@ function deposit({}: Props) {
                     }}
                     className="w-full text-white rounded bg-red-500 py-3 font-semibold hover:opacity-70"
                   >
-                    Withdraw USDT
+                    Withdraw {symbolToken1}
                   </button>
                 </div>
               </div>
@@ -199,23 +245,31 @@ function deposit({}: Props) {
             <div className="flex flex-row space-x-10 font-extralight">
               <div className="flex flex-col text-green-500">
                 <h1 className="flex flex-col ">
-                  Balances Spot{' '}
+                  Balances Spot
                   <span className="text-base text-white">
                     ( available for withdrawal )
                   </span>
                 </h1>
-                <span>Amount BTC : {balancesSpotToken0}</span>
-                <span>Amount USDT : {balancesSpotToken1}</span>
+                <span>
+                  Amount {symbolToken0} : {balancesSpotToken0}
+                </span>
+                <span>
+                  Amount {symbolToken1} : {balancesSpotToken1}
+                </span>
               </div>
               <div className="flex flex-col text-red-500">
                 <h1 className="flex flex-col">
-                  Balances Trade{' '}
+                  Balances Trade
                   <span className="text-base text-white">
-                    ( no available for withdrawal )
+                    ( not available for withdrawal )
                   </span>
                 </h1>
-                <span>Amount BTC : {balancesTradeToken0}</span>
-                <span>Amount USDT : {balancesTradeToken1}</span>
+                <span>
+                  Amount {symbolToken0} : {balancesTradeToken0}
+                </span>
+                <span>
+                  Amount {symbolToken1} : {balancesTradeToken1}
+                </span>
               </div>
             </div>
           </div>
@@ -226,3 +280,10 @@ function deposit({}: Props) {
 }
 
 export default deposit
+
+
+export const getServerSideProps = async (context: NextPageContext) => {
+  const { query } = context
+  return { props: { query } }
+}
+
