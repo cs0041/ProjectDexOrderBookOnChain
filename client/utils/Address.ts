@@ -16,5 +16,7 @@ export const ContractToken1Address = '0x7052F109585F2851207dad06C2F5Ec7E26a1270B
 
 export const ContractFaucet = '0x8079A01A77dd50bAFE04A2455A318DA87B450f89'
 
+export const ContractFactoryPair = '0xBD848CDf7efe153Aac5fd77c0599bD01dAF2F8c2'
+
 
 
