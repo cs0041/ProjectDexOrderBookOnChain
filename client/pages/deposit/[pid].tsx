@@ -2,11 +2,7 @@ import { NextPageContext } from 'next'
 import { ParsedUrlQuery } from 'querystring'
 import React, { useContext, useEffect, useState } from 'react'
 import { ContractContext } from '../../context/ContratContext'
-import {
-  ContractPairOrderAddress,
-  ContractToken0Address,
-  ContractToken1Address,
-} from '../../utils/Address'
+
 import { useRouter } from 'next/router'
 interface Props {
   query: ParsedUrlQuery
@@ -18,6 +14,9 @@ function deposit({ query }: Props) {
       setContractPairOrderAddress,
       setContractToken0Address,
       setContractToken1Address,
+      ContractPairOrderAddress,
+      ContractToken0Address,
+      ContractToken1Address,
       symbolToken0,
       symbolToken1,
       checkFactoryPair,
@@ -274,6 +273,18 @@ function deposit({ query }: Props) {
             </div>
           </div>
         </div>
+         <div className=" flex justify-center ">
+              <button
+                onClick={async (event) => {
+                  router.push(
+                    `/trade/tradepair?contractaddress=${contractaddress}&addresstoken0=${addresstoken0}&addresstoken1=${addresstoken1}`
+                  )
+                }}
+                className="ButtonHover py-3"
+              >
+                Go back to trade
+              </button>
+            </div>
       </div>
     </>
   )
