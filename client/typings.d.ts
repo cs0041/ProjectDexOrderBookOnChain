@@ -44,3 +44,12 @@ interface TypeTradingView {
   low: number
   close: number
 }
+
+interface TypeListPairOrder {
+  addressToken0: string
+  addressToken1: string
+  addressContractPair: string
+  symbolToken0: string
+  symbolToken1: string
+  price: string
+}
