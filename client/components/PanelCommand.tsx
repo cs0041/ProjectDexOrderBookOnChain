@@ -2,6 +2,7 @@ import React, { useContext, useState } from 'react'
 import { ContractContext } from '../context/ContratContext'
 import { PlusCircleIcon } from '@heroicons/react/24/solid'
 import router from 'next/router'
+import { notificationToast } from '../utils/notificationHotToast'
 
 type Props = {}
 
@@ -143,13 +144,9 @@ function PanelCommand({}: Props) {
           <button
             onClick={() => {
               if (selectlimitMarket === LimitMarketStatus.Limit) {
-                sendTxLimitOrder(
-                  0,
-                  inputBuyAmountTokenLimitOrder!,
-                  inputBuyPriceTokenLimitOrder!
-                )
+               notificationToast( sendTxLimitOrder( 0,inputBuyAmountTokenLimitOrder!,  inputBuyPriceTokenLimitOrder!  ))
               } else if (selectlimitMarket === LimitMarketStatus.Market) {
-                sendTxMarketOrder(0, inputBuyAmountTokenLimitOrder!)
+                notificationToast(sendTxMarketOrder(0, inputBuyAmountTokenLimitOrder!))
               }
             }}
             className=" w-full text-white rounded bg-green-500 py-2 font-semibold hover:opacity-70"
@@ -234,13 +231,9 @@ function PanelCommand({}: Props) {
           <button
             onClick={() => {
               if (selectlimitMarket === LimitMarketStatus.Limit) {
-                sendTxLimitOrder(
-                  1,
-                  inputSellAmountTokenLimitOrder!,
-                  inputSellPriceTokenLimitOrder!
-                )
+                notificationToast(sendTxLimitOrder(  1, inputSellAmountTokenLimitOrder!, inputSellPriceTokenLimitOrder!))
               } else if (selectlimitMarket === LimitMarketStatus.Market) {
-                sendTxMarketOrder(1, inputSellAmountTokenLimitOrder!)
+                notificationToast(sendTxMarketOrder(1, inputSellAmountTokenLimitOrder!))
               }
             }}
             className="w-full text-white rounded bg-red-500 py-2 font-semibold hover:opacity-70"

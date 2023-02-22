@@ -3,6 +3,7 @@ import {
   PlusCircleIcon,
 } from '@heroicons/react/24/solid'
 import { ContractContext } from '../context/ContratContext'
+import { notificationToast } from '../utils/notificationHotToast'
 
 type Props = {}
 
@@ -14,7 +15,7 @@ function createpair({}: Props) {
   return (
     <div className="flex flex-1 justify-center items-center mt-[10vh] ">
       <div className="blue-glassmorphism p-5 w-1/4 space-y-10">
-        <h1 className="text-xl font-bold">CreatePair</h1>
+        <h1 className="text-xl   text-center">CreatePair</h1>
         <form className=" space-y-10">
           <input
             type="text"
@@ -52,7 +53,7 @@ function createpair({}: Props) {
             <button
               onClick={(event) => {
                 event.preventDefault()
-                sendTxCreatePair(inputAddressToken0, inputAddressToken1)
+                notificationToast(sendTxCreatePair( inputAddressToken0,  inputAddressToken1  ))
               }}
               className="ButtonHover py-3"
             >

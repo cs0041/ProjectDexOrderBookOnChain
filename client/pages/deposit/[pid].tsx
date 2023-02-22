@@ -2,8 +2,8 @@ import { NextPageContext } from 'next'
 import { ParsedUrlQuery } from 'querystring'
 import React, { useContext, useEffect, useState } from 'react'
 import { ContractContext } from '../../context/ContratContext'
-
 import { useRouter } from 'next/router'
+import {notificationToast} from '../../utils/notificationHotToast'
 interface Props {
   query: ParsedUrlQuery
 }
@@ -31,10 +31,7 @@ function deposit({ query }: Props) {
             addresstoken1 as string
           )
           console.log('checkFactoryPair', isExistPair)
-          if (
-            isExistPair == '0x0000000000000000000000000000000000000000' ||
-            isExistPair == undefined
-          ) {
+          if (contractaddress != isExistPair) {
             router.push('/nopair')
           }
         }
@@ -99,10 +96,8 @@ function deposit({ query }: Props) {
                   </div>
                   <button
                     onClick={() => {
-                      sendTxDeposit(
-                        amountInputDepositToken0!,
-                        ContractToken0Address
-                      )
+                      notificationToast(sendTxDeposit( amountInputDepositToken0!, ContractToken0Address  ),)
+                      
                     }}
                     className="w-full text-white rounded bg-green-500 py-3 font-semibold hover:opacity-70"
                   >
@@ -138,10 +133,10 @@ function deposit({ query }: Props) {
                   </div>
                   <button
                     onClick={() => {
-                      sendTxDeposit(
+                        notificationToast( sendTxDeposit(
                         amountInputDepositToken1!,
                         ContractToken1Address
-                      )
+                      ))
                     }}
                     className="w-full text-white rounded bg-green-500 py-3 font-semibold hover:opacity-70"
                   >
@@ -183,10 +178,10 @@ function deposit({ query }: Props) {
                   </div>
                   <button
                     onClick={() => {
-                      sendTxWithdraw(
+                        notificationToast(  sendTxWithdraw(
                         amountInputWithdrawToken0!,
                         ContractToken0Address
-                      )
+                      ))
                     }}
                     className="w-full text-white rounded bg-red-500 py-3 font-semibold hover:opacity-70"
                   >
@@ -222,10 +217,10 @@ function deposit({ query }: Props) {
                   </div>
                   <button
                     onClick={() => {
-                      sendTxWithdraw(
+                        notificationToast(   sendTxWithdraw(
                         amountInputWithdrawToken1!,
                         ContractToken1Address
-                      )
+                      ))
                     }}
                     className="w-full text-white rounded bg-red-500 py-3 font-semibold hover:opacity-70"
                   >
@@ -273,18 +268,19 @@ function deposit({ query }: Props) {
             </div>
           </div>
         </div>
-         <div className=" flex justify-center ">
-              <button
-                onClick={async (event) => {
-                  router.push(
-                    `/trade/tradepair?contractaddress=${contractaddress}&addresstoken0=${addresstoken0}&addresstoken1=${addresstoken1}`
-                  )
-                }}
-                className="ButtonHover py-3"
-              >
-                Go back to trade
-              </button>
-            </div>
+        <div className=" flex justify-center ">
+          <button
+            onClick={async (event) => {
+              router.push(
+                `/trade/tradepair?contractaddress=${contractaddress}&addresstoken0=${addresstoken0}&addresstoken1=${addresstoken1}`
+              )
+            }}
+            className="ButtonHover py-3"
+          >
+            Go back to trade
+          </button>
+        </div>
+       
       </div>
     </>
   )

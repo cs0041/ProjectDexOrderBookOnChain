@@ -1,6 +1,7 @@
 import { useContext, useEffect, useState } from 'react'
 import { ContractContext } from '../context/ContratContext'
 import MuiModal from '@mui/material/Modal'
+import { notificationToast } from '../utils/notificationHotToast'
 
 interface Props {
   onClose: () => void
@@ -64,7 +65,7 @@ function Modal({ onClose, side, id }: Props) {
         </div>
         <button
           onClick={() => {
-            sendTxUpdateOrder(side, id, amountInput!, priceInput!)
+            notificationToast(sendTxUpdateOrder(side, id, amountInput!, priceInput!))
           }}
           className="w-full text-white rounded bg-green-500 py-3 font-semibold  hover:opacity-70"
         >

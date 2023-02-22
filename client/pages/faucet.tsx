@@ -15,13 +15,14 @@ import CountdownTimer from '../components/CountdownTimer'
 import Image from 'next/image'
 import { useAccount } from 'wagmi'
 import { ContractContext } from '../context/ContratContext'
+import { notificationToast } from '../utils/notificationHotToast'
 
 function faucet({}: Props) {
   const { timeUnLockFaucet, sendTxFaucet } = useContext(ContractContext)
   const { address, isConnected } = useAccount()
   return (
     <>
-      <div className="flex  flex-col w-screen  h-[88vh] mt-10 items-center ">
+      <div className="flex  flex-col w-screen   mt-10 items-center ">
         <div className="p-5  max-w-[500px] min-w-[400px] flex flex-col w-full justify-start  blue-glassmorphism mb-10 ">
           <h1 className="text-white text-3xl font-bold  ">Get Gas</h1>
           <Image
@@ -109,7 +110,9 @@ function faucet({}: Props) {
 
           <button
             disabled={timeUnLockFaucet > Math.floor(Date.now() / 1000)}
-            onClick={sendTxFaucet}
+            onClick={()=> {
+             notificationToast(sendTxFaucet())
+            }}
             className={`${
               timeUnLockFaucet > Math.floor(Date.now() / 1000)
                 ? 'cursor-not-allowed bg-gray-500  '
