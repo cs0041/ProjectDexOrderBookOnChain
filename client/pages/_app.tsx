@@ -17,6 +17,7 @@ import { Chain } from 'wagmi/chains'
 import { ContractProvider } from '../context/ContratContext'
 import Header from '../components/Header'
 import Footer from '../components/Footer'
+import { Toaster } from 'react-hot-toast'
 
 
 
@@ -73,6 +74,9 @@ function MyApp({ Component, pageProps }: AppProps) {
           <Header />
           <Component {...pageProps} />
           <Footer />
+          <Toaster
+          position='bottom-right'
+          />
         </RainbowKitProvider>
       </WagmiConfig>
     </ContractProvider>
