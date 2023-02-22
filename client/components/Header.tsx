@@ -11,11 +11,11 @@ function Header({}: Props) {
   const { txNotification, isLoadingTxNavBar } = useContext(ContractContext)
   const { pathname } = useRouter()
   return (
-    <div className="border-b-[1px] border-gray-600  sticky inset-0 z-10 ">
+    <div className="   sticky inset-0 z-10 ">
       <div className="flex flex-row text-base font-semibold items-center justify-between px-10  bg-[#1c1c28] py-3 space-x-10">
         <div className="flex flex-row items-center space-x-2">
           <h1 className="text-2xl mr-10 font-bold text-transparent bg-clip-text bg-gradient-to-r from-purple-400 to-pink-600 animate-pulse">
-            Trustless protocol
+            Trustless
           </h1>
           <Link href="/markets">
             <h1
@@ -64,7 +64,7 @@ function Header({}: Props) {
           </Link>
         </div>
 
-        <form className="flex items-center w-1/5 min-w-fit">
+        {/* <form className="flex items-center w-1/5 min-w-fit">
           <input
             type="text"
             // onKeyPress={(event) => {
@@ -101,7 +101,7 @@ function Header({}: Props) {
             </svg>
             <span className="sr-only">Search</span>
           </button>
-        </form>
+        </form> */}
 
         <div className="flex flex-row items-center space-x-2">
           {isLoadingTxNavBar && (
