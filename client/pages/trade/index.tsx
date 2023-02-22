@@ -11,9 +11,9 @@ function trade({}: Props) {
 
   return (
     <>
-      <div className="flex flex-col w-full h-[92vh]   items-center mt-[10vh] ">
+      <div className="flex flex-col w-full   items-center mt-[10vh] ">
         <div className="blue-glassmorphism p-10 min-w-[500px]  ">
-          <h1 className="text-xl text-center font-bold mb-10">Trade</h1>
+          <h1 className="text-xl text-center  mb-10">Trade</h1>
           <form className=" space-y-10">
             <input
               type="text"

@@ -3,7 +3,7 @@ import React from 'react'
 
 type Props = {}
 
-function nopair({}: Props) {
+function Nopair({}: Props) {
   return (
     <div className='flex flex-col justify-center items-center mt-20 '>
         <h1 className='text-9xl font-semibold text-red-500'>404</h1>
@@ -34,4 +34,4 @@ function nopair({}: Props) {
   )
 }
 
-export default nopair
+export default Nopair

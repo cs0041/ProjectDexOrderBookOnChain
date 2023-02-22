@@ -12,9 +12,9 @@ function deposit({}: Props) {
 
   return (
     <>
-      <div className="flex flex-col w-full h-[92vh]   items-center mt-[10vh] ">
+      <div className="flex flex-col w-full    items-center mt-[10vh] ">
         <div className="blue-glassmorphism p-10 min-w-[500px]  ">
-          <h1 className="text-xl text-center font-bold mb-10">Deposit</h1>
+          <h1 className="text-xl text-center   mb-10">Deposit/Withdraw</h1>
           <form className=" space-y-10">
             <input
               type="text"
@@ -56,7 +56,7 @@ function deposit({}: Props) {
                 }}
                 className="ButtonHover py-3"
               >
-                Go to deposit this pair
+                Go to deposit/withdraw this pair
               </button>
             </div>
           </form>
