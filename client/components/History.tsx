@@ -10,6 +10,7 @@ import { TrashIcon } from '@heroicons/react/24/outline'
 import { ethers } from 'ethers'
 import { ConvertFullDateTime } from '../utils/DateTime'
 import { toEtherandFixFloatingPoint } from '../utils/UnitInEther'
+import { notificationToast } from '../utils/notificationHotToast'
 
 type Props = {}
 
@@ -83,10 +84,10 @@ const History = (props: Props) => {
               <div>Pair</div>
               <div>Type</div>
               <div>Side</div>
-              <div>Price ({symbolToken1})</div>
-              <div>Amount ({symbolToken0})</div>
-              <div>Filled ({symbolToken0})</div>
-              <div>Total ({symbolToken1})</div>
+              <div>Price</div>
+              <div>Amount</div>
+              <div>Filled</div>
+              <div>Total</div>
               <div>Cancel Order</div>
             </div>
 
@@ -94,7 +95,10 @@ const History = (props: Props) => {
               {orderBookByAddress.map((item) => (
                 <div className=" grid grid-cols-9 text-lg border-b-2 border-gray-700  p-3 ">
                   <div>{ConvertFullDateTime(Number(item.createdDate))}</div>
-                  <div> {symbolToken0} - {symbolToken1}</div>
+                  <div>
+                    {' '}
+                    {symbolToken0} - {symbolToken1}
+                  </div>
                   <div>Limit</div>
                   <div
                     className={`${
@@ -104,7 +108,7 @@ const History = (props: Props) => {
                     {item.BuyOrSell === 0 ? 'Buy' : 'Sell'}
                   </div>
                   <div className="flex flex-row">
-                    {item.price}
+                    {item.price} {symbolToken1}
                     <AdjustmentsHorizontalIcon
                       onClick={() => {
                         setIdUpdate(item.id)
@@ -115,7 +119,7 @@ const History = (props: Props) => {
                     />
                   </div>
                   <div className="flex flex-row">
-                    {item.amount}
+                    {item.amount} {symbolToken0}
                     <AdjustmentsHorizontalIcon
                       onClick={() => {
                         setIdUpdate(item.id)
@@ -125,10 +129,14 @@ const History = (props: Props) => {
                       className="IconHover !h-8 !w-8"
                     />
                   </div>
-                  <div>{item.filled}</div>
-                  <div>{Number(item.price) * Number(item.amount)}</div>
+                  <div>{item.filled} {symbolToken0}</div>
+                  <div>{Number(item.price) * Number(item.amount)} {symbolToken1}</div>
                   <TrashIcon
-                    onClick={() => sendTxCancelOrder(item.BuyOrSell, item.id)}
+                    onClick={() => {
+                      notificationToast(
+                        sendTxCancelOrder(item.BuyOrSell, item.id)
+                      )
+                    }}
                     className="IconHover !h-8 !w-8"
                   />
                 </div>
@@ -142,15 +150,18 @@ const History = (props: Props) => {
               <div>Pair</div>
               <div>Type</div>
               <div>Side</div>
-              <div>Price({symbolToken1})</div>
-              <div>Amount({symbolToken0})</div>
+              <div>Price</div>
+              <div>Amount</div>
             </div>
 
             <div className=" max-h-full ">
               {historyOrderEvent.map((item) => (
                 <div className=" grid grid-cols-6 text-lg border-b-2 border-gray-700  p-3">
                   <div>{ConvertFullDateTime(item.date.toNumber())}</div>
-                  <div>  {symbolToken0} - {symbolToken1}</div>
+                  <div>
+                    {' '}
+                    {symbolToken0} - {symbolToken1}
+                  </div>
                   <div>{item.Type}</div>
                   <div
                     className={`${
@@ -174,9 +185,19 @@ const History = (props: Props) => {
                   <div>
                     {Number(toEtherandFixFloatingPoint(item.price)) === 0
                       ? 'Market'
-                      : toEtherandFixFloatingPoint(item.price)}
+                      : `${toEtherandFixFloatingPoint(
+                          item.price
+                        )} ${symbolToken1}`}
                   </div>
-                  <div> {toEtherandFixFloatingPoint(item.amount)} </div>
+                  <div>
+                    {Number(toEtherandFixFloatingPoint(item.price)) === 0
+                      ? `${toEtherandFixFloatingPoint(
+                          item.amount
+                        )} ${symbolToken1}`
+                      : `${toEtherandFixFloatingPoint(
+                          item.amount
+                        )} ${symbolToken0}`}
+                  </div>
                 </div>
               ))}
             </div>
