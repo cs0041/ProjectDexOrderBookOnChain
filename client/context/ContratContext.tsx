@@ -18,7 +18,10 @@ interface IContract {
   orderBookSell: Order[]
   orderBookBuy: Order[]
   priceToken: string
-  sendTxMarketOrder: (side: number, amount: number | string) => Promise<void>
+  sendTxMarketOrder: (
+    side: number,
+    amount: number | string
+  ) => Promise<string | void>
   balancesSpotToken0: string
   balancesTradeToken0: string
   balancesSpotToken1: string
@@ -29,32 +32,35 @@ interface IContract {
     side: number,
     amount: number | string,
     price: number | string
-  ) => Promise<void>
+  ) => Promise<string | void>
   isLoadingOrderBookByAddress: boolean
   orderBookByAddress: Order[]
   loadOrderBookByAddress: () => Promise<void>
-  sendTxCancelOrder: (side: number, id: number | string) => Promise<void>
+  sendTxCancelOrder: (
+    side: number,
+    id: number | string
+  ) => Promise<string | void>
   sendTxUpdateOrder: (
     side: number,
     id: number,
     newAmount: number | string,
     newPriceOrder: number | string
-  ) => Promise<void>
+  ) => Promise<string | void>
   marketEvent: PairNewOrder.OrderMarketStructOutput[]
   historyOrderEvent: PairNewOrder.OrderHistoryStructOutput[]
   // sumMarketEvent:EventMarketOrder[]
   sendTxDeposit: (
     amount: number | string,
     addressToken: string
-  ) => Promise<void>
+  ) => Promise<string | void>
   sendTxWithdraw: (
     amount: number | string,
     addressToken: string
-  ) => Promise<void>
+  ) => Promise<string | void>
   tradingViewList: TypeTradingView[]
   loadHistoryByAddress: () => Promise<void>
   timeUnLockFaucet: number
-  sendTxFaucet: () => Promise<void>
+  sendTxFaucet: () => Promise<string | void>
   isLoadingTx: boolean
   txNotification: string
   isLoadingTxNavBar: boolean
@@ -70,7 +76,7 @@ interface IContract {
   sendTxCreatePair: (
     addressToken0: string,
     addressToken1: string
-  ) => Promise<void>
+  ) => Promise<string | void>
   listPairOrder: TypeListPairOrder[]
   isLoadingListFactoryPairAddress: boolean
   ContractPairOrderAddress: string
@@ -317,6 +323,7 @@ export const ContractProvider = ({ children }: ChildrenProps) => {
       setIsLoadingTxNavBar(false)
       loadBalances()
       setIsLoadingTx(false)
+      return transactionHash.hash
     } catch (error: any) {
       setIsLoadingTx(false)
       setIsLoadingTxNavBar(false)
@@ -342,8 +349,11 @@ export const ContractProvider = ({ children }: ChildrenProps) => {
       setIsLoadingTxNavBar(true)
       await transactionHash.wait()
       setIsLoadingTxNavBar(false)
+
       loadBalances()
+
       setIsLoadingTx(false)
+      return transactionHash.hash
     } catch (error: any) {
       setIsLoadingTx(false)
       setIsLoadingTxNavBar(false)
@@ -362,8 +372,11 @@ export const ContractProvider = ({ children }: ChildrenProps) => {
       setIsLoadingTxNavBar(true)
       await transactionHash.wait()
       setIsLoadingTxNavBar(false)
+
       loadBalances()
+
       setIsLoadingTx(false)
+      return transactionHash.hash
     } catch (error: any) {
       setIsLoadingTx(false)
       setIsLoadingTxNavBar(false)
@@ -383,12 +396,11 @@ export const ContractProvider = ({ children }: ChildrenProps) => {
       setIsLoadingTxNavBar(true)
       await transactionHash.wait()
       setIsLoadingTxNavBar(false)
-      // loadOrderBook()
-      loadPriceToken()
-      loadBalances()
+ 
       loadHistoryByAddress()
-      loadHistoryMarketOrder()
+
       setIsLoadingTx(false)
+      return transactionHash.hash
     } catch (error: any) {
       setIsLoadingTx(false)
       setIsLoadingTxNavBar(false)
@@ -418,11 +430,13 @@ export const ContractProvider = ({ children }: ChildrenProps) => {
       setIsLoadingTxNavBar(true)
       await transactionHash.wait()
       setIsLoadingTxNavBar(false)
-      // loadOrderBook()
+ 
       loadBalances()
       loadOrderBookByAddress()
       loadHistoryByAddress()
+
       setIsLoadingTx(false)
+      return transactionHash.hash
     } catch (error: any) {
       setIsLoadingTx(false)
       setIsLoadingTxNavBar(false)
@@ -444,15 +458,9 @@ export const ContractProvider = ({ children }: ChildrenProps) => {
       setIsLoadingTx(true)
       const newAmount = toWei(_newAmount)
       const newPriceOrder = toWei(_newPriceOrder)
-      console.log('side', side)
-      console.log('newAmount', newAmount)
-      console.log('newPriceOrder', newPriceOrder)
-      console.log('id', id)
       const contract = getPairOrderContract()
       const prevIndexAdd = await contract._findIndex(newPriceOrder, side)
       const prevIndexRemove = await contract._findPrevOrder(side, id)
-      console.log('prevIndexAdd', prevIndexAdd.toNumber())
-      console.log('prevIndexRemove', prevIndexRemove.toNumber())
       const transactionHash = await contract.updateOrder(
         side,
         id,
@@ -471,11 +479,13 @@ export const ContractProvider = ({ children }: ChildrenProps) => {
       setIsLoadingTxNavBar(true)
       await transactionHash.wait()
       setIsLoadingTxNavBar(false)
-      // loadOrderBook()
+
       loadBalances()
       loadOrderBookByAddress()
       loadHistoryByAddress()
+
       setIsLoadingTx(false)
+      return transactionHash.hash
     } catch (error: any) {
       setIsLoadingTx(false)
       setIsLoadingTxNavBar(false)
@@ -495,11 +505,13 @@ export const ContractProvider = ({ children }: ChildrenProps) => {
       setIsLoadingTxNavBar(true)
       await transactionHash.wait()
       setIsLoadingTxNavBar(false)
-      // loadOrderBook()
+
       loadOrderBookByAddress()
       loadBalances()
       loadHistoryByAddress()
+
       setIsLoadingTx(false)
+      return transactionHash.hash
     } catch (error: any) {
       setIsLoadingTx(false)
       setIsLoadingTxNavBar(false)
@@ -521,8 +533,11 @@ export const ContractProvider = ({ children }: ChildrenProps) => {
       console.log(transactionHash.hash)
       setIsLoadingTxNavBar(true)
       await transactionHash.wait()
+
       loadListFactoryPairAddress()
+
       setIsLoadingTxNavBar(false)
+      return transactionHash.hash
     } catch (error: any) {
       setIsLoadingTxNavBar(false)
       throw new Error(error)
@@ -538,6 +553,7 @@ export const ContractProvider = ({ children }: ChildrenProps) => {
       const contract = getFactoryPairContract()
       const result = await contract.getPair(addressToken0, addressToken1)
       return result
+
     } catch (error) {
       console.log(error)
     }
@@ -555,6 +571,8 @@ export const ContractProvider = ({ children }: ChildrenProps) => {
       for (let i = 0; i < length && i < Fixlength; i++) {
         listFactoryPairAddress.push(await contractFactoryPair.allPairs(i))
       }
+
+      let dataListPairOrderTemp: TypeListPairOrder[] = []
       listFactoryPairAddress.map(async (address) => {
         const contractPairOrder = getPairOrderContractDynamic(address)
         const [dataAddressToken0, dataAddressToken1, dataPrice] =
@@ -581,9 +599,10 @@ export const ContractProvider = ({ children }: ChildrenProps) => {
           price: toEtherandFixFloatingPoint(dataPrice),
           totalSuplly: toEtherandFixFloatingPoint(dataToTalSupplyToken0),
         }
+        dataListPairOrderTemp.push(struct)
         setListPairOrder((prev) => [...prev, struct])
-        setIsLoadingListFactoryPairAddress(false)
       })
+      setIsLoadingListFactoryPairAddress(false)
     } catch (error) {
       setIsLoadingListFactoryPairAddress(false)
       console.log(error)
@@ -675,8 +694,8 @@ export const ContractProvider = ({ children }: ChildrenProps) => {
     setLoadingOrderBuy(true)
     setLoadingOrderSell(true)
     try {
-      setOrderBookBuy([])
-      setOrderBookSell([])
+      // setOrderBookBuy([])
+      // setOrderBookSell([])
 
       const contract = getPairOrderContract()
 
@@ -685,6 +704,7 @@ export const ContractProvider = ({ children }: ChildrenProps) => {
         await contract.getOrderBook(0),
       ])
 
+      let tempDataOrderBuy: Order[] = []
       dataOrderBuy.map((order) => {
         const structOrder: Order = {
           id: order.id.toNumber(),
@@ -696,9 +716,11 @@ export const ContractProvider = ({ children }: ChildrenProps) => {
           price: toEtherandFixFloatingPoint(order.price),
           filled: toEtherandFixFloatingPoint(order.filled),
         }
-        setOrderBookBuy((prev) => [...prev, structOrder])
+        tempDataOrderBuy.push(structOrder)
       })
+      setOrderBookBuy(tempDataOrderBuy)
 
+      let tempDataOrderSell: Order[] = []
       dataOrderSell.map((order) => {
         const structOrder: Order = {
           id: order.id.toNumber(),
@@ -710,16 +732,17 @@ export const ContractProvider = ({ children }: ChildrenProps) => {
           price: toEtherandFixFloatingPoint(order.price),
           filled: toEtherandFixFloatingPoint(order.filled),
         }
-        setOrderBookSell((prev) => [structOrder, ...prev])
+        tempDataOrderSell.push(structOrder)
       })
+      setOrderBookSell(tempDataOrderSell?.reverse())
 
       setLoadingOrderBuy(false)
       setLoadingOrderSell(false)
     } catch (error) {
       setLoadingOrderBuy(false)
       setLoadingOrderSell(false)
-      setOrderBookBuy([])
-      setOrderBookSell([])
+      // setOrderBookBuy([])
+      // setOrderBookSell([])
       console.log(error)
     }
   }
@@ -729,7 +752,7 @@ export const ContractProvider = ({ children }: ChildrenProps) => {
 
     try {
       setIsLoadingOrderBookByAddress(true)
-      setOrderBookByAddress([])
+      // setOrderBookByAddress([])
 
       const contract = getPairOrderContract()
 
@@ -741,6 +764,7 @@ export const ContractProvider = ({ children }: ChildrenProps) => {
         await contract.getOrderBook(0),
       ])
 
+      let tempDataOrder: Order[] = []
       dataOrderBuy.map((order) => {
         if (order.trader.toLocaleLowerCase() === address) {
           const structOrder: Order = {
@@ -753,8 +777,9 @@ export const ContractProvider = ({ children }: ChildrenProps) => {
             price: toEtherandFixFloatingPoint(order.price),
             filled: toEtherandFixFloatingPoint(order.filled),
           }
-          setOrderBookByAddress((prev) => [...prev, structOrder])
+          tempDataOrder.push(structOrder)
         }
+      
       })
 
       dataOrderSell.map((order) => {
@@ -769,14 +794,15 @@ export const ContractProvider = ({ children }: ChildrenProps) => {
             price: toEtherandFixFloatingPoint(order.price),
             filled: toEtherandFixFloatingPoint(order.filled),
           }
-          setOrderBookByAddress((prev) => [...prev, structOrder])
-        }
-      })
+           tempDataOrder.push(structOrder)
+          }
+        })
+        setOrderBookByAddress(tempDataOrder)
 
       setIsLoadingOrderBookByAddress(false)
     } catch (error) {
       setIsLoadingOrderBookByAddress(false)
-      setOrderBookByAddress([])
+      // setOrderBookByAddress([])
       console.log(error)
     }
   }
@@ -799,7 +825,7 @@ export const ContractProvider = ({ children }: ChildrenProps) => {
   const loadHistoryMarketOrder = async () => {
     if (!window.ethereum) return console.log('Please install metamask')
     try {
-      setTradingViewList([])
+      // setTradingViewList([])
       const contract = getPairOrderContract()
       const data = await contract.getMarketOrder()
       const covertData = Object.keys(data).map((key) => data[key as any])
@@ -810,18 +836,11 @@ export const ContractProvider = ({ children }: ChildrenProps) => {
         const data: TypesTradingViewOriginal = {
           price: Number(ethers.utils.formatEther(item.price)),
           time: item.date.toNumber(),
-          //  close: Number(ethers.utils.formatEther(item.price)),
-          //  high: Number(ethers.utils.formatEther(item.price)),
-          //  low: Number(ethers.utils.formatEther(item.price)),
-          //  open: 50,
-          //  time: item.date.toNumber(),
         }
         temp.push(data)
-        // setTradingViewList((prev) => [...prev,data])
       })
       setTradingViewList(convertToOHLC(temp))
-      // console.log("temp",temp)
-      // convertToOHLC(tradingViewList)
+
     } catch (error) {
       console.log(error)
     }
@@ -837,11 +856,12 @@ export const ContractProvider = ({ children }: ChildrenProps) => {
         provider
       ) as PairNewOrder
 
-      contract.on('MarketOrder', async () => {
+      contract.on('SumMarketOrder', async () => {
         loadHistoryMarketOrder()
         loadOrderBookByAddress()
-        loadOrderBook()
         loadPriceToken()
+        loadBalances()
+        loadOrderBook()
       })
       contract.on('CreateLimitOrder', async () => {
         loadOrderBook()
