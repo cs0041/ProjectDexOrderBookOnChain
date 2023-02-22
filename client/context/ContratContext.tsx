@@ -56,8 +56,6 @@ interface IContract {
   timeUnLockFaucet: number
   sendTxFaucet: () => Promise<void>
   isLoadingTx: boolean
-  notification: boolean
-  setNotification: (notification: boolean) => void
   txNotification: string
   isLoadingTxNavBar: boolean
   setContractPairOrderAddress: (address: string) => void
@@ -111,8 +109,6 @@ export const ContractContext = createContext<IContract>({
   timeUnLockFaucet: 0,
   sendTxFaucet: async () => {},
   isLoadingTx: false,
-  notification: false,
-  setNotification: () => {},
   txNotification: '',
   isLoadingTxNavBar: false,
   setContractPairOrderAddress: () => {},
@@ -256,7 +252,6 @@ export const ContractProvider = ({ children }: ChildrenProps) => {
   const [isLoadingTx, setIsLoadingTx] = useState(false)
 
   //Notification
-  const [notification, setNotification] = useState(false)
   const [txNotification, setTxNotification] = useState('')
 
   //Navbar loading
@@ -316,21 +311,20 @@ export const ContractProvider = ({ children }: ChildrenProps) => {
       }
       const transactionHash = await contract.deposit(amount, addressToken)
       console.log(transactionHash.hash)
-      // setTxNotification(transactionHash.hash)
+      setTxNotification(transactionHash.hash)
       setIsLoadingTxNavBar(true)
       await transactionHash.wait()
       setIsLoadingTxNavBar(false)
-      // setNotification(true)
       loadBalances()
       setIsLoadingTx(false)
     } catch (error: any) {
-      try {
-        alert(error.error.data.message)
-      } catch (e) {
-        alert(error)
-      }
       setIsLoadingTx(false)
       setIsLoadingTxNavBar(false)
+      throw new Error((error))
+      // throw new Error(error.error.data.message)
+        
+  
+
     }
   }
   const sendTxWithdraw = async (
@@ -344,21 +338,16 @@ export const ContractProvider = ({ children }: ChildrenProps) => {
       const contract = getPairOrderContract()
       const transactionHash = await contract.withdraw(amount, addressToken)
       console.log(transactionHash.hash)
-      // setTxNotification(transactionHash.hash)
+      setTxNotification(transactionHash.hash)
       setIsLoadingTxNavBar(true)
       await transactionHash.wait()
       setIsLoadingTxNavBar(false)
-      // setNotification(true)
       loadBalances()
       setIsLoadingTx(false)
     } catch (error: any) {
-      try {
-        alert(error.error.data.message)
-      } catch (e) {
-        alert(error)
-      }
       setIsLoadingTx(false)
       setIsLoadingTxNavBar(false)
+      throw new Error(error)
     }
   }
 
@@ -370,20 +359,15 @@ export const ContractProvider = ({ children }: ChildrenProps) => {
       const transactionHash = await contract.getFaucet()
       console.log(transactionHash.hash)
       setTxNotification(transactionHash.hash)
-      // setIsLoadingTxNavBar(true)
+      setIsLoadingTxNavBar(true)
       await transactionHash.wait()
       setIsLoadingTxNavBar(false)
-      // setNotification(true)
       loadBalances()
       setIsLoadingTx(false)
     } catch (error: any) {
-      try {
-        alert(error.error.data.message)
-      } catch (e) {
-        alert(error)
-      }
       setIsLoadingTx(false)
       setIsLoadingTxNavBar(false)
+      throw new Error(error)
     }
   }
 
@@ -399,7 +383,6 @@ export const ContractProvider = ({ children }: ChildrenProps) => {
       setIsLoadingTxNavBar(true)
       await transactionHash.wait()
       setIsLoadingTxNavBar(false)
-      setNotification(true)
       // loadOrderBook()
       loadPriceToken()
       loadBalances()
@@ -407,13 +390,9 @@ export const ContractProvider = ({ children }: ChildrenProps) => {
       loadHistoryMarketOrder()
       setIsLoadingTx(false)
     } catch (error: any) {
-      try {
-        alert(error.error.data.message)
-      } catch (e) {
-        alert(error)
-      }
       setIsLoadingTx(false)
       setIsLoadingTxNavBar(false)
+      throw new Error(error)
     }
   }
 
@@ -439,20 +418,16 @@ export const ContractProvider = ({ children }: ChildrenProps) => {
       setIsLoadingTxNavBar(true)
       await transactionHash.wait()
       setIsLoadingTxNavBar(false)
-      setNotification(true)
       // loadOrderBook()
       loadBalances()
       loadOrderBookByAddress()
       loadHistoryByAddress()
       setIsLoadingTx(false)
     } catch (error: any) {
-      try {
-        alert(error.error.data.message)
-      } catch (e) {
-        alert(error)
-      }
       setIsLoadingTx(false)
       setIsLoadingTxNavBar(false)
+      throw new Error(error)
+      
     }
   }
 
@@ -496,20 +471,15 @@ export const ContractProvider = ({ children }: ChildrenProps) => {
       setIsLoadingTxNavBar(true)
       await transactionHash.wait()
       setIsLoadingTxNavBar(false)
-      setNotification(true)
       // loadOrderBook()
       loadBalances()
       loadOrderBookByAddress()
       loadHistoryByAddress()
       setIsLoadingTx(false)
     } catch (error: any) {
-      try {
-        alert(error.error.data.message)
-      } catch (e) {
-        alert(error)
-      }
       setIsLoadingTx(false)
       setIsLoadingTxNavBar(false)
+      throw new Error(error)
     }
   }
 
@@ -525,20 +495,15 @@ export const ContractProvider = ({ children }: ChildrenProps) => {
       setIsLoadingTxNavBar(true)
       await transactionHash.wait()
       setIsLoadingTxNavBar(false)
-      setNotification(true)
       // loadOrderBook()
       loadOrderBookByAddress()
       loadBalances()
       loadHistoryByAddress()
       setIsLoadingTx(false)
     } catch (error: any) {
-      try {
-        alert(error.error.data.message)
-      } catch (e) {
-        alert(error)
-      }
       setIsLoadingTx(false)
       setIsLoadingTxNavBar(false)
+      throw new Error(error)
     }
   }
 
@@ -559,12 +524,8 @@ export const ContractProvider = ({ children }: ChildrenProps) => {
       loadListFactoryPairAddress()
       setIsLoadingTxNavBar(false)
     } catch (error: any) {
-      try {
-        alert(error.error.data.message)
-      } catch (e) {
-        alert(error)
-      }
       setIsLoadingTxNavBar(false)
+      throw new Error(error)
     }
   }
 
@@ -577,8 +538,6 @@ export const ContractProvider = ({ children }: ChildrenProps) => {
       const contract = getFactoryPairContract()
       const result = await contract.getPair(addressToken0, addressToken1)
       return result
-      // const time = await contract.timeFaucet(accounts[0])
-      // setTimeUnLockFaucet(time.toNumber())
     } catch (error) {
       console.log(error)
     }
@@ -1110,8 +1069,7 @@ export const ContractProvider = ({ children }: ChildrenProps) => {
         sendTxFaucet,
         isLoadingTx,
 
-        notification,
-        setNotification,
+
         txNotification,
         isLoadingTxNavBar,
 
