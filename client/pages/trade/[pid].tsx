@@ -45,9 +45,7 @@ const Home = ({ query }: Props) => {
     chainId: polygonMumbai.id,
   })
   const {
-    notification,
     txNotification,
-    setNotification,
     setContractPairOrderAddress,
     setContractToken0Address,
     setContractToken1Address,
@@ -58,7 +56,9 @@ const Home = ({ query }: Props) => {
     async function  check  ()  {
          const isExistPair  = await checkFactoryPair(addresstoken0 as string, addresstoken1 as string)
          console.log('checkFactoryPair', isExistPair)
-         if (isExistPair == '0x0000000000000000000000000000000000000000' ||  isExistPair == undefined)  {
+         if (
+           contractaddress != isExistPair
+         ) {
            router.push('/nopair')
          }
     }
@@ -69,14 +69,8 @@ const Home = ({ query }: Props) => {
     setContractToken1Address(addresstoken1 as string)
   }, [])
 
-  useEffect(() => {
-    const timeout = setTimeout(() => {
-      console.log('notification close')
-      setNotification(false)
-    }, 5000)
 
-    return () => clearTimeout(timeout)
-  }, [notification])
+
 
   return (
     mounted && (
@@ -113,13 +107,6 @@ const Home = ({ query }: Props) => {
             id={idUpdate}
             side={sideBuyOrSell}
             onClose={() => setShowUpdateModal(false)}
-          />
-        )}
-
-        {notification && (
-          <NotificationModal
-            onClose={() => setNotification(false)}
-            txNotification={txNotification}
           />
         )}
       </div>
