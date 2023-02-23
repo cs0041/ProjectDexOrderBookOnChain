@@ -15,7 +15,7 @@ import CountdownTimer from '../components/CountdownTimer'
 import Image from 'next/image'
 import { useAccount } from 'wagmi'
 import { ContractContext } from '../context/ContratContext'
-import { notificationToast } from '../utils/notificationHotToast'
+import { notificationToast } from '../utils/notificationToastify'
 
 function faucet({}: Props) {
   const { timeUnLockFaucet, sendTxFaucet } = useContext(ContractContext)
@@ -105,7 +105,7 @@ function faucet({}: Props) {
             Wallet Address
           </h2>
           <div className="Buttonselect py-3 mt-2 !bg-slate-700  !cursor-default">
-            {address ? address : 'pls connect wallet'}
+            {address ? address : 'connect wallet'}
           </div>
 
           <button

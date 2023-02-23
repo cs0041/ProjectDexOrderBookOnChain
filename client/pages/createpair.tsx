@@ -3,7 +3,7 @@ import {
   PlusCircleIcon,
 } from '@heroicons/react/24/solid'
 import { ContractContext } from '../context/ContratContext'
-import { notificationToast } from '../utils/notificationHotToast'
+import { notificationToast } from '../utils/notificationToastify'
 
 type Props = {}
 

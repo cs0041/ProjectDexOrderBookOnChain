@@ -2,7 +2,7 @@ import React, { useContext, useState } from 'react'
 import { ContractContext } from '../context/ContratContext'
 import { PlusCircleIcon } from '@heroicons/react/24/solid'
 import router from 'next/router'
-import { notificationToast } from '../utils/notificationHotToast'
+import { notificationToast } from '../utils/notificationToastify'
 
 type Props = {}
 

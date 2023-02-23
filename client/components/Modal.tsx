@@ -1,7 +1,7 @@
 import { useContext, useEffect, useState } from 'react'
 import { ContractContext } from '../context/ContratContext'
 import MuiModal from '@mui/material/Modal'
-import { notificationToast } from '../utils/notificationHotToast'
+import { notificationToast } from '../utils/notificationToastify'
 
 interface Props {
   onClose: () => void

@@ -3,7 +3,7 @@ import router from 'next/router'
 import { ContractContext } from '../context/ContratContext'
 import {numberWithCommas} from '../utils/FormatNumberComma'
 import { shortenAddress } from '../utils/shortenAddress'
-import { simpleNotificationToast } from '../utils/notificationHotToast'
+import { simpleNotificationToast } from '../utils/notificationToastify'
 import { ClipboardDocumentListIcon,ArrowTrendingUpIcon } from '@heroicons/react/24/solid'
 import copy from 'copy-to-clipboard'  
 type Props = {}

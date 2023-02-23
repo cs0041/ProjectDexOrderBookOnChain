@@ -18,7 +18,8 @@ import { ContractProvider } from '../context/ContratContext'
 import Header from '../components/Header'
 import Footer from '../components/Footer'
 import { Toaster } from 'react-hot-toast'
-
+import { ToastContainer } from 'react-toastify'
+  import 'react-toastify/dist/ReactToastify.css'
 
 
 const hardhat: Chain = {
@@ -74,8 +75,12 @@ function MyApp({ Component, pageProps }: AppProps) {
           <Header />
           <Component {...pageProps} />
           <Footer />
-          <Toaster
+          {/* <Toaster
           position='bottom-right'
+          /> */}
+          <ToastContainer
+          className= "!top-14" 
+          theme="dark"
           />
         </RainbowKitProvider>
       </WagmiConfig>

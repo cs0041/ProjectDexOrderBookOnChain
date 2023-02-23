@@ -10,7 +10,7 @@ import { TrashIcon } from '@heroicons/react/24/outline'
 import { ethers } from 'ethers'
 import { ConvertFullDateTime } from '../utils/DateTime'
 import { toEtherandFixFloatingPoint } from '../utils/UnitInEther'
-import { notificationToast } from '../utils/notificationHotToast'
+import { notificationToast } from '../utils/notificationToastify'
 
 type Props = {}
 
