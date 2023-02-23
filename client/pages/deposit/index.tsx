@@ -49,10 +49,13 @@ function deposit({}: Props) {
               <button
                 onClick={async (event) => {
                   event.preventDefault()
-                  const contractPairAddress  = await checkFactoryPair(inputAddressToken0  ,inputAddressToken1)
-                  router.push(
-                    `/deposit/depositpair?contractaddress=${contractPairAddress}&addresstoken0=${inputAddressToken0}&addresstoken1=${inputAddressToken1}`
-                  )
+                  if (inputAddressToken0 != '' || inputAddressToken1 != ''){
+                    const contractPairAddress  = await checkFactoryPair(inputAddressToken0  ,inputAddressToken1)
+                    router.push(
+                      `/deposit/depositpair?contractaddress=${contractPairAddress}&addresstoken0=${inputAddressToken0}&addresstoken1=${inputAddressToken1}`
+                    )
+
+                  }
                 }}
                 className="ButtonHover py-3"
               >
