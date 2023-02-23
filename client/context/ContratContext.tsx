@@ -57,7 +57,7 @@ interface IContract {
     amount: number | string,
     addressToken: string
   ) => Promise<string | void>
-  tradingViewList: TypeTradingView[]
+  tradingViewList: TypesTradingViewOriginal[]
   loadHistoryByAddress: () => Promise<void>
   timeUnLockFaucet: number
   sendTxFaucet: () => Promise<string | void>
@@ -249,7 +249,7 @@ export const ContractProvider = ({ children }: ChildrenProps) => {
   >([])
 
   // tradingView
-  const [tradingViewList, setTradingViewList] = useState<TypeTradingView[]>([])
+  const [tradingViewList, setTradingViewList] = useState<TypesTradingViewOriginal[]>([])
 
   // Time Faucet
   const [timeUnLockFaucet, setTimeUnLockFaucet] = useState<number>(0)
@@ -573,36 +573,41 @@ export const ContractProvider = ({ children }: ChildrenProps) => {
       }
 
       let dataListPairOrderTemp: TypeListPairOrder[] = []
-      listFactoryPairAddress.map(async (address) => {
-        const contractPairOrder = getPairOrderContractDynamic(address)
-        const [dataAddressToken0, dataAddressToken1, dataPrice] =
-          await Promise.all([
-            await contractPairOrder.token0(),
-            await contractPairOrder.token1(),
-            await contractPairOrder.price(),
-          ])
+      listFactoryPairAddress.map(async (address,index) => {
+       const contractPairOrder = getPairOrderContractDynamic(address)
+       const [dataAddressToken0, dataAddressToken1, dataPrice] =
+         await Promise.all([
+           await contractPairOrder.token0(),
+           await contractPairOrder.token1(),
+           await contractPairOrder.price(),
+         ])
 
-        const token0 = getTokenContract(dataAddressToken0)
-        const token1 = getTokenContract(dataAddressToken1)
-        const [dataMetaDataToken0, dataMetaDataToken1,dataToTalSupplyToken0] = await Promise.all([
-          await token0.symbol(),
-          await token1.symbol(),
-          await token0.totalSupply(),
-        ])
+       const token0 = getTokenContract(dataAddressToken0)
+       const token1 = getTokenContract(dataAddressToken1)
+       const [dataMetaDataToken0, dataMetaDataToken1, dataToTalSupplyToken0] =
+         await Promise.all([
+           await token0.symbol(),
+           await token1.symbol(),
+           await token0.totalSupply(),
+         ])
 
-        const struct: TypeListPairOrder = {
-          addressContractPair: address,
-          addressToken0: dataAddressToken0,
-          addressToken1: dataAddressToken1,
-          symbolToken0: dataMetaDataToken0.toUpperCase(),
-          symbolToken1: dataMetaDataToken1.toUpperCase(),
-          price: toEtherandFixFloatingPoint(dataPrice),
-          totalSuplly: toEtherandFixFloatingPoint(dataToTalSupplyToken0),
-        }
-        dataListPairOrderTemp.push(struct)
-        setListPairOrder((prev) => [...prev, struct])
-      })
-      setIsLoadingListFactoryPairAddress(false)
+       const struct: TypeListPairOrder = {
+         addressContractPair: address,
+         addressToken0: dataAddressToken0,
+         addressToken1: dataAddressToken1,
+         symbolToken0: dataMetaDataToken0.toUpperCase(),
+         symbolToken1: dataMetaDataToken1.toUpperCase(),
+         price: toEtherandFixFloatingPoint(dataPrice),
+         totalSuplly: toEtherandFixFloatingPoint(dataToTalSupplyToken0),
+       }
+       dataListPairOrderTemp.push(struct)
+       setListPairOrder((prev) => [...prev, struct])
+
+       if(index == listFactoryPairAddress.length-1){
+        setIsLoadingListFactoryPairAddress(false)
+       }
+     })
+
     } catch (error) {
       setIsLoadingListFactoryPairAddress(false)
       console.log(error)
@@ -839,7 +844,8 @@ export const ContractProvider = ({ children }: ChildrenProps) => {
         }
         temp.push(data)
       })
-      setTradingViewList(convertToOHLC(temp))
+      console.log('temp', temp)
+      setTradingViewList(temp)
 
     } catch (error) {
       console.log(error)
