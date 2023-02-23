@@ -357,7 +357,7 @@ export const ContractProvider = ({ children }: ChildrenProps) => {
     } catch (error: any) {
       setIsLoadingTx(false)
       setIsLoadingTxNavBar(false)
-      throw new Error(error)
+      throw new Error(error.reason)
     }
   }
 
@@ -380,7 +380,7 @@ export const ContractProvider = ({ children }: ChildrenProps) => {
     } catch (error: any) {
       setIsLoadingTx(false)
       setIsLoadingTxNavBar(false)
-      throw new Error(error)
+      throw new Error(error.reason)
     }
   }
 
@@ -404,7 +404,7 @@ export const ContractProvider = ({ children }: ChildrenProps) => {
     } catch (error: any) {
       setIsLoadingTx(false)
       setIsLoadingTxNavBar(false)
-      throw new Error(error)
+      throw new Error(error.reason)
     }
   }
 
@@ -440,7 +440,7 @@ export const ContractProvider = ({ children }: ChildrenProps) => {
     } catch (error: any) {
       setIsLoadingTx(false)
       setIsLoadingTxNavBar(false)
-      throw new Error(error)
+      throw new Error(error.reason)
       
     }
   }
@@ -489,7 +489,7 @@ export const ContractProvider = ({ children }: ChildrenProps) => {
     } catch (error: any) {
       setIsLoadingTx(false)
       setIsLoadingTxNavBar(false)
-      throw new Error(error)
+      throw new Error(error.reason)
     }
   }
 
@@ -515,7 +515,7 @@ export const ContractProvider = ({ children }: ChildrenProps) => {
     } catch (error: any) {
       setIsLoadingTx(false)
       setIsLoadingTxNavBar(false)
-      throw new Error(error)
+      throw new Error(error.reason)
     }
   }
 
@@ -540,7 +540,7 @@ export const ContractProvider = ({ children }: ChildrenProps) => {
       return transactionHash.hash
     } catch (error: any) {
       setIsLoadingTxNavBar(false)
-      throw new Error(error)
+      throw new Error(error.reason)
     }
   }
 
