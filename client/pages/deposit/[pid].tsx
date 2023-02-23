@@ -3,7 +3,7 @@ import { ParsedUrlQuery } from 'querystring'
 import React, { useContext, useEffect, useState } from 'react'
 import { ContractContext } from '../../context/ContratContext'
 import { useRouter } from 'next/router'
-import {notificationToast} from '../../utils/notificationHotToast'
+import {notificationToast} from '../../utils/notificationToastify'
 interface Props {
   query: ParsedUrlQuery
 }
