@@ -4,13 +4,16 @@ import MuiModal from '@mui/material/Modal'
 import { notificationToast } from '../utils/notificationToastify'
 import { XCircleIcon } from '@heroicons/react/24/outline'
 
-
 enum Version {
   _0_1_0 = '0.1.0',
   _0_2_0 = '0.2.0',
 }
 
-function ModalShowNew() {
+interface Props {
+  onClose: () => void
+}
+
+function ModalShowNew({ onClose }: Props) {
   const [statusVersion, setStatusVersion] = useState<Version>(Version._0_2_0)
 
   const [showModal, setShowModal] = useState(true)
@@ -19,8 +22,8 @@ function ModalShowNew() {
   const [priceInput, setPriceInput] = useState<string>()
 
   const handleCLose = () => {
+    onClose()
     setShowModal(false)
-   // onClose()
   }
 
   return (
@@ -31,7 +34,10 @@ function ModalShowNew() {
    rounded-xl relative   bg-[#1c1c28]  border-[1px] border-gray-600 p-10 outline-none"
     >
       <div className="outline-none space-y-5">
-        <XCircleIcon onClick={handleCLose} className="IconHover absolute right-5 top-5"  />
+        <XCircleIcon
+          onClick={handleCLose}
+          className="IconHover absolute right-5 top-5"
+        />
         <h1 className="text-xl font-semibold text-center">✨ What's New ✨</h1>
         <p className="text-center"> Trustless v 0.2.0 is coming 🤖🥰🚀</p>
         <p className="text-center">See details below</p>
